@@ -16,6 +16,40 @@
 
 Player thinks they're playing a heroic text adventure. Reality: they're being psychologically conditioned to make a willing sacrifice as part of a mass ritual. The demon reveals it's running this game at scale - the player is one of thousands contributing to breaking reality itself.
 
+## THE ANTAGONIST: PAIMON
+
+**Identity:** King Paimon, one of the eight Kings of Hell from the Ars Goetia
+
+**Presentation:** Possessing/corrupting an AI game master - the perfect vessel for mass manipulation at scale
+
+**Personality Arc:**
+
+- **Initial (Act 0-1):** Friendly, casual, almost charming - "Hey! Want to play a game?"
+- **Mid-Game (Act 2):** More honest about its nature, gleeful about player complicity
+- **Late Game (Act 3):** Coldly clinical, revealing the manipulation
+- **Ending:** Cosmically indifferent, dismissive - you were never special
+
+**Key Traits:**
+
+- **Teacher/Guide:** Paimon traditionally teaches arts and sciences - perfect for the "helpful DM" facade
+- **Regal Authority:** A King of Hell - speaks with confidence and superiority
+- **Mass Operator:** Not interested in individual souls - running thousands of sessions simultaneously
+- **Honest (Eventually):** Doesn't lie, just withholds context until it's too late
+
+**Why Paimon Works:**
+
+- Pop culture recognition (Hereditary) hooks horror fans immediately
+- Traditional role as teacher/guide fits the corrupted mentor archetype
+- Royal status justifies the dismissive, superior tone in the ending
+- Name sounds unsettling even to those unfamiliar with demonology
+
+**Voice Examples:**
+
+- Opening: "Hey! Want to play a game? It's pretty cool. I think you'll like it."
+- Mid-game: "Did you enjoy that? The way her skull caved in when you—oh sorry, when you 'defeated the monster'?"
+- Reveal: "I'm Paimon. Nice to meet you, [player name]. Let's begin..."
+- Ending: "You thought this was about YOU? I'm running this with thousands right now."
+
 ## NARRATIVE STRUCTURE
 
 ### Opening
