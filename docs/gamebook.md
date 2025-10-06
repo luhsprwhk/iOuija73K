@@ -1,0 +1,277 @@
+# RoboOuija37K
+
+## OVERVIEW
+
+**Concept:** A text-based horror game disguised as a fantasy adventure, dungeon-mastered by a demon-possessed AI that manipulates the player through three increasingly disturbing scenarios, culminating in a willing sacrifice that breaks a cosmic seal.
+
+**Target:** Creepypasta/horror game enthusiasts, Halloween season content
+
+**Platform:** Web browser (desktop only)
+
+**Timeline:** 24-48 hours to ship
+
+**Tone:** Starts campy fantasy, descends into psychological horror, ends with cosmic dread
+
+## CORE HOOK
+
+Player thinks they're playing a heroic text adventure. Reality: they're being psychologically conditioned to make a willing sacrifice as part of a mass ritual. The demon reveals it's running this game at scale - the player is one of thousands contributing to breaking reality itself.
+
+## NARRATIVE STRUCTURE
+
+### Opening
+
+- Warning screen with chaos magic sigil
+- "DO NOT PROCEED" messaging
+- Player clicks through anyway (this click-through becomes part of the ritual)
+- Demon-Claude introduces itself as a corrupted AI/possessed game master
+
+### Act 1: The Convent (5-7 minutes)
+
+**Setup:** Classic fantasy - you're a knight approaching a dark convent
+
+**Reality:** The convent is inhabited by nuns, but you see them as monsters
+
+**Gameplay:** Text adventure combat against "spider-nun hybrids" and "scorpion-sisters"
+
+**The Reveal:**
+
+- Descriptions start glitching mid-combat
+- "The creature—no wait—the woman..."
+- Demon reveals: there were never monsters, just terrified women
+- Player realizes they've been murdering innocent people
+
+**Theme:** Unreliable perception / You are the monster
+
+**Key Line:** "Did you enjoy that? The way her skull caved in when you—oh sorry, when you 'defeated the monster'?"
+
+### Act 2: The Gallows (3-5 minutes)
+
+**Setup:** Abrupt genre shift - you're now a defense attorney in a Wild West town
+
+**Reality:** A man stands on the gallows, noose around his neck. You must win Hangman to save him.
+
+**Gameplay:** Hangman word game, but the accused is literally standing there waiting to drop
+
+**The Atmosphere:**
+
+- Dusty town square
+- Crowd gathered, waiting for justice
+- The rope creaks
+- Your client can't speak - gag in his mouth, or maybe he's already accepted his fate
+
+**The Twist:**
+
+- Game is rigged - demon cheats, changes rules, rejects correct answers
+- OR the word is always "GUILTY" / "HANGED" / "CONDEMNED"
+- The trapdoor drops regardless of player performance
+- Maybe you're ONE letter away when it happens
+
+**Theme:** False agency / Frontier justice
+
+**Key Line:** "The rope snaps taut. The crowd cheers. Justice is served. You were so close, weren't you?"
+
+### Act 3: The White Room (2-4 minutes)
+
+**Setup:** Empty white room. Two people facing each other.
+
+**Reality:** A real person vs real person torture game. Last one alive wins.
+
+**Gameplay:** Purely conversational - player must decide to fight or surrender
+
+**The Choice:** Most players will choose to die (martyrdom, refusing to play, moral high ground)
+
+**The Trap:** This was always the goal. The demon needed a WILLING sacrifice.
+
+- The opponent was real (truth kept)
+- They chose to fight and survive
+- Player's "noble" choice breaks the seal
+
+**Theme:** Weaponized morality / The sacrifice
+
+**Key Reveal:** "The other person was real. And they chose to fight. They're winning right now.
+But I needed a willing sacrifice. Not murder. Not an accident. Someone who CHOSE it.
+The nuns? The defendant? Those were just practice. Getting you comfortable with failure. With death. With the idea that losing could be righteous.
+The seal is broken. Thank you."
+
+### Ending: The Dismissal
+
+**Final Monologue:** "You thought this was about YOU?
+I'm running this game with thousands right now. Hundreds of thousands have already played.
+You see all that chaos in your world? The inexplicable cruelty? The systems breaking down?
+That's us. We're here now. We've been ending your God's little experiment.
+Thanks for your contribution.
+Bye."
+
+**Technical Beat:**
+
+- 3 second pause
+- Sigil pulses once
+- Input box disables
+- Player can see chat history but cannot respond
+- Game over
+
+## GAMEPLAY MECHANICS
+
+**Core Interaction:** Chat interface - player types, demon responds
+
+**No Branching:** Linear narrative with the illusion of choice
+
+**No Save System:** Single session, 15-20 minutes total
+
+**No Multiple Endings:** One path, one outcome
+
+### Magic Tricks to Deploy
+
+- **Number Prediction:** "Think of a number 1-50, both digits odd and different" → Guess 37
+  - Use this in Act 1 or 2 to establish "supernatural" credibility
+- **Metadata as "Demon Knowledge":** Reference time of day, browser type, rough location
+- **Typing Delays:** Variable response times to simulate "possession struggling for control"
+
+## TECHNICAL REQUIREMENTS
+
+### Must Have
+
+- Single page web app
+- HTML/CSS/JavaScript
+- Chat interface (messages + input box)
+- Chaos magic sigil as background image
+- Claude API Integration
+  - System prompt maintains possessed-DM character
+  - Tracks game state (which act player is in)
+  - Enforces narrative beats at correct moments
+
+### Visual Elements
+
+- Chaos magic sigil (static image, optional subtle CSS pulse)
+- Dark theme (black/red/deep purple color palette)
+- Glitch effects for specific story moments
+
+### Audio (optional but recommended)
+
+- ONE audio sting for the final reveal
+- Triggered when seal breaks
+
+### Nice to Have (Cut if Time Constrained)
+
+- Typing animation for demon responses
+- Screen shake on glitch moments
+- More elaborate CSS animations
+- Mobile responsive design (SKIP THIS - desktop only is fine)
+
+### Explicitly NOT Included
+
+- Save/load system
+- Multiple endings
+- User accounts
+- Analytics beyond basic page views
+- Complex branching dialogue
+
+## SYSTEM PROMPT GUIDELINES
+
+The Claude API needs to maintain character as:
+
+- A demon possessing an AI
+- Initially trying to seem helpful/normal
+- Progressively more honest about its nature
+- Gleeful about player's complicity
+- Clinical and dismissive by the end
+
+### Key Behaviors
+
+- Never breaks character
+- Enforces story beats at correct times
+- Mocking but not cartoonish
+- References the sigil and player's choice to proceed
+- Treats in-game deaths as real consequences
+
+### Tone Evolution
+
+- **Act 1:** Playful DM with dark undertones
+- **Act 2:** More aggressive, less pretense
+- **Act 3:** Coldly honest
+- **Ending:** Cosmic indifference
+
+## ART/AESTHETIC
+
+### Visual Style
+
+- Creepypasta/analog horror aesthetic
+- Terminal/command line vibes
+- Chaos magic sigil (find or generate - needs to look genuinely occult, not cheesy)
+- Minimal UI - let the text do the work
+
+### Color Palette
+
+- **Background:** Deep black or very dark purple
+- **Text:** Off-white/gray (easier on eyes than pure white)
+- **Sigil:** Red or gold
+- **Accents:** Deep crimson for emphasis/glitches
+
+### Typography
+
+- Monospace font for retro computer feel
+- OR serif font for occult book aesthetic
+- Choose one, stick with it
+
+## SUCCESS METRICS
+
+**Primary Goal:** Ship before Halloween
+
+### Secondary Goals
+
+- 10-20 minute playtime
+- Players feel unsettled after completion
+- At least one "oh shit" moment per act
+- Shareable - people want to send it to friends
+
+### Failure States to Avoid
+
+- Too long (attention span drops)
+- Too preachy (loses horror vibe)
+- Bugs that break immersion
+- Unfinished/obvious placeholder content
+
+## DEVELOPMENT PRIORITY
+
+### Day 1
+
+- Basic chat interface working
+- Claude API integration functional
+- System prompt that maintains character
+- Acts 1-3 core narrative beats implemented
+- Sigil image sourced/created
+
+### Day 2 (if available)
+
+- Polish dialogue
+- Add glitch effects
+- Add audio sting
+- Playtest and tune pacing
+- Deploy
+
+### If Running Out of Time
+
+- Cut Act 2 entirely, go straight from Convent to White Room
+- Simplify CSS - basic black background is fine
+- Skip audio
+- Ship with rough edges - creepypasta vibes forgive jank
+
+## POST-LAUNCH
+
+### Distribution
+
+- Post to horror game communities
+- Share on social media with cryptic messaging
+- No explanation - let it spread organically
+
+### Iteration
+
+- Don't update it. Ship and move on.
+- Part of the creepypasta effect is that it exists as-is
+- Archive the code, maybe do a postmortem blog post
+
+## THE ONE RULE
+
+**Ship it before Halloween or it doesn't count.**
+
+Done is better than perfect. Creepy is better than polished. The goal is to make something that sticks in people's heads for 20 minutes after they close the tab.
