@@ -44,7 +44,6 @@
     // Show input and add name request
     showInput = true;
     gameState = "name_exchange";
-    onGameStateChange?.(gameState);
 
     setTimeout(() => {
       messages = [
@@ -56,6 +55,8 @@
         },
       ];
       scrollToBottom();
+      // Trigger footer reveal after Paimon's name appears
+      onGameStateChange?.(gameState);
     }, 500);
   }
 
@@ -106,7 +107,7 @@
   const containerClass = css({
     display: "flex",
     flexDirection: "column",
-    height: "100vh",
+    height: "100%",
     backgroundColor: "#0d0d1a",
     color: "#e0e0e0",
     fontFamily: "monospace",
@@ -116,22 +117,25 @@
     padding: "1.5rem",
     backgroundColor: "#16161f",
     borderBottom: "2px solid #8b0000",
-    textAlign: "center",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
   });
 
   const titleClass = css({
-    fontSize: "1.5rem",
+    fontSize: "2.5rem",
     fontWeight: "bold",
     color: "#c9c9d4",
     letterSpacing: "0.1em",
     textTransform: "uppercase",
+    margin: 0,
   });
 
   const subtitleClass = css({
     fontSize: "0.75rem",
     color: "#8b0000",
-    marginTop: "0.25rem",
     letterSpacing: "0.15em",
+    margin: 0,
   });
 
   const messagesContainerClass = css({

@@ -12,10 +12,11 @@
   }
 </script>
 
-<div>
-  <ChatInterface onGameStateChange={handleGameStateChange} />
+<div style="display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
+  <div style="flex: 1; overflow: hidden;">
+    <ChatInterface onGameStateChange={handleGameStateChange} />
+  </div>
   {#if showFooter}
-    <div style="height: 2rem"></div>
     <Footer />
   {/if}
 </div>
