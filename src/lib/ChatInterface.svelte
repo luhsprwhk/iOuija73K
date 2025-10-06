@@ -107,10 +107,12 @@
   const containerClass = css({
     display: "flex",
     flexDirection: "column",
-    height: "100%",
+    height: "85%",
     backgroundColor: "#0d0d1a",
     color: "#e0e0e0",
     fontFamily: "monospace",
+    border: "2px solid #8b0000",
+    borderRadius: "0.5rem",
   });
 
   const headerClass = css({
@@ -135,6 +137,7 @@
     fontSize: "0.75rem",
     color: "#8b0000",
     letterSpacing: "0.15em",
+    marginRight: "1em",
     margin: 0,
   });
 
@@ -160,7 +163,6 @@
   });
 
   const inputContainerClass = css({
-    padding: "1.5rem",
     backgroundColor: "#16161f",
     borderTop: "2px solid #8b0000",
   });

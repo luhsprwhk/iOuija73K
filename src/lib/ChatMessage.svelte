@@ -1,7 +1,13 @@
 <script>
   import { css } from "../../styled-system/css";
 
-  let { role = "user", content = "", showButton = false, onButtonClick, showDemonName = false } = $props();
+  let {
+    role = "user",
+    content = "",
+    showButton = false,
+    onButtonClick,
+    showDemonName = false,
+  } = $props();
 
   const messageClass = css({
     padding: "1rem",
@@ -16,7 +22,6 @@
     backgroundColor: "#2a2a3e",
     color: "#e0e0e0",
     marginLeft: "auto",
-    textAlign: "right",
   });
 
   const assistantMessageClass = css({
@@ -25,7 +30,7 @@
     marginRight: "auto",
     borderLeft: "3px solid #8b0000",
   });
-  
+
   const buttonClass = css({
     marginTop: "0.75rem",
     padding: "0.5rem 1.5rem",
@@ -69,9 +74,7 @@
     {content}
   </div>
   {#if showButton}
-    <button class={buttonClass} onclick={onButtonClick}>
-      Ok.
-    </button>
+    <button class={buttonClass} onclick={onButtonClick}> Ok. </button>
   {/if}
 </div>
 

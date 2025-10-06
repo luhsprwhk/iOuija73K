@@ -2,8 +2,8 @@
   import { css } from "../../styled-system/css";
   import paimonSigil from "../assets/paimon_sigil.webp";
 
-  export let width = "80px";
-  export let height = "80px";
+  export let width = "40px";
+  export let height = "40px";
   export let opacity = 0.8;
   export let animate = true;
 
