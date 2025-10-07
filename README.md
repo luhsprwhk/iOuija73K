@@ -1,6 +1,30 @@
-# Svelte + Vite
+# iOuija73k
 
-This template should help get you started developing with Svelte in Vite.
+A text-based horror game disguised as a fantasy adventure, dungeon-mastered by a demon-possessed AI.
+
+## Setup
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Create a `.env` file in the root directory:
+```bash
+cp .env.example .env
+```
+
+3. Add your Anthropic Claude API key to `.env`:
+```
+VITE_CLAUDE_API_KEY=your_api_key_here
+```
+
+Get your API key from: https://console.anthropic.com/
+
+4. Run the development server:
+```bash
+npm run dev
+```
 
 ## Recommended IDE Setup
 

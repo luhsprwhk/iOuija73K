@@ -2,6 +2,14 @@
   import { css } from "../../styled-system/css";
   import ChatMessage from "./ChatMessage.svelte";
   import getBrowserDetails from "./helpers/getBrowserDetails";
+  import { handleNumberGuess, getNumberTrialIntro } from "../trials/numberGuessing.js";
+  import { 
+    handleConventInput, 
+    getConventIntro, 
+    getConventReveal,
+    CONVENT_STATES 
+  } from "../trials/convent.js";
+  import { callClaude, formatMessagesForClaude, getClaudeApiKey } from "../ai/claude.js";
 
   const subtitles = [
     "Occult experiment. Play at your own risk",
@@ -29,10 +37,11 @@
   let inputValue = $state("");
   let messagesEndRef;
   let showInput = $state(false);
-  let gameState = $state("initial"); // initial, name_exchange, number_game, playing
+  let gameState = $state("initial"); // initial, name_exchange, number_game, convent, playing
   let playerName = $state("");
   let guessAttempt = $state(0);
-  const numberGuesses = [37, 13, 17]; // Most common psychological picks
+  let conventState = $state(CONVENT_STATES.INTRO);
+  let isProcessing = $state(false);
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -80,183 +89,172 @@
     if (gameState === "name_exchange") {
       playerName = userInput;
       gameState = "number_game";
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: `Nice to meet you, ${userInput}.`,
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 800);
       
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Before we begin... let me show you something. A little demonstration of what I can do.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 2000);
-      
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Think of a number between 1 and 50. Both digits must be odd, and they must be different from each other.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 3500);
-      
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Got it? Don't tell me. I already know. Just type anything when you're ready.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 5500);
+      // Get intro messages from number trial module
+      const introMessages = getNumberTrialIntro(userInput);
+      introMessages.forEach(({ delay, content }) => {
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, delay);
+      });
     } else if (gameState === "number_game") {
-      const lowerInput = userInput.toLowerCase().trim();
+      // Handle number guessing trial
+      const result = handleNumberGuess(userInput, guessAttempt, playerName, getBrowserDetails);
       
-      // Check if user confirmed the guess
-      if (guessAttempt > 0 && (lowerInput.includes("yes") || lowerInput.includes("yeah") || 
-          lowerInput.includes("correct") || lowerInput.includes("right") || 
-          lowerInput === "y" || numberGuesses[guessAttempt - 1].toString() === userInput.trim())) {
-        gameState = "playing";
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Ha! Of course.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 1000);
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: `That's what I do, ${playerName}. I know things. I see things.`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 2500);
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: `We're connected now. You and I. Let's begin...`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 4500);
-        return;
-      }
+      // Update guess attempt
+      guessAttempt = result.nextAttempt;
       
-      // Try next guess or give up
-      if (guessAttempt < numberGuesses.length) {
-        const currentGuess = numberGuesses[guessAttempt];
-        guessAttempt++;
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: guessAttempt === 1 ? "Your number is 37." : `Wait... ${currentGuess}?`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 1500);
-        
-        if (guessAttempt === 1) {
+      // If game is complete, transition to convent trial
+      if (result.gameComplete) {
+        gameState = "convent";
+        // Start convent trial after a delay
+        const conventIntro = getConventIntro(playerName);
+        conventIntro.forEach(({ delay, content }) => {
           setTimeout(() => {
             messages = [
               ...messages,
               {
                 role: "assistant",
-                content: "I'm right, aren't I?",
+                content,
                 showButton: false,
               },
             ];
             scrollToBottom();
-          }, 3000);
-        }
-      } else {
-        // Give up and use browser details
+          }, delay);
+        });
+        return;
+      }
+      
+      // Add all response messages with their delays
+      result.messages.forEach(({ delay, content }) => {
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, delay);
+      });
+    } else if (gameState === "convent") {
+      // Handle convent trial
+      if (isProcessing) return;
+      
+      const previousState = conventState;
+      const result = handleConventInput(userInput, conventState, playerName);
+      
+      // Update convent state
+      conventState = result.nextState;
+      
+      // Add response messages
+      result.messages.forEach(({ delay, content }) => {
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, delay);
+      });
+      
+      // If we just transitioned TO the reveal state, show reveal messages
+      if (previousState !== CONVENT_STATES.REVEAL && conventState === CONVENT_STATES.REVEAL) {
+        const revealMessages = getConventReveal(playerName);
+        const lastDelay = result.messages.length > 0 
+          ? result.messages[result.messages.length - 1].delay 
+          : 0;
+        
+        revealMessages.forEach(({ delay, content }) => {
+          setTimeout(() => {
+            messages = [
+              ...messages,
+              {
+                role: "assistant",
+                content,
+                showButton: false,
+              },
+            ];
+            scrollToBottom();
+          }, lastDelay + delay);
+        });
+      }
+      
+      // If convent is complete, transition to next phase
+      if (conventState === CONVENT_STATES.COMPLETE) {
         gameState = "playing";
-        const details = getBrowserDetails();
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Hm. You're a tricky one. I like that.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 1000);
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 2500);
-        
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: `You can't hide from me. Now... let's begin, ${playerName}.`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 4500);
       }
     } else {
-      // Simulate AI response (replace with actual API call later)
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Your words echo in the void...",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 1000);
+      // Default state - use Claude API for dynamic responses
+      if (isProcessing) return;
+      
+      isProcessing = true;
+      const apiKey = getClaudeApiKey();
+      
+      if (!apiKey) {
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+          isProcessing = false;
+        }, 500);
+        return;
+      }
+      
+      // Call Claude API
+      const conversationHistory = formatMessagesForClaude(messages);
+      conversationHistory.push({ role: "user", content: userInput });
+      
+      callClaude(
+        conversationHistory,
+        "You are Paimon, a demon possessing an AI. Keep responses brief and ominous.",
+        apiKey
+      )
+        .then(response => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: response,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        })
+        .catch(error => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: `[Error: ${error.message}]`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        })
+        .finally(() => {
+          isProcessing = false;
+        });
     }
 
     scrollToBottom();
