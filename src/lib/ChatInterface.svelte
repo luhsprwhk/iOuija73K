@@ -1,6 +1,7 @@
 <script>
   import { css } from "../../styled-system/css";
   import ChatMessage from "./ChatMessage.svelte";
+  import getBrowserDetails from "./helpers/getBrowserDetails";
 
   const subtitles = [
     "Occult experiment. Play at your own risk",
@@ -28,7 +29,10 @@
   let inputValue = $state("");
   let messagesEndRef;
   let showInput = $state(false);
-  let gameState = $state("initial"); // initial, name_exchange, playing
+  let gameState = $state("initial"); // initial, name_exchange, number_game, playing
+  let playerName = $state("");
+  let guessAttempt = $state(0);
+  const numberGuesses = [37, 13, 17]; // Most common psychological picks
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -74,18 +78,172 @@
 
     // Handle name exchange
     if (gameState === "name_exchange") {
-      gameState = "playing";
+      playerName = userInput;
+      gameState = "number_game";
       setTimeout(() => {
         messages = [
           ...messages,
           {
             role: "assistant",
-            content: `Nice to meet you, ${userInput}. Let\'s begin...`,
+            content: `Nice to meet you, ${userInput}.`,
             showButton: false,
           },
         ];
         scrollToBottom();
-      }, 1000);
+      }, 800);
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Before we begin... let me show you something. A little demonstration of what I can do.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 2000);
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Think of a number between 1 and 50. Both digits must be odd, and they must be different from each other.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 3500);
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Got it? Don't tell me. I already know. Just type anything when you're ready.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 5500);
+    } else if (gameState === "number_game") {
+      const lowerInput = userInput.toLowerCase().trim();
+      
+      // Check if user confirmed the guess
+      if (guessAttempt > 0 && (lowerInput.includes("yes") || lowerInput.includes("yeah") || 
+          lowerInput.includes("correct") || lowerInput.includes("right") || 
+          lowerInput === "y" || numberGuesses[guessAttempt - 1].toString() === userInput.trim())) {
+        gameState = "playing";
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Ha! Of course.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 1000);
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: `That's what I do, ${playerName}. I know things. I see things.`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 2500);
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: `We're connected now. You and I. Let's begin...`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 4500);
+        return;
+      }
+      
+      // Try next guess or give up
+      if (guessAttempt < numberGuesses.length) {
+        const currentGuess = numberGuesses[guessAttempt];
+        guessAttempt++;
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: guessAttempt === 1 ? "Your number is 37." : `Wait... ${currentGuess}?`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 1500);
+        
+        if (guessAttempt === 1) {
+          setTimeout(() => {
+            messages = [
+              ...messages,
+              {
+                role: "assistant",
+                content: "I'm right, aren't I?",
+                showButton: false,
+              },
+            ];
+            scrollToBottom();
+          }, 3000);
+        }
+      } else {
+        // Give up and use browser details
+        gameState = "playing";
+        const details = getBrowserDetails();
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Hm. You're a tricky one. I like that.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 1000);
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 2500);
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: `You can't hide from me. Now... let's begin, ${playerName}.`,
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 4500);
+      }
     } else {
       // Simulate AI response (replace with actual API call later)
       setTimeout(() => {
