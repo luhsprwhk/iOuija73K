@@ -21,7 +21,11 @@ VITE_CLAUDE_API_KEY=your_api_key_here
 
 Get your API key from: https://console.anthropic.com/
 
-4. Run the development server:
+4. Add dark ambient music:
+   - Place your creepy ambient audio file in `/public/audio/` as `dark-ambient.mp3`
+   - See `/public/audio/README.md` for recommendations and sources
+
+5. Run the development server:
 ```bash
 npm run dev
 ```

@@ -37,11 +37,13 @@
   let inputValue = $state("");
   let messagesEndRef;
   let showInput = $state(false);
-  let gameState = $state("initial"); // initial, name_exchange, number_game, convent, playing
+  let gameState = $state("initial"); // initial, name_exchange, number_game, convent, music_interlude, playing
   let playerName = $state("");
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
   let isProcessing = $state(false);
+  let audioElement = $state(null);
+  let isPlayingMusic = $state(false);
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -50,27 +52,81 @@
   }
 
   function handleOkClick() {
-    // Remove button from first message
-    messages[0].showButton = false;
-    messages = [...messages];
+    // Find the message with the button and remove it
+    const buttonMessageIndex = messages.findIndex(msg => msg.showButton);
+    if (buttonMessageIndex !== -1) {
+      messages[buttonMessageIndex].showButton = false;
+      messages = [...messages];
+    }
 
-    // Show input and add name request
-    showInput = true;
-    gameState = "name_exchange";
+    // Handle different game states
+    if (gameState === "initial") {
+      // Initial game start
+      showInput = true;
+      gameState = "name_exchange";
 
-    setTimeout(() => {
-      messages = [
-        ...messages,
-        {
-          role: "assistant",
-          content: "Awesome! What's your name? Mine is Paimon.",
-          showButton: false,
-        },
-      ];
-      scrollToBottom();
-      // Trigger footer reveal after Paimon's name appears
-      onGameStateChange?.(gameState);
-    }, 500);
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Awesome! What's your name? Mine is Paimon.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+        // Trigger footer reveal after Paimon's name appears
+        onGameStateChange?.(gameState);
+      }, 500);
+    } else if (gameState === "music_interlude") {
+      // Start playing creepy ambient music
+      isPlayingMusic = true;
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Perfect. Let the music guide you...",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 500);
+      
+      // Play the audio
+      if (audioElement) {
+        audioElement.play().catch(err => {
+          console.error("Audio playback failed:", err);
+        });
+      }
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Feel that? The atmosphere shifting? Good.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 3000);
+      
+      // Transition to next trial after music starts
+      setTimeout(() => {
+        gameState = "playing";
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Ready for the next trial?",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 6000);
+    }
   }
 
   function handleSubmit(e) {
@@ -194,9 +250,32 @@
         });
       }
       
-      // If convent is complete, transition to next phase
+      // If convent is complete, transition to music interlude
       if (conventState === CONVENT_STATES.COMPLETE) {
-        gameState = "playing";
+        gameState = "music_interlude";
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "You did well. Really well.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 1000);
+        
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
+              showButton: true,
+            },
+          ];
+          scrollToBottom();
+        }, 3000);
       }
     } else {
       // Default state - use Claude API for dynamic responses
@@ -405,3 +484,14 @@
     </div>
   {/if}
 </div>
+
+<!-- Hidden audio element for ambient music -->
+<audio 
+  bind:this={audioElement} 
+  loop 
+  preload="auto"
+  style="display: none;"
+>
+  <source src="/audio/dark-ambient.mp3" type="audio/mpeg" />
+  <source src="/audio/dark-ambient.ogg" type="audio/ogg" />
+</audio>
