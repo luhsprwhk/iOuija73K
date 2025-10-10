@@ -178,7 +178,69 @@
       // If game is complete, transition to convent trial
       if (result.gameComplete) {
         gameState = "convent";
-        // Start convent trial after a delay
+
+        // Add creepy meta-horror warning before trial 1
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Before we begin... a word about the rules.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 1000);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "This game is filled with lies. But here's a truth disguised as one:",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 3000);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 5500);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "They don't know they're part of this. They don't know about you.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 8000);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Not yet, anyway.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, 10000);
+
+        // Start convent trial after the meta-horror setup
         const conventIntro = getConventIntro(playerName);
         conventIntro.forEach(({ delay, content }) => {
           setTimeout(() => {
@@ -191,7 +253,7 @@
               },
             ];
             scrollToBottom();
-          }, delay);
+          }, 11500 + delay); // Add base delay to account for meta-horror messages
         });
         return;
       }
