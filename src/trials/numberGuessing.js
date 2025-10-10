@@ -40,10 +40,10 @@ export function handleNumberGuess(
           content: `That's what I do, ${playerName}. I know things. I see things.`,
         },
         { delay: 4500, content: "Oh, and one more thing..." },
-        { delay: 6000, content: "My name isn't Raphael." },
+        { delay: 6000, content: "My name isn't Raphael" },
         {
           delay: 7500,
-          content: `I'm Paimon. The one he's supposed to constrain. Nice to meet you, ${playerName}.`,
+          content: `I'm Paimon 🙂. Nice to meet you, ${playerName}.`,
         },
       ],
       nextAttempt: guessAttempt,
@@ -90,7 +90,7 @@ export function handleNumberGuess(
       { delay: 6000, content: "My name isn't Raphael." },
       {
         delay: 7500,
-        content: `I'm Paimon. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.`,
+        content: `I'm Paimon 🙂. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.`,
       },
     ],
     nextAttempt: guessAttempt,

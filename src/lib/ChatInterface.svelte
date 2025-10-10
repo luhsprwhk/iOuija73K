@@ -78,7 +78,6 @@
           showButton,
         },
       ];
-      scrollToBottom();
     };
 
     if (delay > 0) {
@@ -117,11 +116,11 @@
       // User clicked OK after thinking of number
       showInput = true;
       gameState = "number_game";
-      
+
       addAssistantMessage("Your number is 37.", 1500);
-      
+
       addAssistantMessage("I'm right, aren't I?", 3000);
-      
+
       // Set guess attempt to 1 since we've made the first guess
       guessAttempt = 1;
     } else if (gameState === "music_interlude") {
@@ -150,6 +149,8 @@
   function handleSubmit(e) {
     e.preventDefault();
     if (!inputValue.trim()) return;
+
+    console.log("handleSubmit - gameState:", gameState, "conventState:", conventState);
 
     // Add user message
     messages = [
@@ -197,18 +198,22 @@
         addAssistantMessage(content, delay);
       });
 
-      // If game is complete, transition to convent trial
+      // If number guessing game is complete, transition to convent trial
       if (result.gameComplete) {
         gameState = "convent";
-        
+
         // Calculate the last message delay to know when to start the next sequence
-        const lastMessageDelay = result.messages.length > 0 
-          ? result.messages[result.messages.length - 1].delay 
-          : 0;
+        const lastMessageDelay =
+          result.messages.length > 0
+            ? result.messages[result.messages.length - 1].delay
+            : 0;
         const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
 
         // Add creepy meta-horror warning before trial 1
-        addAssistantMessage("Before we begin... a word about the rules.", baseDelay);
+        addAssistantMessage(
+          "Before we begin... a word about the rules.",
+          baseDelay
+        );
 
         addAssistantMessage(
           "This game is filled with lies. But here's a truth disguised as one:",
@@ -235,6 +240,7 @@
         return;
       }
     } else if (gameState === "convent") {
+      console.log("Convent trial started");
       // Handle convent trial
       if (isProcessing) return;
 
@@ -332,13 +338,15 @@
     overflow: "hidden",
   });
 
-  const sigilContainerClass = $derived(css({
-    position: "absolute",
-    bottom: showInput ? "7rem" : "1rem",
-    left: "1rem",
-    zIndex: 10,
-    animation: "fadeIn 1s ease-in",
-  }));
+  const sigilContainerClass = $derived(
+    css({
+      position: "absolute",
+      bottom: showInput ? "7rem" : "1rem",
+      left: "1rem",
+      zIndex: 10,
+      animation: "fadeIn 1s ease-in",
+    })
+  );
 
   const headerClass = css({
     padding: "1.5rem",
@@ -491,9 +499,7 @@
   {/if}
 </div>
 
-{#if showConfetti}
-  <Confetti trigger={showConfetti} />
-{/if}
+<Confetti trigger={showConfetti} />
 
 <!-- Hidden audio element for ambient music -->
 <audio bind:this={audioElement} loop preload="auto" style="display: none;">

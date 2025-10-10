@@ -5,15 +5,19 @@
 
   let canvas;
   let confetti;
+  let isReady = $state(false);
 
   onMount(async () => {
     // Dynamically import canvas-confetti
     const module = await import("canvas-confetti");
     confetti = module.default;
+    isReady = true;
   });
 
   $effect(() => {
-    if (trigger && confetti && canvas) {
+    if (trigger && isReady && confetti && canvas) {
+      console.log("Confetti triggered!");
+      
       // Create confetti instance bound to our canvas
       const myConfetti = confetti.create(canvas, {
         resize: true,
@@ -59,5 +63,5 @@
 
 <canvas
   bind:this={canvas}
-  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000;"
+  style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"
 ></canvas>
