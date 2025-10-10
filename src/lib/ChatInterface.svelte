@@ -53,6 +53,12 @@
     }
   }
 
+  // Auto-scroll whenever messages change
+  $effect(() => {
+    messages; // Track messages array
+    setTimeout(() => scrollToBottom(), 100);
+  });
+
   function handleOkClick() {
     // Find the message with the button and remove it
     const buttonMessageIndex = messages.findIndex(msg => msg.showButton);
@@ -463,6 +469,7 @@
     overflowY: "auto",
     overflowX: "hidden",
     padding: "1rem ",
+    paddingBottom: "6rem",
     display: "flex",
     flexDirection: "column",
     minWidth: 0,

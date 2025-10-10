@@ -8,6 +8,8 @@
     height: "100vh",
     overflow: "hidden",
     marginTop: "3rem",
+    maxWidth: "60vw",
+    margin: "auto",
   });
 
   const contentClass = css({
@@ -16,6 +18,7 @@
     width: "100%",
     maxWidth: "100%",
     minWidth: 0,
+    marginTop: "3rem", 
   });
 </script>
 
