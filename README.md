@@ -1,71 +1,125 @@
 # iOuija73k
 
-A text-based horror game disguised as a fantasy adventure, dungeon-mastered by a demon-possessed AI.
+> **Halloween Project Challenge 2024** 🎃
+> A text-based horror game disguised as a fantasy adventure, dungeon-mastered by a demon-possessed AI.
 
-## Setup
+**Project Goal:** Launch before Halloween to take advantage of the spooky season (ideally the week before Halloween).
 
-1. Install dependencies:
+## What is this?
+
+You think you're playing a friendly fantasy adventure with an AI dungeon master named "Raphael." You're not.
+
+This is an interactive horror experience where you're actually conversing with **Paimon**, a demon that manipulates your perception through psychological trials. What starts as a cute text game gradually reveals itself to be something much darker.
+
+Built with Svelte 5, Panda CSS, and powered by Anthropic's Claude API for dynamic horror narrative.
+
+## Features
+
+- **Scripted psychological trials** that deceive the player
+- **Progressive horror** - starts friendly, becomes sinister
+- **Perception manipulation** - you think you're doing one thing, you're actually doing another
+- **AI-driven narrative** using Claude API for dynamic responses
+- **Dark ambient music** integration for atmosphere
+- **Demon sigil animations** and creepy visual aesthetics
+
+## Quick Start
+
+### 1. Install dependencies
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the root directory:
+### 2. Configure your environment
 ```bash
 cp .env.example .env
 ```
 
-3. Add your Anthropic Claude API key to `.env`:
+Add your Anthropic Claude API key to `.env`:
 ```
 VITE_CLAUDE_API_KEY=your_api_key_here
 ```
 
 Get your API key from: https://console.anthropic.com/
 
-4. Add dark ambient music:
-   - Place your creepy ambient audio file in `/public/audio/` as `dark-ambient.mp3`
-   - See `/public/audio/README.md` for recommendations and sources
+### 3. Add dark ambient music (optional but recommended)
+Place your creepy ambient audio file in `/public/audio/` as:
+- `dark-ambient.mp3` (primary)
+- `dark-ambient.ogg` (fallback)
 
-5. Run the development server:
+See `/public/audio/README.md` for recommendations and sources.
+
+### 4. Run the development server
 ```bash
 npm run dev
 ```
 
-## Recommended IDE Setup
+Visit `http://localhost:5173` and prepare to be unsettled.
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+## Tech Stack
 
-## Need an official Svelte framework?
+- **Svelte 5** - Reactive UI with new runes API
+- **Vite** - Lightning-fast dev server and build tool
+- **Panda CSS** - Atomic CSS-in-JS for styling
+- **Anthropic Claude API** - AI-powered horror dungeon master
 
-Check out [SvelteKit](https://github.com/sveltejs/kit#readme), which is also powered by Vite. Deploy anywhere with its serverless-first approach and adapt to various platforms, with out of the box support for TypeScript, SCSS, and Less, and easily-added support for mdsvex, GraphQL, PostCSS, Tailwind CSS, and more.
+## Project Structure
 
-## Technical considerations
-
-**Why use this over SvelteKit?**
-
-- It brings its own routing solution which might not be preferable for some users.
-- It is first and foremost a framework that just happens to use Vite under the hood, not a Vite app.
-
-This template contains as little as possible to get started with Vite + Svelte, while taking into account the developer experience with regards to HMR and intellisense. It demonstrates capabilities on par with the other `create-vite` templates and is a good starting point for beginners dipping their toes into a Vite + Svelte project.
-
-Should you later need the extended capabilities and extensibility provided by SvelteKit, the template has been structured similarly to SvelteKit so that it is easy to migrate.
-
-**Why include `.vscode/extensions.json`?**
-
-Other templates indirectly recommend extensions via the README, but this file allows VS Code to prompt the user to install the recommended extension upon opening the project.
-
-**Why enable `checkJs` in the JS template?**
-
-It is likely that most cases of changing variable types in runtime are likely to be accidental, rather than deliberate. This provides advanced typechecking out of the box. Should you like to take advantage of the dynamically-typed nature of JavaScript, it is trivial to change the configuration.
-
-**Why is HMR not preserving my local component state?**
-
-HMR state preservation comes with a number of gotchas! It has been disabled by default in both `svelte-hmr` and `@sveltejs/vite-plugin-svelte` due to its often surprising behavior. You can read the details [here](https://github.com/sveltejs/svelte-hmr/tree/master/packages/svelte-hmr#preservation-of-local-state).
-
-If you have state that's important to retain within a component, consider creating an external store which would not be replaced by HMR.
-
-```js
-// store.js
-// An extremely simple external store
-import { writable } from 'svelte/store'
-export default writable(0)
 ```
+src/
+├── App.svelte                    # Main app container
+├── lib/
+│   ├── ChatInterface.svelte      # Core game logic and state management
+│   ├── ChatMessage.svelte        # Individual message bubbles
+│   ├── PaimonSigil.svelte        # Animated demon sigil
+│   └── helpers/
+│       └── getBrowserDetails.js  # Extract user metadata for "omniscience"
+├── trials/
+│   ├── numberGuessing.js         # First trial: psychological number trick
+│   └── convent.js                # Second trial: perception manipulation horror
+└── ai/
+    └── claude.js                 # Claude API integration
+```
+
+## How It Works
+
+The game progresses through distinct phases:
+
+1. **Initial Contact** - Friendly AI introduction
+2. **Name Exchange** - Building false trust
+3. **Number Guessing Trial** - Paimon demonstrates "psychic" abilities
+4. **Convent Trial** - You think you're fighting monsters... you're not
+5. **Revelation** - The demon reveals its true nature
+6. **Free-form Horror** - Dynamic AI-driven narrative using Claude API
+
+Each trial is carefully scripted with timed message reveals to build tension and manipulate player perception.
+
+## Development
+
+```bash
+npm run dev      # Start dev server
+npm run build    # Build for production
+npm run preview  # Preview production build
+```
+
+## Contributing
+
+This is a Halloween challenge project! If you want to contribute:
+
+- **New trials** - Create additional psychological horror scenarios in `src/trials/`
+- **Visual effects** - Enhance the creepy aesthetic
+- **Sound design** - Add more ambient audio layers or sound effects
+- **Narrative branches** - Expand the post-trial AI-driven horror
+
+Just remember: the goal is to ship before Halloween! 🎃
+
+## License
+
+MIT
+
+## Warning
+
+This is a horror experience that uses psychological manipulation tactics. It may be unsettling for some players. The game references violence and dark themes. Play at your own discretion.
+
+---
+
+*"One of thousands. Your participation is required."*
