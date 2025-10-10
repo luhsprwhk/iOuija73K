@@ -2,6 +2,7 @@
   import { css } from "../../styled-system/css";
   import ChatMessage from "./ChatMessage.svelte";
   import PaimonSigil from "./PaimonSigil.svelte";
+  import Confetti from "./Confetti.svelte";
   import getBrowserDetails from "./helpers/getBrowserDetails";
   import { handleNumberGuess, getNumberTrialIntro } from "../trials/numberGuessing.js";
   import { 
@@ -46,6 +47,7 @@
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
+  let showConfetti = $state(false);
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -179,6 +181,11 @@
       // If name should be revealed, update demonName
       if (result.revealName) {
         demonName = "Paimon";
+        // Trigger confetti celebration
+        showConfetti = true;
+        setTimeout(() => {
+          showConfetti = false;
+        }, 3500);
       }
       
       // If game is complete, transition to convent trial
@@ -584,6 +591,10 @@
     </div>
   {/if}
 </div>
+
+{#if showConfetti}
+  <Confetti trigger={showConfetti} />
+{/if}
 
 <!-- Hidden audio element for ambient music -->
 <audio 
