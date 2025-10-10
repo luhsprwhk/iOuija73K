@@ -232,92 +232,6 @@
         }, 3500);
       }
 
-      // If game is complete, transition to convent trial
-      if (result.gameComplete) {
-        gameState = "convent";
-
-        // Add creepy meta-horror warning before trial 1
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Before we begin... a word about the rules.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 1000);
-
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "This game is filled with lies. But here's a truth disguised as one:",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 3000);
-
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 5500);
-
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "They don't know they're part of this. They don't know about you.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 8000);
-
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Not yet, anyway.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 10000);
-
-        // Start convent trial after the meta-horror setup
-        const conventIntro = getConventIntro(playerName);
-        conventIntro.forEach(({ delay, content }) => {
-          setTimeout(() => {
-            messages = [
-              ...messages,
-              {
-                role: "assistant",
-                content,
-                showButton: false,
-              },
-            ];
-            scrollToBottom();
-          }, 11500 + delay); // Add base delay to account for meta-horror messages
-        });
-        return;
-      }
-
       // Add all response messages with their delays
       result.messages.forEach(({ delay, content }) => {
         setTimeout(() => {
@@ -332,6 +246,98 @@
           scrollToBottom();
         }, delay);
       });
+
+      // If game is complete, transition to convent trial
+      if (result.gameComplete) {
+        gameState = "convent";
+        
+        // Calculate the last message delay to know when to start the next sequence
+        const lastMessageDelay = result.messages.length > 0 
+          ? result.messages[result.messages.length - 1].delay 
+          : 0;
+        const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
+
+        // Add creepy meta-horror warning before trial 1
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Before we begin... a word about the rules.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, baseDelay);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content:
+                "This game is filled with lies. But here's a truth disguised as one:",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, baseDelay + 2000);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content:
+                "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, baseDelay + 4500);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content:
+                "They don't know they're part of this. They don't know about you.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, baseDelay + 7000);
+
+        setTimeout(() => {
+          messages = [
+            ...messages,
+            {
+              role: "assistant",
+              content: "Not yet, anyway.",
+              showButton: false,
+            },
+          ];
+          scrollToBottom();
+        }, baseDelay + 9000);
+
+        // Start convent trial after the meta-horror setup
+        const conventIntro = getConventIntro(playerName);
+        conventIntro.forEach(({ delay, content }) => {
+          setTimeout(() => {
+            messages = [
+              ...messages,
+              {
+                role: "assistant",
+                content,
+                showButton: false,
+              },
+            ];
+            scrollToBottom();
+          }, baseDelay + 10500 + delay); // Add base delay to account for meta-horror messages
+        });
+        return;
+      }
     } else if (gameState === "convent") {
       // Handle convent trial
       if (isProcessing) return;
