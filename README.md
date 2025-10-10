@@ -5,6 +5,20 @@
 
 **Project Goal:** Launch before Halloween to take advantage of the spooky season (ideally the week before Halloween).
 
+---
+
+## ⚠️ SPOILER WARNING ⚠️
+
+**If you're a player who hasn't completed the game yet, STOP READING NOW!**
+
+This README and the source code contain major spoilers about the game's mechanics, twists, and narrative structure. Reading further will significantly diminish your experience.
+
+**For players:** Close this file and just play the game at the deployed URL.
+
+**For developers/contributors:** Continue below to understand how the horror experience works.
+
+---
+
 ## What is this?
 
 You think you're playing a friendly fantasy adventure with an AI dungeon master named "Raphael." You're not.

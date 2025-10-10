@@ -490,13 +490,13 @@
     overflow: "hidden",
   });
 
-  const sigilContainerClass = css({
+  const sigilContainerClass = $derived(css({
     position: "absolute",
-    bottom: "7rem",
+    bottom: showInput ? "7rem" : "1rem",
     left: "1rem",
     zIndex: 10,
     animation: "fadeIn 1s ease-in",
-  });
+  }));
 
   const headerClass = css({
     padding: "1.5rem",
