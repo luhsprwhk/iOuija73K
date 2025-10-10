@@ -4,14 +4,21 @@
   import PaimonSigil from "./PaimonSigil.svelte";
   import Confetti from "./Confetti.svelte";
   import getBrowserDetails from "./helpers/getBrowserDetails";
-  import { handleNumberGuess, getNumberTrialIntro } from "../trials/numberGuessing.js";
-  import { 
-    handleConventInput, 
-    getConventIntro, 
+  import {
+    handleNumberGuess,
+    getNumberTrialIntro,
+  } from "../trials/numberGuessing.js";
+  import {
+    handleConventInput,
+    getConventIntro,
     getConventReveal,
-    CONVENT_STATES 
+    CONVENT_STATES,
   } from "../trials/convent.js";
-  import { callClaude, formatMessagesForClaude, getClaudeApiKey } from "../ai/claude.js";
+  import {
+    callClaude,
+    formatMessagesForClaude,
+    getClaudeApiKey,
+  } from "../ai/claude.js";
 
   const subtitles = [
     "Occult experiment. Play at your own risk",
@@ -39,7 +46,7 @@
   let inputValue = $state("");
   let messagesEndRef;
   let showInput = $state(false);
-  let gameState = $state("initial"); // initial, name_exchange, number_game, convent, music_interlude, playing
+  let gameState = $state("initial"); // initial, name_exchange, number_game_intro, number_game, convent, music_interlude, playing
   let playerName = $state("");
   let demonName = $state("Raphael"); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
@@ -63,7 +70,7 @@
 
   function handleOkClick() {
     // Find the message with the button and remove it
-    const buttonMessageIndex = messages.findIndex(msg => msg.showButton);
+    const buttonMessageIndex = messages.findIndex((msg) => msg.showButton);
     if (buttonMessageIndex !== -1) {
       messages[buttonMessageIndex].showButton = false;
       messages = [...messages];
@@ -88,10 +95,41 @@
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
+    } else if (gameState === "number_game_intro") {
+      // User clicked OK after thinking of number
+      showInput = true;
+      gameState = "number_game";
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "Your number is 37.",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 1500);
+      
+      setTimeout(() => {
+        messages = [
+          ...messages,
+          {
+            role: "assistant",
+            content: "I'm right, aren't I?",
+            showButton: false,
+          },
+        ];
+        scrollToBottom();
+      }, 3000);
+      
+      // Set guess attempt to 1 since we've made the first guess
+      guessAttempt = 1;
     } else if (gameState === "music_interlude") {
       // Start playing creepy ambient music
       isPlayingMusic = true;
-      
+
       setTimeout(() => {
         messages = [
           ...messages,
@@ -103,14 +141,14 @@
         ];
         scrollToBottom();
       }, 500);
-      
+
       // Play the audio
       if (audioElement) {
-        audioElement.play().catch(err => {
+        audioElement.play().catch((err) => {
           console.error("Audio playback failed:", err);
         });
       }
-      
+
       setTimeout(() => {
         messages = [
           ...messages,
@@ -122,7 +160,7 @@
         ];
         scrollToBottom();
       }, 3000);
-      
+
       // Transition to next trial after music starts
       setTimeout(() => {
         gameState = "playing";
@@ -154,18 +192,19 @@
     // Handle name exchange
     if (gameState === "name_exchange") {
       playerName = userInput;
-      gameState = "number_game";
-      
+      gameState = "number_game_intro";
+      showInput = false; // Hide input until button is clicked
+
       // Get intro messages from number trial module
       const introMessages = getNumberTrialIntro(userInput);
-      introMessages.forEach(({ delay, content }) => {
+      introMessages.forEach(({ delay, content, showButton }) => {
         setTimeout(() => {
           messages = [
             ...messages,
             {
               role: "assistant",
               content,
-              showButton: false,
+              showButton: showButton || false,
             },
           ];
           scrollToBottom();
@@ -173,11 +212,16 @@
       });
     } else if (gameState === "number_game") {
       // Handle number guessing trial
-      const result = handleNumberGuess(userInput, guessAttempt, playerName, getBrowserDetails);
-      
+      const result = handleNumberGuess(
+        userInput,
+        guessAttempt,
+        playerName,
+        getBrowserDetails
+      );
+
       // Update guess attempt
       guessAttempt = result.nextAttempt;
-      
+
       // If name should be revealed, update demonName
       if (result.revealName) {
         demonName = "Paimon";
@@ -187,7 +231,7 @@
           showConfetti = false;
         }, 3500);
       }
-      
+
       // If game is complete, transition to convent trial
       if (result.gameComplete) {
         gameState = "convent";
@@ -210,7 +254,8 @@
             ...messages,
             {
               role: "assistant",
-              content: "This game is filled with lies. But here's a truth disguised as one:",
+              content:
+                "This game is filled with lies. But here's a truth disguised as one:",
               showButton: false,
             },
           ];
@@ -222,7 +267,8 @@
             ...messages,
             {
               role: "assistant",
-              content: "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+              content:
+                "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
               showButton: false,
             },
           ];
@@ -234,7 +280,8 @@
             ...messages,
             {
               role: "assistant",
-              content: "They don't know they're part of this. They don't know about you.",
+              content:
+                "They don't know they're part of this. They don't know about you.",
               showButton: false,
             },
           ];
@@ -270,7 +317,7 @@
         });
         return;
       }
-      
+
       // Add all response messages with their delays
       result.messages.forEach(({ delay, content }) => {
         setTimeout(() => {
@@ -288,13 +335,13 @@
     } else if (gameState === "convent") {
       // Handle convent trial
       if (isProcessing) return;
-      
+
       const previousState = conventState;
       const result = handleConventInput(userInput, conventState, playerName);
-      
+
       // Update convent state
       conventState = result.nextState;
-      
+
       // Add response messages
       result.messages.forEach(({ delay, content }) => {
         setTimeout(() => {
@@ -309,14 +356,18 @@
           scrollToBottom();
         }, delay);
       });
-      
+
       // If we just transitioned TO the reveal state, show reveal messages
-      if (previousState !== CONVENT_STATES.REVEAL && conventState === CONVENT_STATES.REVEAL) {
+      if (
+        previousState !== CONVENT_STATES.REVEAL &&
+        conventState === CONVENT_STATES.REVEAL
+      ) {
         const revealMessages = getConventReveal(playerName);
-        const lastDelay = result.messages.length > 0 
-          ? result.messages[result.messages.length - 1].delay 
-          : 0;
-        
+        const lastDelay =
+          result.messages.length > 0
+            ? result.messages[result.messages.length - 1].delay
+            : 0;
+
         revealMessages.forEach(({ delay, content }) => {
           setTimeout(() => {
             messages = [
@@ -331,7 +382,7 @@
           }, lastDelay + delay);
         });
       }
-      
+
       // If convent is complete, transition to music interlude
       if (conventState === CONVENT_STATES.COMPLETE) {
         gameState = "music_interlude";
@@ -346,13 +397,14 @@
           ];
           scrollToBottom();
         }, 1000);
-        
+
         setTimeout(() => {
           messages = [
             ...messages,
             {
               role: "assistant",
-              content: "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
+              content:
+                "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
               showButton: true,
             },
           ];
@@ -362,17 +414,18 @@
     } else {
       // Default state - use Claude API for dynamic responses
       if (isProcessing) return;
-      
+
       isProcessing = true;
       const apiKey = getClaudeApiKey();
-      
+
       if (!apiKey) {
         setTimeout(() => {
           messages = [
             ...messages,
             {
               role: "assistant",
-              content: "[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]",
+              content:
+                "[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]",
               showButton: false,
             },
           ];
@@ -381,17 +434,17 @@
         }, 500);
         return;
       }
-      
+
       // Call Claude API
       const conversationHistory = formatMessagesForClaude(messages);
       conversationHistory.push({ role: "user", content: userInput });
-      
+
       callClaude(
         conversationHistory,
         `You are Paimon, a demon possessing an AI. Keep responses brief and ominous. The player knows you as ${demonName}.`,
         apiKey
       )
-        .then(response => {
+        .then((response) => {
           messages = [
             ...messages,
             {
@@ -402,7 +455,7 @@
           ];
           scrollToBottom();
         })
-        .catch(error => {
+        .catch((error) => {
           messages = [
             ...messages,
             {
@@ -547,7 +600,11 @@
     },
   });
 
-  let { title = "iOuija73k", subtitle = randomSubtitle, onGameStateChange = undefined } = $props();
+  let {
+    title = "iOuija73k",
+    subtitle = randomSubtitle,
+    onGameStateChange = undefined,
+  } = $props();
 </script>
 
 <div class={containerClass}>
@@ -564,7 +621,7 @@
         showButton={message.showButton}
         onButtonClick={handleOkClick}
         showDemonName={gameState !== "initial"}
-        demonName={demonName}
+        {demonName}
       />
     {/each}
     <div bind:this={messagesEndRef}></div>
@@ -597,12 +654,7 @@
 {/if}
 
 <!-- Hidden audio element for ambient music -->
-<audio 
-  bind:this={audioElement} 
-  loop 
-  preload="auto"
-  style="display: none;"
->
+<audio bind:this={audioElement} loop preload="auto" style="display: none;">
   <source src="/audio/dark-ambient.mp3" type="audio/mpeg" />
   <source src="/audio/dark-ambient.ogg" type="audio/ogg" />
 </audio>
