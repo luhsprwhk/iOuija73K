@@ -1,6 +1,7 @@
 <script>
   import { css } from "../../styled-system/css";
   import ChatMessage from "./ChatMessage.svelte";
+  import PaimonSigil from "./PaimonSigil.svelte";
   import getBrowserDetails from "./helpers/getBrowserDetails";
   import { handleNumberGuess, getNumberTrialIntro } from "../trials/numberGuessing.js";
   import { 
@@ -348,6 +349,15 @@
     fontFamily: "monospace",
     border: "2px solid #8b0000",
     borderRadius: "0.5rem",
+    position: "relative",
+  });
+
+  const sigilContainerClass = css({
+    position: "absolute",
+    bottom: "2.5rem",
+    left: "1rem",
+    zIndex: 10,
+    animation: "fadeIn 1s ease-in",
   });
 
   const headerClass = css({
@@ -447,7 +457,7 @@
     },
   });
 
-  let { title = "iOuija73k", subtitle = randomSubtitle, onGameStateChange } = $props();
+  let { title = "iOuija73k", subtitle = randomSubtitle, onGameStateChange = undefined } = $props();
 </script>
 
 <div class={containerClass}>
@@ -476,11 +486,17 @@
           type="text"
           class={inputClass}
           bind:value={inputValue}
-          placeholder="Type your response..."
+          placeholder="Reply to Paimon"
           autocomplete="off"
         />
         <button type="submit" class={buttonClass}> Send </button>
       </form>
+    </div>
+  {/if}
+
+  {#if gameState !== "initial"}
+    <div class={sigilContainerClass}>
+      <PaimonSigil width="64px" height="64px" />
     </div>
   {/if}
 </div>
@@ -495,3 +511,16 @@
   <source src="/audio/dark-ambient.mp3" type="audio/mpeg" />
   <source src="/audio/dark-ambient.ogg" type="audio/ogg" />
 </audio>
+
+<style>
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>

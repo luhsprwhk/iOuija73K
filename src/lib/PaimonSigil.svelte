@@ -17,7 +17,7 @@
   });
 </script>
 
-<img src={paimonSigil} alt="Paimon Sigil" class={sigilClass} />
+<img src={paimonSigil} alt="Paimon Sigil" class={sigilClass} height="64px" width="64px"/>
 
 <style>
   @keyframes pulse {
