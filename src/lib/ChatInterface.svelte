@@ -62,6 +62,32 @@
     }
   }
 
+  /**
+   * Adds an assistant message with optional delay
+   * @param {string} content - Message content
+   * @param {number} delay - Delay in ms before adding message (0 for immediate)
+   * @param {boolean} showButton - Whether to show OK button
+   */
+  function addAssistantMessage(content, delay = 0, showButton = false) {
+    const addMessage = () => {
+      messages = [
+        ...messages,
+        {
+          role: "assistant",
+          content,
+          showButton,
+        },
+      ];
+      scrollToBottom();
+    };
+
+    if (delay > 0) {
+      setTimeout(addMessage, delay);
+    } else {
+      addMessage();
+    }
+  }
+
   // Auto-scroll whenever messages change
   $effect(() => {
     messages; // Track messages array
@@ -83,15 +109,7 @@
       gameState = "name_exchange";
 
       setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Awesome! What's your name? Mine is Raphael.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
+        addAssistantMessage("Awesome! What's your name? Mine is Raphael.");
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
@@ -100,29 +118,9 @@
       showInput = true;
       gameState = "number_game";
       
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Your number is 37.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 1500);
+      addAssistantMessage("Your number is 37.", 1500);
       
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "I'm right, aren't I?",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 3000);
+      addAssistantMessage("I'm right, aren't I?", 3000);
       
       // Set guess attempt to 1 since we've made the first guess
       guessAttempt = 1;
@@ -130,17 +128,7 @@
       // Start playing creepy ambient music
       isPlayingMusic = true;
 
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Perfect. Let the music guide you...",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 500);
+      addAssistantMessage("Perfect. Let the music guide you...", 500);
 
       // Play the audio
       if (audioElement) {
@@ -149,30 +137,12 @@
         });
       }
 
-      setTimeout(() => {
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Feel that? The atmosphere shifting? Good.",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
-      }, 3000);
+      addAssistantMessage("Feel that? The atmosphere shifting? Good.", 3000);
 
       // Transition to next trial after music starts
       setTimeout(() => {
         gameState = "playing";
-        messages = [
-          ...messages,
-          {
-            role: "assistant",
-            content: "Ready for the next trial?",
-            showButton: false,
-          },
-        ];
-        scrollToBottom();
+        addAssistantMessage("Ready for the next trial?");
       }, 6000);
     }
   }
@@ -198,17 +168,7 @@
       // Get intro messages from number trial module
       const introMessages = getNumberTrialIntro(userInput);
       introMessages.forEach(({ delay, content, showButton }) => {
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content,
-              showButton: showButton || false,
-            },
-          ];
-          scrollToBottom();
-        }, delay);
+        addAssistantMessage(content, delay, showButton || false);
       });
     } else if (gameState === "number_game") {
       // Handle number guessing trial
@@ -234,17 +194,7 @@
 
       // Add all response messages with their delays
       result.messages.forEach(({ delay, content }) => {
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, delay);
+        addAssistantMessage(content, delay);
       });
 
       // If game is complete, transition to convent trial
@@ -258,83 +208,29 @@
         const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
 
         // Add creepy meta-horror warning before trial 1
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Before we begin... a word about the rules.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, baseDelay);
+        addAssistantMessage("Before we begin... a word about the rules.", baseDelay);
 
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "This game is filled with lies. But here's a truth disguised as one:",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, baseDelay + 2000);
+        addAssistantMessage(
+          "This game is filled with lies. But here's a truth disguised as one:",
+          baseDelay + 2000
+        );
 
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, baseDelay + 4500);
+        addAssistantMessage(
+          "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+          baseDelay + 4500
+        );
 
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "They don't know they're part of this. They don't know about you.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, baseDelay + 7000);
+        addAssistantMessage(
+          "They don't know they're part of this. They don't know about you.",
+          baseDelay + 7000
+        );
 
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "Not yet, anyway.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, baseDelay + 9000);
+        addAssistantMessage("Not yet, anyway.", baseDelay + 9000);
 
         // Start convent trial after the meta-horror setup
         const conventIntro = getConventIntro(playerName);
         conventIntro.forEach(({ delay, content }) => {
-          setTimeout(() => {
-            messages = [
-              ...messages,
-              {
-                role: "assistant",
-                content,
-                showButton: false,
-              },
-            ];
-            scrollToBottom();
-          }, baseDelay + 10500 + delay); // Add base delay to account for meta-horror messages
+          addAssistantMessage(content, baseDelay + 10500 + delay);
         });
         return;
       }
@@ -350,17 +246,7 @@
 
       // Add response messages
       result.messages.forEach(({ delay, content }) => {
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, delay);
+        addAssistantMessage(content, delay);
       });
 
       // If we just transitioned TO the reveal state, show reveal messages
@@ -375,47 +261,20 @@
             : 0;
 
         revealMessages.forEach(({ delay, content }) => {
-          setTimeout(() => {
-            messages = [
-              ...messages,
-              {
-                role: "assistant",
-                content,
-                showButton: false,
-              },
-            ];
-            scrollToBottom();
-          }, lastDelay + delay);
+          addAssistantMessage(content, lastDelay + delay);
         });
       }
 
       // If convent is complete, transition to music interlude
       if (conventState === CONVENT_STATES.COMPLETE) {
         gameState = "music_interlude";
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: "You did well. Really well.",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
-        }, 1000);
+        addAssistantMessage("You did well. Really well.", 1000);
 
-        setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
-              showButton: true,
-            },
-          ];
-          scrollToBottom();
-        }, 3000);
+        addAssistantMessage(
+          "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
+          3000,
+          true
+        );
       }
     } else {
       // Default state - use Claude API for dynamic responses
@@ -426,16 +285,9 @@
 
       if (!apiKey) {
         setTimeout(() => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content:
-                "[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]",
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
+          addAssistantMessage(
+            "[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]"
+          );
           isProcessing = false;
         }, 500);
         return;
@@ -451,26 +303,10 @@
         apiKey
       )
         .then((response) => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: response,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
+          addAssistantMessage(response);
         })
         .catch((error) => {
-          messages = [
-            ...messages,
-            {
-              role: "assistant",
-              content: `[Error: ${error.message}]`,
-              showButton: false,
-            },
-          ];
-          scrollToBottom();
+          addAssistantMessage(`[Error: ${error.message}]`);
         })
         .finally(() => {
           isProcessing = false;
