@@ -7,7 +7,7 @@
     flexDirection: "column",
     height: "100vh",
     overflow: "hidden",
-    marginTop: "3rem !important",
+    marginTop: "3rem",
   });
 
   const contentClass = css({
