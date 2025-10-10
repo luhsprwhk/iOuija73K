@@ -371,7 +371,7 @@
   });
 
   const headerClass = css({
-    padding: "1.5rem !important",
+    padding: "1.5rem",
     backgroundColor: "#16161f",
     borderBottom: "2px solid #8b0000",
     display: "flex",
@@ -400,7 +400,7 @@
     flex: 1,
     overflowY: "auto",
     overflowX: "hidden",
-    padding: "1rem !important",
+    padding: "1rem ",
     display: "flex",
     flexDirection: "column",
     minWidth: 0,
@@ -421,7 +421,7 @@
   });
 
   const inputContainerClass = css({
-    padding: "1rem !important",
+    padding: "1rem",
     backgroundColor: "#16161f",
     borderTop: "2px solid #8b0000",
   });
@@ -433,7 +433,7 @@
 
   const inputClass = css({
     flex: 1,
-    padding: "0.75rem 1rem !important",
+    padding: "0.75rem 1rem",
     backgroundColor: "#1a1a2e",
     border: "1px solid #2a2a3e",
     borderRadius: "0.375rem",
@@ -451,7 +451,7 @@
   });
 
   const buttonClass = css({
-    padding: "0.75rem 1.5rem !important",
+    padding: "0.75rem 1.5rem",
     backgroundColor: "#8b0000",
     border: "none",
     borderRadius: "0.375rem",

@@ -11,13 +11,13 @@
   } = $props();
 
   const messageClass = css({
-    padding: "1rem !important",
-    marginBottom: "0.75rem !important",
-    borderRadius: "0.5rem !important",
+    padding: "1rem",
+    marginBottom: "0.75rem",
+    borderRadius: "0.5rem",
     maxWidth: "80%",
     wordWrap: "break-word",
     overflowWrap: "break-word",
-    animation: "fadeIn 0.3s ease-in !important",
+    animation: "fadeIn 0.3s ease-in",
   });
 
   const userMessageClass = css({
