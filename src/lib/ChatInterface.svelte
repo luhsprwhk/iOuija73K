@@ -40,6 +40,7 @@
   let showInput = $state(false);
   let gameState = $state("initial"); // initial, name_exchange, number_game, convent, music_interlude, playing
   let playerName = $state("");
+  let demonName = $state("Raphael"); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
   let isProcessing = $state(false);
@@ -71,12 +72,12 @@
           ...messages,
           {
             role: "assistant",
-            content: "Awesome! What's your name? Mine is Paimon.",
+            content: "Awesome! What's your name? Mine is Raphael.",
             showButton: false,
           },
         ];
         scrollToBottom();
-        // Trigger footer reveal after Paimon's name appears
+        // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
     } else if (gameState === "music_interlude") {
@@ -168,6 +169,11 @@
       
       // Update guess attempt
       guessAttempt = result.nextAttempt;
+      
+      // If name should be revealed, update demonName
+      if (result.revealName) {
+        demonName = "Paimon";
+      }
       
       // If game is complete, transition to convent trial
       if (result.gameComplete) {
@@ -307,7 +313,7 @@
       
       callClaude(
         conversationHistory,
-        "You are Paimon, a demon possessing an AI. Keep responses brief and ominous.",
+        `You are Paimon, a demon possessing an AI. Keep responses brief and ominous. The player knows you as ${demonName}.`,
         apiKey
       )
         .then(response => {
@@ -344,24 +350,28 @@
     display: "flex",
     flexDirection: "column",
     height: "85%",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
     backgroundColor: "#0d0d1a",
     color: "#e0e0e0",
     fontFamily: "monospace",
     border: "2px solid #8b0000",
     borderRadius: "0.5rem",
     position: "relative",
+    overflow: "hidden",
   });
 
   const sigilContainerClass = css({
     position: "absolute",
-    bottom: "2.5rem",
+    bottom: "7rem",
     left: "1rem",
     zIndex: 10,
     animation: "fadeIn 1s ease-in",
   });
 
   const headerClass = css({
-    padding: "1.5rem",
+    padding: "1.5rem !important",
     backgroundColor: "#16161f",
     borderBottom: "2px solid #8b0000",
     display: "flex",
@@ -389,9 +399,12 @@
   const messagesContainerClass = css({
     flex: 1,
     overflowY: "auto",
-    padding: "1.5rem",
+    overflowX: "hidden",
+    padding: "1rem !important",
     display: "flex",
     flexDirection: "column",
+    minWidth: 0,
+    width: "100%",
     "&::-webkit-scrollbar": {
       width: "8px",
     },
@@ -408,6 +421,7 @@
   });
 
   const inputContainerClass = css({
+    padding: "1rem !important",
     backgroundColor: "#16161f",
     borderTop: "2px solid #8b0000",
   });
@@ -419,7 +433,7 @@
 
   const inputClass = css({
     flex: 1,
-    padding: "0.75rem 1rem",
+    padding: "0.75rem 1rem !important",
     backgroundColor: "#1a1a2e",
     border: "1px solid #2a2a3e",
     borderRadius: "0.375rem",
@@ -437,13 +451,13 @@
   });
 
   const buttonClass = css({
-    padding: "0.75rem 1.5rem",
+    padding: "0.75rem 1.5rem !important",
     backgroundColor: "#8b0000",
     border: "none",
     borderRadius: "0.375rem",
     color: "#e0e0e0",
     fontFamily: "monospace",
-    fontSize: "0.95rem",
+    fontSize: "1.5rem",
     fontWeight: "bold",
     cursor: "pointer",
     transition: "background-color 0.2s",
@@ -474,6 +488,7 @@
         showButton={message.showButton}
         onButtonClick={handleOkClick}
         showDemonName={gameState !== "initial"}
+        demonName={demonName}
       />
     {/each}
     <div bind:this={messagesEndRef}></div>
@@ -486,10 +501,10 @@
           type="text"
           class={inputClass}
           bind:value={inputValue}
-          placeholder="Reply to Paimon"
+          placeholder={`Reply to ${demonName}`}
           autocomplete="off"
         />
-        <button type="submit" class={buttonClass}> Send </button>
+        <button type="submit" class={buttonClass}>↑</button>
       </form>
     </div>
   {/if}

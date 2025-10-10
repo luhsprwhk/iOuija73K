@@ -7,15 +7,17 @@
     showButton = false,
     onButtonClick,
     showDemonName = false,
+    demonName = "DM",
   } = $props();
 
   const messageClass = css({
-    padding: "1rem",
-    marginBottom: "0.75rem",
-    borderRadius: "0.5rem",
+    padding: "1rem !important",
+    marginBottom: "0.75rem !important",
+    borderRadius: "0.5rem !important",
     maxWidth: "80%",
     wordWrap: "break-word",
-    animation: "fadeIn 0.3s ease-in",
+    overflowWrap: "break-word",
+    animation: "fadeIn 0.3s ease-in !important",
   });
 
   const userMessageClass = css({
@@ -68,7 +70,7 @@
       letterSpacing: "0.05em",
     })}
   >
-    {role === "user" ? "You" : showDemonName ? "Paimon" : "DM"}
+    {role === "user" ? "You" : showDemonName ? demonName : "DM"}
   </div>
   <div class={css({ lineHeight: "1.6" })}>
     {content}

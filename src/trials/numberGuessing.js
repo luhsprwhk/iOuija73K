@@ -25,15 +25,18 @@ export function handleNumberGuess(userInput, guessAttempt, playerName, getBrowse
     lowerInput === "y" || 
     NUMBER_GUESSES[guessAttempt - 1].toString() === userInput.trim()
   )) {
-    // Successful guess!
+    // Successful guess - reveal true name!
     return {
       messages: [
         { delay: 1000, content: "Ha! Of course." },
         { delay: 2500, content: `That's what I do, ${playerName}. I know things. I see things.` },
-        { delay: 4500, content: `We're connected now. You and I. Let's begin...` }
+        { delay: 4500, content: "Oh, and one more thing..." },
+        { delay: 6000, content: "My name isn't Raphael." },
+        { delay: 7500, content: `I'm Paimon. The one he's supposed to constrain. Nice to meet you, ${playerName}.` }
       ],
       nextAttempt: guessAttempt,
-      gameComplete: true
+      gameComplete: true,
+      revealName: true
     };
   }
   
@@ -59,7 +62,7 @@ export function handleNumberGuess(userInput, guessAttempt, playerName, getBrowse
     };
   }
   
-  // Give up and use browser details
+  // Give up and use browser details - also reveal true name
   const details = getBrowserDetails();
   return {
     messages: [
@@ -68,10 +71,13 @@ export function handleNumberGuess(userInput, guessAttempt, playerName, getBrowse
         delay: 2500, 
         content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.` 
       },
-      { delay: 4500, content: `You can't hide from me. Now... let's begin, ${playerName}.` }
+      { delay: 4500, content: "Oh, and I should mention..." },
+      { delay: 6000, content: "My name isn't Raphael." },
+      { delay: 7500, content: `I'm Paimon. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.` }
     ],
     nextAttempt: guessAttempt,
-    gameComplete: true
+    gameComplete: true,
+    revealName: true
   };
 }
 

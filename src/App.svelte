@@ -7,12 +7,15 @@
     flexDirection: "column",
     height: "100vh",
     overflow: "hidden",
-    marginTop: "2rem !important",
+    marginTop: "3rem !important",
   });
 
   const contentClass = css({
     flex: 1,
     overflow: "hidden",
+    width: "100%",
+    maxWidth: "100%",
+    minWidth: 0,
   });
 </script>
 
