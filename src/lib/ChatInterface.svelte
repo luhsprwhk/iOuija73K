@@ -184,10 +184,9 @@
       if (isProcessing) return;
 
       isProcessing = true;
-      const apiKey = getClaudeApiKey();
       
       // Classify player intent using Claude
-      const isNonViolent = await classifyPlayerIntent(userInput, apiKey);
+      const isNonViolent = await classifyPlayerIntent(userInput);
       
       const previousState = conventState;
       const result = handleConventInput(userInput, conventState, playerName, isNonViolent);
@@ -273,8 +272,7 @@
 
       callClaude(
         conversationHistory,
-        `You are Paimon, a demon possessing an AI. Keep responses brief and ominous. The player knows you as ${demonName}.`,
-        apiKey
+        `You are Paimon, a demon possessing an AI. Keep responses brief and ominous. The player knows you as ${demonName}.`
       )
         .then((response) => {
           addAssistantMessage(response);

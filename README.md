@@ -64,10 +64,23 @@ See `/public/audio/README.md` for recommendations and sources.
 
 ### 4. Run the development server
 ```bash
+npm run dev:all
+```
+
+This starts both the backend proxy server (port 3001) and the frontend dev server (port 5173).
+
+Alternatively, run them separately:
+```bash
+# Terminal 1 - Backend proxy server
+npm run server
+
+# Terminal 2 - Frontend dev server
 npm run dev
 ```
 
 Visit `http://localhost:5173` and prepare to be unsettled.
+
+> **Note:** The backend proxy server is required to avoid CORS issues when calling the Claude API from the browser.
 
 ## Tech Stack
 

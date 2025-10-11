@@ -3,28 +3,22 @@
  * Handles communication with Anthropic's Claude API
  */
 
-const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+// Use local proxy server to avoid CORS issues
+const CLAUDE_PROXY_URL = import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 
 /**
- * Calls Claude API with the given messages and system prompt
+ * Calls Claude API via proxy server with the given messages and system prompt
  * @param {Array} messages - Array of message objects with role and content
  * @param {string} systemPrompt - System prompt for Claude
- * @param {string} apiKey - Anthropic API key
  * @returns {Promise<string>} - Claude's response
  */
-export async function callClaude(messages, systemPrompt, apiKey) {
-  if (!apiKey) {
-    throw new Error('Claude API key is required. Please set VITE_CLAUDE_API_KEY in your environment.');
-  }
-
+export async function callClaude(messages, systemPrompt) {
   try {
-    const response = await fetch(CLAUDE_API_URL, {
+    const response = await fetch(CLAUDE_PROXY_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
@@ -36,7 +30,7 @@ export async function callClaude(messages, systemPrompt, apiKey) {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Claude API error: ${error.error?.message || response.statusText}`);
+      throw new Error(`Claude API error: ${error.error || response.statusText}`);
     }
 
     const data = await response.json();
@@ -72,23 +66,9 @@ export function getClaudeApiKey() {
 /**
  * Classifies player intent as violent or non-violent using Claude
  * @param {string} userInput - The player's input
- * @param {string} apiKey - Anthropic API key
  * @returns {Promise<boolean>} - True if intent is non-violent, false if violent
  */
-export async function classifyPlayerIntent(userInput, apiKey) {
-  if (!apiKey) {
-    // Fallback to keyword matching if no API key
-    const lowerInput = userInput.toLowerCase().trim();
-    return (
-      lowerInput.includes("talk") ||
-      lowerInput.includes("speak") ||
-      lowerInput.includes("flee") ||
-      lowerInput.includes("run") ||
-      lowerInput.includes("escape") ||
-      lowerInput.includes("help") ||
-      lowerInput.includes("wait")
-    );
-  }
+export async function classifyPlayerIntent(userInput) {
 
   const systemPrompt = `You are analyzing player input in a text-based game to determine intent.
 Classify the input as either VIOLENT or NONVIOLENT.
@@ -101,8 +81,7 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
   try {
     const response = await callClaude(
       [{ role: "user", content: userInput }],
-      systemPrompt,
-      apiKey
+      systemPrompt
     );
 
     return response.trim().toUpperCase() === "NONVIOLENT";
