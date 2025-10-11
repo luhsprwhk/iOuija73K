@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "convert-png-to-webp": "./scripts/convert-png-to-webp.sh"
   },
   "devDependencies": {
     "@pandacss/dev": "^1.4.1",

@@ -27,6 +27,10 @@ export function getConventIntro(playerName) {
     },
     {
       delay: 6500,
+      image: "/src/assets/convent_intro.webp",
+    },
+    {
+      delay: 6500,
       content:
         "Before you stands a dark convent. The doors hang open. You hear sounds from within—scraping, chittering, inhuman.",
     },

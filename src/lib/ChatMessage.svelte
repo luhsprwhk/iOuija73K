@@ -8,6 +8,7 @@
     onButtonClick,
     showDemonName = false,
     demonName = "DM",
+    image = undefined,
   } = $props();
 
   const messageClass = css({
@@ -72,11 +73,26 @@
   >
     {role === "user" ? "You" : showDemonName ? demonName : "DM"}
   </div>
-  <div class={css({ lineHeight: "1.6" })}>
-    {content}
-  </div>
+  {#if image}
+    <img
+      src={image}
+      alt="Scene illustration"
+      class={css({
+        width: "100%",
+        maxWidth: "500px",
+        borderRadius: "0.375rem",
+        marginBottom: content ? "0.75rem" : "0",
+        display: "block",
+      })}
+    />
+  {/if}
+  {#if content}
+    <div class={css({ lineHeight: "1.6" })}>
+      {content}
+    </div>
+  {/if}
   {#if showButton}
-    <button class={buttonClass} onclick={onButtonClick}> Ok. </button>
+    <button class={buttonClass} onclick={onButtonClick}> Ok </button>
   {/if}
 </div>
 

@@ -120,7 +120,17 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 5500,
       content:
-        "Got it? Don't tell me. I already know.",
+        "Picture it in your mind. Really see it. Like those little birthday candles—light them up, set the whole cake on fire if you want.",
+    },
+    {
+      delay: 7500,
+      content:
+        "Make that image crystal clear. Hold it there. I need to see what you're seeing.",
+    },
+    {
+      delay: 9500,
+      content:
+        "Got it? Good. Don't tell me. I already know.",
       showButton: true,
     },
   ];

@@ -67,8 +67,9 @@
    * @param {string} content - Message content
    * @param {number} delay - Delay in ms before adding message (0 for immediate)
    * @param {boolean} showButton - Whether to show OK button
+   * @param {string} image - Optional image URL
    */
-  function addAssistantMessage(content, delay = 0, showButton = false) {
+  function addAssistantMessage(content, delay = 0, showButton = false, image = undefined) {
     const addMessage = () => {
       messages = [
         ...messages,
@@ -76,6 +77,7 @@
           role: "assistant",
           content,
           showButton,
+          image,
         },
       ];
     };
@@ -237,12 +239,18 @@
 
         // Start convent trial after the meta-horror setup
         const conventIntro = getConventIntro(playerName);
-        conventIntro.forEach(({ delay, content }) => {
-          addAssistantMessage(content, baseDelay + 10500 + delay);
+        conventIntro.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, baseDelay + 10500 + delay, false, image);
         });
 
         // Add first encounter description and prompt
         const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
+        addAssistantMessage(
+          undefined,
+          baseDelay + 10500 + lastIntroDelay + 2000,
+          false,
+          "/src/assets/convent_encounter_1.webp"
+        );
         addAssistantMessage(
           "A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.",
           baseDelay + 10500 + lastIntroDelay + 2000
@@ -255,7 +263,7 @@
         // Set up state for convent trial
         showInput = true;
         gameState = "convent";
-        conventState = CONVENT_STATES.ENCOUNTER_1; // Ready to handle player's combat response
+        conventState = CONVENT_STATES.ENCOUNTER_1; // Skip INTRO since we already showed encounter 1 description
         return;
       }
     } else if (gameState === "convent") {
@@ -270,9 +278,36 @@
       conventState = result.nextState;
 
       // Add response messages
-      result.messages.forEach(({ delay, content }) => {
-        addAssistantMessage(content, delay);
+      result.messages.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, delay, false, image);
       });
+
+      // Calculate last message delay for chaining
+      const lastDelay =
+        result.messages.length > 0
+          ? result.messages[result.messages.length - 1].delay
+          : 0;
+
+      // If we just transitioned TO encounter 2, auto-show encounter 2 intro
+      if (
+        previousState === CONVENT_STATES.ENCOUNTER_1 &&
+        conventState === CONVENT_STATES.ENCOUNTER_2
+      ) {
+        addAssistantMessage(
+          "Deeper in the convent, you encounter a scorpion-sister. Massive pincers where arms should be, a segmented tail arching over her—its—back.",
+          lastDelay + 2000
+        );
+        addAssistantMessage(
+          "The creature's chitinous armor—no wait—her black habit rustles as she—it—moves toward you.",
+          lastDelay + 4500
+        );
+        addAssistantMessage(
+          "What do you do?",
+          lastDelay + 7000
+        );
+        // Advance state so next input triggers combat resolution
+        conventState = `${CONVENT_STATES.ENCOUNTER_2}_combat`;
+      }
 
       // If we just transitioned TO the reveal state, show reveal messages
       if (
@@ -280,13 +315,9 @@
         conventState === CONVENT_STATES.REVEAL
       ) {
         const revealMessages = getConventReveal(playerName);
-        const lastDelay =
-          result.messages.length > 0
-            ? result.messages[result.messages.length - 1].delay
-            : 0;
 
-        revealMessages.forEach(({ delay, content }) => {
-          addAssistantMessage(content, lastDelay + delay);
+        revealMessages.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, lastDelay + delay, false, image);
         });
       }
 
@@ -491,6 +522,7 @@
         onButtonClick={handleOkClick}
         showDemonName={gameState !== "initial"}
         {demonName}
+        image={message.image}
       />
     {/each}
     <div bind:this={messagesEndRef}></div>
