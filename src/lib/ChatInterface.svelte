@@ -150,7 +150,12 @@
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    console.log("handleSubmit - gameState:", gameState, "conventState:", conventState);
+    console.log(
+      "handleSubmit - gameState:",
+      gameState,
+      "conventState:",
+      conventState
+    );
 
     // Add user message
     messages = [
@@ -200,8 +205,6 @@
 
       // If number guessing game is complete, transition to convent trial
       if (result.gameComplete) {
-        gameState = "convent";
-
         // Calculate the last message delay to know when to start the next sequence
         const lastMessageDelay =
           result.messages.length > 0
@@ -237,11 +240,27 @@
         conventIntro.forEach(({ delay, content }) => {
           addAssistantMessage(content, baseDelay + 10500 + delay);
         });
+
+        // Add first encounter description and prompt
+        const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
+        addAssistantMessage(
+          "A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.",
+          baseDelay + 10500 + lastIntroDelay + 2000
+        );
+        addAssistantMessage(
+          "What do you do?",
+          baseDelay + 10500 + lastIntroDelay + 4500
+        );
+
+        // Set up state for convent trial
+        showInput = true;
+        gameState = "convent";
+        conventState = CONVENT_STATES.ENCOUNTER_1; // Ready to handle player's combat response
         return;
       }
     } else if (gameState === "convent") {
-      console.log("Convent trial started");
       // Handle convent trial
+      console.log("Convent trial");
       if (isProcessing) return;
 
       const previousState = conventState;
