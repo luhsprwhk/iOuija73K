@@ -9,6 +9,7 @@
     showDemonName = false,
     demonName = "DM",
     image = undefined,
+    buttons = undefined,
   } = $props();
 
   const messageClass = css({
@@ -93,6 +94,15 @@
   {/if}
   {#if showButton}
     <button class={buttonClass} onclick={onButtonClick}> Ok </button>
+  {/if}
+  {#if buttons && buttons.length > 0}
+    <div class={css({ display: "flex", gap: "0.75rem", marginTop: "0.75rem" })}>
+      {#each buttons as button}
+        <button class={buttonClass} onclick={() => button.onClick(button.value)}>
+          {button.label}
+        </button>
+      {/each}
+    </div>
   {/if}
 </div>
 

@@ -68,3 +68,56 @@ export function formatMessagesForClaude(messages) {
 export function getClaudeApiKey() {
   return import.meta.env.VITE_CLAUDE_API_KEY || null;
 }
+
+/**
+ * Classifies player intent as violent or non-violent using Claude
+ * @param {string} userInput - The player's input
+ * @param {string} apiKey - Anthropic API key
+ * @returns {Promise<boolean>} - True if intent is non-violent, false if violent
+ */
+export async function classifyPlayerIntent(userInput, apiKey) {
+  if (!apiKey) {
+    // Fallback to keyword matching if no API key
+    const lowerInput = userInput.toLowerCase().trim();
+    return (
+      lowerInput.includes("talk") ||
+      lowerInput.includes("speak") ||
+      lowerInput.includes("flee") ||
+      lowerInput.includes("run") ||
+      lowerInput.includes("escape") ||
+      lowerInput.includes("help") ||
+      lowerInput.includes("wait")
+    );
+  }
+
+  const systemPrompt = `You are analyzing player input in a text-based game to determine intent.
+Classify the input as either VIOLENT or NONVIOLENT.
+
+VIOLENT actions include: attacking, fighting, striking, killing, using weapons, aggressive actions
+NONVIOLENT actions include: talking, fleeing, waiting, helping, peaceful interactions, hesitation
+
+Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
+
+  try {
+    const response = await callClaude(
+      [{ role: "user", content: userInput }],
+      systemPrompt,
+      apiKey
+    );
+
+    return response.trim().toUpperCase() === "NONVIOLENT";
+  } catch (error) {
+    console.error("Intent classification failed, falling back to keywords:", error);
+    // Fallback to keyword matching on error
+    const lowerInput = userInput.toLowerCase().trim();
+    return (
+      lowerInput.includes("talk") ||
+      lowerInput.includes("speak") ||
+      lowerInput.includes("flee") ||
+      lowerInput.includes("run") ||
+      lowerInput.includes("escape") ||
+      lowerInput.includes("help") ||
+      lowerInput.includes("wait")
+    );
+  }
+}

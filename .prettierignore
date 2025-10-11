@@ -1,0 +1,8 @@
+dist
+styled-system
+node_modules
+.svelte-kit
+build
+package-lock.json
+pnpm-lock.yaml
+*.min.js

@@ -18,6 +18,7 @@
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
+    classifyPlayerIntent,
   } from "../ai/claude.js";
 
   const subtitles = [
@@ -46,7 +47,7 @@
   let inputValue = $state("");
   let messagesEndRef;
   let showInput = $state(false);
-  let gameState = $state("initial"); // initial, name_exchange, number_game_intro, number_game, convent, music_interlude, playing
+  let gameState = $state("initial"); // initial, name_exchange, number_game_intro, number_game, convent, playing
   let playerName = $state("");
   let demonName = $state("Raphael"); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
@@ -68,8 +69,9 @@
    * @param {number} delay - Delay in ms before adding message (0 for immediate)
    * @param {boolean} showButton - Whether to show OK button
    * @param {string} image - Optional image URL
+   * @param {Array} buttons - Optional array of button objects with {label, value, onClick}
    */
-  function addAssistantMessage(content, delay = 0, showButton = false, image = undefined) {
+  function addAssistantMessage(content, delay = 0, showButton = false, image = undefined, buttons = undefined) {
     const addMessage = () => {
       messages = [
         ...messages,
@@ -78,6 +80,7 @@
           content,
           showButton,
           image,
+          buttons,
         },
       ];
     };
@@ -116,39 +119,32 @@
       }, 500);
     } else if (gameState === "number_game_intro") {
       // User clicked OK after thinking of number
-      showInput = true;
+      showInput = false; // Hide input, we'll use buttons
       gameState = "number_game";
 
-      addAssistantMessage("Your number is 37.", 1500);
+      // Make first guess
+      const result = handleNumberGuess(
+        null,
+        0,
+        playerName,
+        getBrowserDetails
+      );
 
-      addAssistantMessage("I'm right, aren't I?", 3000);
+      // Add messages with buttons
+      result.messages.forEach(({ delay, content, showButtons }) => {
+        const buttons = showButtons ? [
+          { label: "Yes", value: true, onClick: (value) => handleNumberGuessResponse(value) },
+          { label: "No", value: false, onClick: (value) => handleNumberGuessResponse(value) },
+        ] : undefined;
+        addAssistantMessage(content, delay, false, undefined, buttons);
+      });
 
-      // Set guess attempt to 1 since we've made the first guess
-      guessAttempt = 1;
-    } else if (gameState === "music_interlude") {
-      // Start playing creepy ambient music
-      isPlayingMusic = true;
-
-      addAssistantMessage("Perfect. Let the music guide you...", 500);
-
-      // Play the audio
-      if (audioElement) {
-        audioElement.play().catch((err) => {
-          console.error("Audio playback failed:", err);
-        });
-      }
-
-      addAssistantMessage("Feel that? The atmosphere shifting? Good.", 3000);
-
-      // Transition to next trial after music starts
-      setTimeout(() => {
-        gameState = "playing";
-        addAssistantMessage("Ready for the next trial?");
-      }, 6000);
+      // Update guess attempt
+      guessAttempt = result.nextAttempt;
     }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
@@ -179,103 +175,26 @@
         addAssistantMessage(content, delay, showButton || false);
       });
     } else if (gameState === "number_game") {
-      // Handle number guessing trial
-      const result = handleNumberGuess(
-        userInput,
-        guessAttempt,
-        playerName,
-        getBrowserDetails
-      );
-
-      // Update guess attempt
-      guessAttempt = result.nextAttempt;
-
-      // If name should be revealed, update demonName
-      if (result.revealName) {
-        demonName = "Paimon";
-        // Trigger confetti celebration
-        showConfetti = true;
-        setTimeout(() => {
-          showConfetti = false;
-        }, 3500);
-      }
-
-      // Add all response messages with their delays
-      result.messages.forEach(({ delay, content }) => {
-        addAssistantMessage(content, delay);
-      });
-
-      // If number guessing game is complete, transition to convent trial
-      if (result.gameComplete) {
-        // Calculate the last message delay to know when to start the next sequence
-        const lastMessageDelay =
-          result.messages.length > 0
-            ? result.messages[result.messages.length - 1].delay
-            : 0;
-        const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
-
-        // Add creepy meta-horror warning before trial 1
-        addAssistantMessage(
-          "Before we begin... a word about the rules.",
-          baseDelay
-        );
-
-        addAssistantMessage(
-          "This game is filled with lies. But here's a truth disguised as one:",
-          baseDelay + 2000
-        );
-
-        addAssistantMessage(
-          "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
-          baseDelay + 4500
-        );
-
-        addAssistantMessage(
-          "They don't know they're part of this. They don't know about you.",
-          baseDelay + 7000
-        );
-
-        addAssistantMessage("Not yet, anyway.", baseDelay + 9000);
-
-        // Start convent trial after the meta-horror setup
-        const conventIntro = getConventIntro(playerName);
-        conventIntro.forEach(({ delay, content, image }) => {
-          addAssistantMessage(content, baseDelay + 10500 + delay, false, image);
-        });
-
-        // Add first encounter description and prompt
-        const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
-        addAssistantMessage(
-          undefined,
-          baseDelay + 10500 + lastIntroDelay + 2000,
-          false,
-          "/src/assets/convent_encounter_1.webp"
-        );
-        addAssistantMessage(
-          "A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.",
-          baseDelay + 10500 + lastIntroDelay + 2000
-        );
-        addAssistantMessage(
-          "What do you do?",
-          baseDelay + 10500 + lastIntroDelay + 4500
-        );
-
-        // Set up state for convent trial
-        showInput = true;
-        gameState = "convent";
-        conventState = CONVENT_STATES.ENCOUNTER_1; // Skip INTRO since we already showed encounter 1 description
-        return;
-      }
+      // This shouldn't be reached anymore since we use buttons
+      // But keep for backwards compatibility
+      console.warn("Unexpected text input in number_game state");
     } else if (gameState === "convent") {
       // Handle convent trial
       console.log("Convent trial");
       if (isProcessing) return;
 
+      isProcessing = true;
+      const apiKey = getClaudeApiKey();
+      
+      // Classify player intent using Claude
+      const isNonViolent = await classifyPlayerIntent(userInput, apiKey);
+      
       const previousState = conventState;
-      const result = handleConventInput(userInput, conventState, playerName);
+      const result = handleConventInput(userInput, conventState, playerName, isNonViolent);
 
       // Update convent state
       conventState = result.nextState;
+      isProcessing = false;
 
       // Add response messages
       result.messages.forEach(({ delay, content, image }) => {
@@ -321,15 +240,14 @@
         });
       }
 
-      // If convent is complete, transition to music interlude
+      // If convent is complete, transition to next phase
       if (conventState === CONVENT_STATES.COMPLETE) {
-        gameState = "music_interlude";
+        gameState = "playing";
         addAssistantMessage("You did well. Really well.", 1000);
 
         addAssistantMessage(
-          "Want to hear some music while we prepare for what's next? I've got a badass playlist.",
-          3000,
-          true
+          "Ready for the next trial?",
+          3000
         );
       }
     } else {
@@ -370,6 +288,119 @@
     }
 
     scrollToBottom();
+  }
+
+  /**
+   * Handles yes/no button clicks for number guessing
+   * @param {boolean} userConfirmed - True if yes, false if no
+   */
+  function handleNumberGuessResponse(userConfirmed) {
+    // Remove buttons from the message that had them
+    const buttonMessageIndex = messages.findIndex((msg) => msg.buttons);
+    if (buttonMessageIndex !== -1) {
+      messages[buttonMessageIndex].buttons = undefined;
+      messages = [...messages];
+    }
+
+    // Handle the response
+    const result = handleNumberGuess(
+      userConfirmed,
+      guessAttempt,
+      playerName,
+      getBrowserDetails
+    );
+
+    // Update guess attempt
+    guessAttempt = result.nextAttempt;
+
+    // If name should be revealed, update demonName
+    if (result.revealName) {
+      demonName = "Paimon";
+      // Trigger confetti celebration
+      showConfetti = true;
+      setTimeout(() => {
+        showConfetti = false;
+      }, 3500);
+    }
+
+    // Add all response messages with their delays
+    result.messages.forEach(({ delay, content, showButtons }) => {
+      const buttons = showButtons ? [
+        { label: "Yes", value: true, onClick: (value) => handleNumberGuessResponse(value) },
+        { label: "No", value: false, onClick: (value) => handleNumberGuessResponse(value) },
+      ] : undefined;
+      addAssistantMessage(content, delay, false, undefined, buttons);
+    });
+
+    // If number guessing game is complete, transition to convent trial
+    if (result.gameComplete) {
+      // Calculate the last message delay to know when to start the next sequence
+      const lastMessageDelay =
+        result.messages.length > 0
+          ? result.messages[result.messages.length - 1].delay
+          : 0;
+      const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
+
+      // Add creepy meta-horror warning before trial 1
+      addAssistantMessage(
+        "Before we begin... a word about the rules.",
+        baseDelay
+      );
+
+      addAssistantMessage(
+        "This game is filled with lies. But here's a truth disguised as one:",
+        baseDelay + 2000
+      );
+
+      addAssistantMessage(
+        "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+        baseDelay + 4500
+      );
+
+      addAssistantMessage(
+        "They don't know they're part of this. They don't know about you.",
+        baseDelay + 7000
+      );
+
+      addAssistantMessage("Not yet, anyway.", baseDelay + 9000);
+
+      // Start playing creepy ambient music before convent trial
+      isPlayingMusic = true;
+      if (audioElement) {
+        audioElement.play().catch((err) => {
+          console.error("Audio playback failed:", err);
+        });
+      }
+
+      // Start convent trial after the meta-horror setup
+      const conventIntro = getConventIntro(playerName);
+      conventIntro.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, baseDelay + 10500 + delay, false, image);
+      });
+
+      // Add first encounter description and prompt
+      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
+      addAssistantMessage(
+        undefined,
+        baseDelay + 10500 + lastIntroDelay + 2000,
+        false,
+        "/src/assets/convent_encounter_1.webp"
+      );
+      addAssistantMessage(
+        "A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.",
+        baseDelay + 10500 + lastIntroDelay + 2000
+      );
+      addAssistantMessage(
+        "What do you do?",
+        baseDelay + 10500 + lastIntroDelay + 4500
+      );
+
+      // Set up state for convent trial
+      showInput = true;
+      gameState = "convent";
+      conventState = CONVENT_STATES.ENCOUNTER_1; // Skip INTRO since we already showed encounter 1 description
+      return;
+    }
   }
 
   const containerClass = css({
@@ -523,6 +554,7 @@
         showDemonName={gameState !== "initial"}
         {demonName}
         image={message.image}
+        buttons={message.buttons}
       />
     {/each}
     <div bind:this={messagesEndRef}></div>

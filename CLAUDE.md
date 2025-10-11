@@ -18,6 +18,17 @@ npm run preview      # Preview production build locally
 npm run prepare      # Generate Panda CSS styles (runs automatically on install)
 ```
 
+### Testing & Code Quality
+```bash
+npm run test         # Run Vitest tests once
+npm run test:watch   # Run Vitest in watch mode
+npm run test:ui      # Open Vitest UI (interactive test runner)
+npm run lint         # Run ESLint (fails on warnings)
+npm run lint:fix     # Run ESLint and auto-fix issues
+npm run format       # Format all files with Prettier
+npm run format:check # Check formatting without modifying files
+```
+
 ### Environment Setup
 1. Copy `.env.example` to `.env`
 2. Add your Anthropic API key: `VITE_CLAUDE_API_KEY=sk-ant-...`
@@ -123,9 +134,24 @@ Critical transitions occur in `handleSubmit()`:
 - Browser/OS detection from user agent
 - Used as fallback in number guessing trial to demonstrate supernatural knowledge
 
-## Testing Notes
+## Testing & Quality Assurance
 
-No formal test suite exists. Manual testing flow:
+### Automated Testing
+The project uses **Vitest** for unit testing (config: `vitest.config.js`):
+- Test files: `src/**/*.test.js` or `src/**/*.spec.js`
+- Environment: Node.js (trials are pure functions)
+- Current coverage: Number guessing trial logic (`numberGuessing.test.js`)
+- Run tests: `npm run test` or `npm run test:watch` for watch mode
+- Interactive UI: `npm run test:ui` for visual test runner
+
+### Linting & Formatting
+- **ESLint** (config: `eslint.config.js`): Catch errors, enforce code style
+- **Prettier** (config: `.prettierrc`): Auto-format code consistently
+- Both support Svelte 5 syntax and work with Panda CSS
+- Run `npm run lint:fix && npm run format` before committing
+
+### Manual Testing Checklist
+Key user flows to verify manually:
 1. Start dev server
 2. Click "OK" to begin
 3. Enter name when prompted

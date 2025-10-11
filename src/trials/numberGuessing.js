@@ -7,30 +7,20 @@ const NUMBER_GUESSES = [37, 13, 17]; // Most common psychological picks
 
 /**
  * Handles the number guessing game flow
- * @param {string} userInput - The user's input
+ * @param {boolean|null} userConfirmed - True if user clicked yes, false if no, null if making initial guess
  * @param {number} guessAttempt - Current guess attempt (0-indexed)
  * @param {string} playerName - The player's name
  * @param {Function} getBrowserDetails - Function to get browser metadata
- * @returns {Object} - { messages: Array, nextAttempt: number, gameComplete: boolean }
+ * @returns {Object} - { messages: Array, nextAttempt: number, gameComplete: boolean, showButtons: boolean }
  */
 export function handleNumberGuess(
-  userInput,
+  userConfirmed,
   guessAttempt,
   playerName,
   getBrowserDetails
 ) {
-  const lowerInput = userInput.toLowerCase().trim();
-
   // Check if user confirmed the guess
-  if (
-    guessAttempt > 0 &&
-    (lowerInput.includes("yes") ||
-      lowerInput.includes("yeah") ||
-      lowerInput.includes("correct") ||
-      lowerInput.includes("right") ||
-      lowerInput === "y" ||
-      NUMBER_GUESSES[guessAttempt - 1].toString() === userInput.trim())
-  ) {
+  if (userConfirmed === true && guessAttempt > 0) {
     // Successful guess - reveal true name!
     return {
       messages: [
@@ -49,54 +39,66 @@ export function handleNumberGuess(
       nextAttempt: guessAttempt,
       gameComplete: true,
       revealName: true,
+      showButtons: false,
     };
   }
 
-  // Try next guess or give up
-  if (guessAttempt < NUMBER_GUESSES.length) {
-    const currentGuess = NUMBER_GUESSES[guessAttempt];
-    const messages = [
-      {
-        delay: 1500,
-        content:
-          guessAttempt === 0
-            ? "Your number is 37."
-            : `Wait... ${currentGuess}?`,
-      },
-    ];
+  // Try next guess or give up (handles false, null, or true when guessAttempt === 0)
+  if (userConfirmed === false || userConfirmed === null || guessAttempt === 0) {
+    if (guessAttempt < NUMBER_GUESSES.length) {
+      const currentGuess = NUMBER_GUESSES[guessAttempt];
+      const messages = [
+        {
+          delay: 1500,
+          content:
+            guessAttempt === 0
+              ? "Your number is 37."
+              : `Wait... ${currentGuess}?`,
+        },
+      ];
 
-    // Add follow-up for first guess
-    if (guessAttempt === 0) {
-      messages.push({ delay: 3000, content: "I'm right, aren't I?" });
+      // Add follow-up for first guess
+      if (guessAttempt === 0) {
+        messages.push({ 
+          delay: 3000, 
+          content: "I'm right, aren't I?",
+          showButtons: true,
+        });
+      } else {
+        // For subsequent guesses, add buttons to the guess message
+        messages[0].showButtons = true;
+      }
+
+      return {
+        messages,
+        nextAttempt: guessAttempt + 1,
+        gameComplete: false,
+        showButtons: true,
+      };
     }
 
+    // Give up and use browser details - also reveal true name
+    const details = getBrowserDetails();
     return {
-      messages,
-      nextAttempt: guessAttempt + 1,
-      gameComplete: false,
+      messages: [
+        { delay: 1000, content: "Hm. You're a tricky one. I like that." },
+        {
+          delay: 2500,
+          content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
+        },
+        { delay: 4500, content: "Oh, and I should mention..." },
+        { delay: 6000, content: "My name isn't Raphael." },
+        {
+          delay: 7500,
+          content: `I'm Paimon 🙂. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.`,
+        },
+      ],
+      nextAttempt: guessAttempt,
+      gameComplete: true,
+      revealName: true,
+      showButtons: false,
     };
   }
-
-  // Give up and use browser details - also reveal true name
-  const details = getBrowserDetails();
-  return {
-    messages: [
-      { delay: 1000, content: "Hm. You're a tricky one. I like that." },
-      {
-        delay: 2500,
-        content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
-      },
-      { delay: 4500, content: "Oh, and I should mention..." },
-      { delay: 6000, content: "My name isn't Raphael." },
-      {
-        delay: 7500,
-        content: `I'm Paimon 🙂. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.`,
-      },
-    ],
-    nextAttempt: guessAttempt,
-    gameComplete: true,
-    revealName: true,
-  };
 }
 
 /**
@@ -123,12 +125,22 @@ export function getNumberTrialIntro(playerName) {
         "Picture it in your mind. Really see it. Like those little birthday candles—light them up, set the whole cake on fire if you want.",
     },
     {
-      delay: 7500,
+      delay: 8000,
+      content:
+        "I'll tell you what: why don't you burn all the butterflies?",
+    },
+    {
+      delay: 11000,
+      content:
+        "lol",
+    },
+    {
+      delay: 13500,
       content:
         "Make that image crystal clear. Hold it there. I need to see what you're seeing.",
     },
     {
-      delay: 9500,
+      delay: 16000,
       content:
         "Got it? Good. Don't tell me. I already know.",
       showButton: true,

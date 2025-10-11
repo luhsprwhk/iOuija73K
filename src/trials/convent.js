@@ -97,21 +97,10 @@ export function getConventReveal(playerName) {
  * @param {string} userInput - The user's input
  * @param {string} currentState - Current encounter state
  * @param {string} playerName - The player's name
+ * @param {boolean} isNonViolent - Whether the player's intent is non-violent (determined by AI)
  * @returns {Object} - { messages: Array, nextState: string, useAPI: boolean, systemPrompt: string }
  */
-export function handleConventInput(userInput, currentState, playerName) {
-  const lowerInput = userInput.toLowerCase().trim();
-
-  // Check for non-violent attempts (talk, flee, etc.)
-  const isNonViolent =
-    lowerInput.includes("talk") ||
-    lowerInput.includes("speak") ||
-    lowerInput.includes("flee") ||
-    lowerInput.includes("run") ||
-    lowerInput.includes("escape") ||
-    lowerInput.includes("help") ||
-    lowerInput.includes("wait");
-
+export function handleConventInput(userInput, currentState, playerName, isNonViolent = false) {
   // Paimon subverts non-violent choices
   if (isNonViolent && currentState !== CONVENT_STATES.REVEAL) {
     return {
