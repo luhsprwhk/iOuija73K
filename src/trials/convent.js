@@ -134,6 +134,7 @@ export function handleConventInput(userInput, currentState, playerName, isNonVio
       return {
         messages: [
           { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
+          { delay: 3500, image: "/src/assets/trials/convent_trial_attack_success.webp" },
           { delay: 3500, content: ENCOUNTERS[1].glitchHint },
           { delay: 5500, content: "You press forward into the darkness." },
         ],

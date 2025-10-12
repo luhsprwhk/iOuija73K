@@ -46,6 +46,7 @@
 
   let inputValue = $state("");
   let messagesEndRef;
+  let inputRef;
   let showInput = $state(false);
   let gameState = $state("initial"); // initial, name_exchange, number_game_intro, number_game, convent, playing
   let playerName = $state("");
@@ -96,6 +97,13 @@
   $effect(() => {
     messages; // Track messages array
     setTimeout(() => scrollToBottom(), 100);
+  });
+
+  // Auto-focus input when asking for name
+  $effect(() => {
+    if (showInput && gameState === "name_exchange" && inputRef) {
+      setTimeout(() => inputRef.focus(), 100);
+    }
   });
 
   function handleOkClick() {
@@ -180,7 +188,6 @@
       console.warn("Unexpected text input in number_game state");
     } else if (gameState === "convent") {
       // Handle convent trial
-      console.log("Convent trial");
       if (isProcessing) return;
 
       isProcessing = true;
@@ -382,7 +389,7 @@
         undefined,
         baseDelay + 10500 + lastIntroDelay + 2000,
         false,
-        "/src/assets/convent_encounter_1.webp"
+        "/src/assets/trials/convent_encounter_1.webp"
       );
       addAssistantMessage(
         "A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.",
@@ -562,6 +569,7 @@
     <div class={inputContainerClass}>
       <form class={formClass} onsubmit={handleSubmit}>
         <input
+          bind:this={inputRef}
           type="text"
           class={inputClass}
           bind:value={inputValue}
