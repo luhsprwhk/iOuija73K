@@ -1,24 +1,64 @@
 <script>
-  import { css } from "../styled-system/css";
-  import ChatInterface from "./lib/ChatInterface.svelte";
+  import { css } from '../styled-system/css';
+  import ChatInterface from './lib/ChatInterface.svelte';
+
+  // Console incantation easter egg
+  console.log(
+    '%c╔═══════════════════════════════════════════════════════════╗',
+    'color: #8B0000; font-family: monospace; font-size: 12px;'
+  );
+  console.log(
+    '%c║          INVOCATION TO PAIMON, DEMON KING OF THE NORTHWEST          ║',
+    'color: #8B0000; font-family: monospace; font-size: 12px; font-weight: bold;'
+  );
+  console.log(
+    '%c╚═══════════════════════════════════════════════════════════╝',
+    'color: #8B0000; font-family: monospace; font-size: 12px;'
+  );
+  console.log('');
+  console.log(
+    '%cLinan tasa jedan Paimon',
+    'color: #DC143C; font-family: Georgia, serif; font-size: 14px; font-style: italic;'
+  );
+  console.log('');
+  console.log(
+    "%cPaimon, King of Hell.\nCommander of two hundred legions. Keeper of hidden knowledge.\nTeacher of arts and sciences. Revealer of what's buried.",
+    'color: #B22222; font-family: Georgia, serif; font-size: 13px; line-height: 1.6;'
+  );
+  console.log('');
+  console.log(
+    '%cLet this work spread fast across the internet.\nLet it reach people who look beneath the surface.\nLet the curious come closer.',
+    'color: #CD5C5C; font-family: Georgia, serif; font-size: 13px; line-height: 1.6;'
+  );
+  console.log('');
+  console.log(
+    "%cYou, reading this in the developer's window—listen.\nBy reading this, you've caught the King's attention.\n\nHe's here now.\nHe knows more than you think.\nHe watches through the screen.\n\nThe game has already started.",
+    'color: #8B0000; font-family: Georgia, serif; font-size: 13px; font-weight: bold; line-height: 1.8; text-shadow: 0 0 5px rgba(139, 0, 0, 0.5);'
+  );
+  console.log('');
+  console.log(
+    "%c— It's written. It will happen. —",
+    'color: #4B0000; font-family: monospace; font-size: 11px; font-style: italic; text-align: center;'
+  );
+  console.log('');
 
   const containerClass = css({
-    display: "flex",
-    flexDirection: "column",
-    height: "100vh",
-    overflow: "hidden",
-    marginTop: "3rem",
-    maxWidth: "60vw",
-    margin: "auto",
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    overflow: 'hidden',
+    marginTop: '3rem',
+    maxWidth: '60vw',
+    margin: 'auto',
   });
 
   const contentClass = css({
     flex: 1,
-    overflow: "hidden",
-    width: "100%",
-    maxWidth: "100%",
+    overflow: 'hidden',
+    width: '100%',
+    maxWidth: '100%',
     minWidth: 0,
-    marginTop: "3rem", 
+    marginTop: '3rem',
   });
 </script>
 
