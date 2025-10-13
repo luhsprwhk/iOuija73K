@@ -1,12 +1,12 @@
 <script>
-  import { css } from "../../styled-system/css";
+  import { css } from '../../styled-system/css';
 
   const footerClass = css({
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: "2rem",
-    animation: "fadeIn 1s ease-in",
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '2rem',
+    animation: 'fadeIn 1s ease-in',
   });
 </script>
 
@@ -25,5 +25,4 @@
       transform: translateY(0);
     }
   }
-
 </style>

@@ -47,7 +47,9 @@
     if (riddleTooltips.length <= 1) return 0;
     let idx = Math.floor(Math.random() * riddleTooltips.length);
     if (idx === excludeIndex) {
-      idx = (idx + 1 + Math.floor(Math.random() * (riddleTooltips.length - 1))) % riddleTooltips.length;
+      idx =
+        (idx + 1 + Math.floor(Math.random() * (riddleTooltips.length - 1))) %
+        riddleTooltips.length;
     }
     return idx;
   }
@@ -58,7 +60,9 @@
     initialRiddleIndex = stored !== null ? parseInt(stored, 10) : -1;
   } catch {}
   let currentRiddleIndex = $state(
-    pickNewRiddleIndex(Number.isFinite(initialRiddleIndex) ? initialRiddleIndex : -1)
+    pickNewRiddleIndex(
+      Number.isFinite(initialRiddleIndex) ? initialRiddleIndex : -1
+    )
   );
 
   // Persist whenever riddle changes
@@ -74,7 +78,9 @@
   function rerollRiddle() {
     const next = pickNewRiddleIndex(currentRiddleIndex);
     currentRiddleIndex = next;
-    try { localStorage.setItem(STORAGE_KEY_RIDDLE, String(next)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY_RIDDLE, String(next));
+    } catch {}
   }
 
   let messages = $state([
@@ -603,11 +609,7 @@
 <div class={containerClass}>
   <header class={headerClass}>
     <h1 class={titleClass}>{title}</h1>
-    <p
-      class={subtitleClass}
-      title={hoverRiddle}
-      onmouseenter={rerollRiddle}
-    >
+    <p class={subtitleClass} title={hoverRiddle} onmouseenter={rerollRiddle}>
       {subtitle}
     </p>
   </header>
@@ -673,7 +675,8 @@
 
   /* Subtle, rare pulse to draw attention without distraction */
   @keyframes subtlePulse {
-    0%, 96% {
+    0%,
+    96% {
       text-shadow: none;
     }
     97% {
@@ -689,7 +692,8 @@
 
   /* Shimmer underline used by subtitleClass ::after */
   @keyframes shimmerUnderline {
-    0%, 96% {
+    0%,
+    96% {
       background-position: 0% 0;
       opacity: 0.9;
     }

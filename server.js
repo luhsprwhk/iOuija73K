@@ -27,32 +27,38 @@ app.get('/api/health', (req, res) => {
 app.post('/api/claude', async (req, res) => {
   if (!CLAUDE_API_KEY) {
     return res.status(500).json({
-      error: 'Claude API key not configured. Please set VITE_CLAUDE_API_KEY in your .env file.'
+      error:
+        'Claude API key not configured. Please set VITE_CLAUDE_API_KEY in your .env file.',
     });
   }
 
   try {
-    const { messages, system, model = 'claude-3-5-sonnet-20241022', max_tokens = 1024 } = req.body;
+    const {
+      messages,
+      system,
+      model = 'claude-3-5-sonnet-20241022',
+      max_tokens = 1024,
+    } = req.body;
 
     const response = await fetch(CLAUDE_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': CLAUDE_API_KEY,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
         model,
         max_tokens,
         system,
-        messages
-      })
+        messages,
+      }),
     });
 
     if (!response.ok) {
       const error = await response.json();
       return res.status(response.status).json({
-        error: error.error?.message || response.statusText
+        error: error.error?.message || response.statusText,
       });
     }
 
@@ -61,7 +67,7 @@ app.post('/api/claude', async (req, res) => {
   } catch (error) {
     console.error('Claude API proxy error:', error);
     res.status(500).json({
-      error: error.message || 'Internal server error'
+      error: error.message || 'Internal server error',
     });
   }
 });

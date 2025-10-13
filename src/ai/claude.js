@@ -4,7 +4,8 @@
  */
 
 // Use local proxy server to avoid CORS issues
-const CLAUDE_PROXY_URL = import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
+const CLAUDE_PROXY_URL =
+  import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 
 /**
@@ -18,19 +19,21 @@ export async function callClaude(messages, systemPrompt) {
     const response = await fetch(CLAUDE_PROXY_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
         max_tokens: 1024,
         system: systemPrompt,
-        messages: messages
-      })
+        messages: messages,
+      }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(`Claude API error: ${error.error || response.statusText}`);
+      throw new Error(
+        `Claude API error: ${error.error || response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -48,10 +51,10 @@ export async function callClaude(messages, systemPrompt) {
  */
 export function formatMessagesForClaude(messages) {
   return messages
-    .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-    .map(msg => ({
+    .filter((msg) => msg.role === 'user' || msg.role === 'assistant')
+    .map((msg) => ({
       role: msg.role,
-      content: msg.content
+      content: msg.content,
     }));
 }
 
@@ -69,7 +72,6 @@ export function getClaudeApiKey() {
  * @returns {Promise<boolean>} - True if intent is non-violent, false if violent
  */
 export async function classifyPlayerIntent(userInput) {
-
   const systemPrompt = `You are analyzing player input in a text-based game to determine intent.
 Classify the input as either VIOLENT or NONVIOLENT.
 
@@ -80,23 +82,26 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
 
   try {
     const response = await callClaude(
-      [{ role: "user", content: userInput }],
+      [{ role: 'user', content: userInput }],
       systemPrompt
     );
 
-    return response.trim().toUpperCase() === "NONVIOLENT";
+    return response.trim().toUpperCase() === 'NONVIOLENT';
   } catch (error) {
-    console.error("Intent classification failed, falling back to keywords:", error);
+    console.error(
+      'Intent classification failed, falling back to keywords:',
+      error
+    );
     // Fallback to keyword matching on error
     const lowerInput = userInput.toLowerCase().trim();
     return (
-      lowerInput.includes("talk") ||
-      lowerInput.includes("speak") ||
-      lowerInput.includes("flee") ||
-      lowerInput.includes("run") ||
-      lowerInput.includes("escape") ||
-      lowerInput.includes("help") ||
-      lowerInput.includes("wait")
+      lowerInput.includes('talk') ||
+      lowerInput.includes('speak') ||
+      lowerInput.includes('flee') ||
+      lowerInput.includes('run') ||
+      lowerInput.includes('escape') ||
+      lowerInput.includes('help') ||
+      lowerInput.includes('wait')
     );
   }
 }

@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount } from 'svelte';
 
   let { trigger = false } = $props();
 
@@ -9,14 +9,13 @@
 
   onMount(async () => {
     // Dynamically import canvas-confetti
-    const module = await import("canvas-confetti");
+    const module = await import('canvas-confetti');
     confetti = module.default;
     isReady = true;
   });
 
   $effect(() => {
     if (trigger && isReady && confetti && canvas) {
-      
       // Create confetti instance bound to our canvas
       const myConfetti = confetti.create(canvas, {
         resize: true,
@@ -24,12 +23,18 @@
       });
 
       // Dark red/crimson confetti theme for Paimon
-      const colors = ["#8b0000", "#a00000", "#ff0000", "#c9c9d4", "#666"];
-      
+      const colors = ['#8b0000', '#a00000', '#ff0000', '#c9c9d4', '#666'];
+
       // Fire confetti burst
       const duration = 3000;
       const animationEnd = Date.now() + duration;
-      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000, colors };
+      const defaults = {
+        startVelocity: 30,
+        spread: 360,
+        ticks: 60,
+        zIndex: 1000,
+        colors,
+      };
 
       function randomInRange(min, max) {
         return Math.random() * (max - min) + min;
@@ -43,7 +48,7 @@
         }
 
         const particleCount = 50 * (timeLeft / duration);
-        
+
         // Fire from two points
         myConfetti({
           ...defaults,

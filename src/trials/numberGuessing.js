@@ -24,12 +24,12 @@ export function handleNumberGuess(
     // Successful guess - reveal true name!
     return {
       messages: [
-        { delay: 1000, content: "Ha! Of course." },
+        { delay: 1000, content: 'Ha! Of course.' },
         {
           delay: 2500,
           content: `That's what I do, ${playerName}. I know things. I see things.`,
         },
-        { delay: 4500, content: "Oh, and one more thing..." },
+        { delay: 4500, content: 'Oh, and one more thing...' },
         { delay: 6000, content: "My name isn't Raphael" },
         {
           delay: 7500,
@@ -52,15 +52,15 @@ export function handleNumberGuess(
           delay: 1500,
           content:
             guessAttempt === 0
-              ? "Your number is 37."
+              ? 'Your number is 37.'
               : `Wait... ${currentGuess}?`,
         },
       ];
 
       // Add follow-up for first guess
       if (guessAttempt === 0) {
-        messages.push({ 
-          delay: 3000, 
+        messages.push({
+          delay: 3000,
           content: "I'm right, aren't I?",
           showButtons: true,
         });
@@ -86,7 +86,7 @@ export function handleNumberGuess(
           delay: 2500,
           content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
         },
-        { delay: 4500, content: "Oh, and I should mention..." },
+        { delay: 4500, content: 'Oh, and I should mention...' },
         { delay: 6000, content: "My name isn't Raphael." },
         {
           delay: 7500,
@@ -112,27 +112,25 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 2000,
       content:
-        "Before we begin... let me show you something. A little demonstration of what I can do.",
+        'Before we begin... let me show you something. A little demonstration of what I can do.',
     },
     {
       delay: 3500,
       content:
-        "Think of a number between 1 and 50. Both digits must be odd, and they must be different from each other.",
+        'Think of a number between 1 and 50. Both digits must be odd, and they must be different from each other.',
     },
     {
       delay: 5500,
       content:
-        "Picture it in your mind. Really see it. Like those little birthday candles—light them up, set the whole cake on fire if you want.",
+        'Picture it in your mind. Really see it. Like those little birthday candles—light them up, set the whole cake on fire if you want.',
     },
     {
       delay: 8000,
-      content:
-        "I'll tell you what: why don't you kill all the butterflies?",
+      content: "I'll tell you what: why don't you kill all the butterflies?",
     },
     {
       delay: 11000,
-      content:
-        "lol",
+      content: 'lol',
     },
     {
       delay: 13500,
@@ -141,8 +139,7 @@ export function getNumberTrialIntro(playerName) {
     },
     {
       delay: 16000,
-      content:
-        "Got it? Good. Don't tell me. I already know.",
+      content: "Got it? Good. Don't tell me. I already know.",
       showButton: true,
     },
   ];

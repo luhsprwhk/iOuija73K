@@ -39,16 +39,19 @@ Built with Svelte 5, Panda CSS, and powered by Anthropic's Claude API for dynami
 ## Quick Start
 
 ### 1. Install dependencies
+
 ```bash
 npm install
 ```
 
 ### 2. Configure your environment
+
 ```bash
 cp .env.example .env
 ```
 
 Add your Anthropic Claude API key to `.env`:
+
 ```
 VITE_CLAUDE_API_KEY=your_api_key_here
 ```
@@ -56,13 +59,16 @@ VITE_CLAUDE_API_KEY=your_api_key_here
 Get your API key from: https://console.anthropic.com/
 
 ### 3. Add dark ambient music (optional but recommended)
+
 Place your creepy ambient audio file in `/public/audio/` as:
+
 - `dark-ambient.mp3` (primary)
 - `dark-ambient.ogg` (fallback)
 
 See `/public/audio/README.md` for recommendations and sources.
 
 ### 4. Run the development server
+
 ```bash
 npm run dev:all
 ```
@@ -70,6 +76,7 @@ npm run dev:all
 This starts both the backend proxy server (port 3001) and the frontend dev server (port 5173).
 
 Alternatively, run them separately:
+
 ```bash
 # Terminal 1 - Backend proxy server
 npm run server
@@ -149,4 +156,4 @@ This is a horror experience that uses psychological manipulation tactics. It may
 
 ---
 
-*"One of thousands. Your participation is required."*
+_"One of thousands. Your participation is required."_

@@ -189,7 +189,10 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
           },
           { delay: 13500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
-          { delay: 15500, image: '/src/assets/trials/convent_encounter_2.webp' },
+          {
+            delay: 15500,
+            image: '/src/assets/trials/convent_encounter_2.webp',
+          },
           { delay: 15500, content: ENCOUNTERS[2].intro },
           { delay: 18000, content: ENCOUNTERS[2].glitchIntro },
           { delay: 20000, content: 'What do you do?' },
