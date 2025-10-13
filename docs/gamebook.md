@@ -84,7 +84,7 @@ Player thinks they're playing a heroic text adventure. Reality: they're being ps
 
 **Reality:** A man stands on the gallows, noose around his neck. You must win Hangman to save him.
 
-**Gameplay:** Hangman word game, but the accused is literally standing there waiting to drop
+**Gameplay:** Hangman word game, but the accused is literally standing there waiting to drop. The timer starts when the game starts. You have 50 seconds.
 
 **The Atmosphere:**
 
@@ -95,10 +95,8 @@ Player thinks they're playing a heroic text adventure. Reality: they're being ps
 
 **The Twist:**
 
-- Game is rigged - demon cheats, changes rules, rejects correct answers
-- OR the word is always "GUILTY" / "HANGED" / "CONDEMNED"
-- The trapdoor drops regardless of player performance
-- Maybe you're ONE letter away when it happens
+- The word is always "GUILTY" / "HANGED" / "CONDEMNED"
+- The trapdoor if the player gets it right or if the timer runs out.
 
 **Theme:** False agency / Frontier justice
 

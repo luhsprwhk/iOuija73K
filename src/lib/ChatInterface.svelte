@@ -15,6 +15,15 @@
     CONVENT_STATES,
   } from '../trials/convent.js';
   import {
+    initializeHangmanGame,
+    getHangmanIntro,
+    getHangmanReveal,
+    processGuess,
+    getGameStatus,
+    getTimeRemaining,
+    HANGMAN_STATES,
+  } from '../trials/hangman.js';
+  import {
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
@@ -96,11 +105,13 @@
   let messagesEndRef;
   let inputRef;
   let showInput = $state(false);
-  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, playing
+  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, playing
   let playerName = $state('');
   let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
+  let hangmanState = $state(null); // Will be initialized when hangman trial starts
+  let hangmanTimer = $state(null); // Interval for updating timer display
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -287,13 +298,87 @@
         });
       }
 
-      // If convent is complete, transition to next phase
+      // If convent is complete, transition to hangman trial
       if (conventState === CONVENT_STATES.COMPLETE) {
-        gameState = 'playing';
-        addAssistantMessage('You did well. Really well.', 1000);
+        gameState = 'hangman';
 
-        addAssistantMessage('Ready for the next trial?', 3000);
+        // Get hangman intro messages
+        const hangmanIntro = getHangmanIntro(playerName);
+        hangmanIntro.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, delay, false, image);
+        });
+
+        // Calculate when to initialize game state (after intro completes)
+        const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
+        setTimeout(() => {
+          hangmanState = initializeHangmanGame();
+          // Add initial game status
+          addAssistantMessage(getGameStatus(hangmanState));
+
+          // Start timer countdown that updates the display every second
+          startHangmanTimer();
+        }, lastIntroDelay + 1000);
       }
+    } else if (gameState === 'hangman') {
+      // Handle hangman trial
+      if (isProcessing || !hangmanState) return;
+
+      isProcessing = true;
+
+      // Process the guess
+      const updatedState = processGuess(hangmanState, userInput);
+      hangmanState = updatedState;
+
+      // Show updated game status
+      if (!updatedState.gameOver) {
+        addAssistantMessage(getGameStatus(updatedState));
+      } else {
+        // Game over - stop timer and show reveal
+        stopHangmanTimer();
+
+        // Show reveal messages
+        const revealMessages = getHangmanReveal(
+          playerName,
+          updatedState.won,
+          updatedState.word
+        );
+
+        revealMessages.forEach(({ delay, content, audio }) => {
+          if (audio) {
+            // Play audio
+            setTimeout(() => {
+              const audioEl = new Audio(audio);
+              audioEl.play().catch((err) => {
+                console.error('Failed to play audio:', err);
+              });
+            }, delay);
+          }
+          if (content) {
+            addAssistantMessage(content, delay);
+          }
+        });
+
+        // Calculate last reveal message delay
+        const lastRevealDelay =
+          revealMessages.length > 0
+            ? revealMessages[revealMessages.length - 1].delay
+            : 0;
+
+        // Transition to next phase (white room or playing state)
+        setTimeout(() => {
+          gameState = 'playing';
+          addAssistantMessage(
+            'You did well. Really well.',
+            lastRevealDelay + 2000
+          );
+          addAssistantMessage(
+            'Ready for the next trial?',
+            lastRevealDelay + 4000
+          );
+        }, lastRevealDelay + 1000);
+      }
+
+      isProcessing = false;
     } else {
       // Default state - use Claude API for dynamic responses
       if (isProcessing) return;
@@ -331,6 +416,93 @@
     }
 
     scrollToBottom();
+  }
+
+  /**
+   * Starts the hangman timer that updates display every second
+   */
+  function startHangmanTimer() {
+    if (hangmanTimer) {
+      clearInterval(hangmanTimer);
+    }
+
+    hangmanTimer = setInterval(() => {
+      if (!hangmanState) return;
+
+      const timeRemaining = getTimeRemaining(hangmanState);
+
+      // Check if time expired
+      if (timeRemaining <= 0 && !hangmanState.gameOver) {
+        stopHangmanTimer();
+
+        // Force game over
+        hangmanState = {
+          ...hangmanState,
+          gameOver: true,
+          won: false,
+          timeExpired: true,
+        };
+
+        // Show reveal messages
+        const revealMessages = getHangmanReveal(
+          playerName,
+          false,
+          hangmanState.word
+        );
+
+        revealMessages.forEach(({ delay, content, audio }) => {
+          if (audio) {
+            setTimeout(() => {
+              const audioEl = new Audio(audio);
+              audioEl.play().catch((err) => {
+                console.error('Failed to play audio:', err);
+              });
+            }, delay);
+          }
+          if (content) {
+            addAssistantMessage(content, delay);
+          }
+        });
+
+        const lastRevealDelay =
+          revealMessages.length > 0
+            ? revealMessages[revealMessages.length - 1].delay
+            : 0;
+
+        setTimeout(() => {
+          gameState = 'playing';
+          addAssistantMessage(
+            'You did well. Really well.',
+            lastRevealDelay + 2000
+          );
+          addAssistantMessage(
+            'Ready for the next trial?',
+            lastRevealDelay + 4000
+          );
+        }, lastRevealDelay + 1000);
+      } else if (!hangmanState.gameOver) {
+        // Update the last message with current game status
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage && lastMessage.role === 'assistant') {
+          // Replace the last assistant message with updated status
+          messages[messages.length - 1] = {
+            ...lastMessage,
+            content: getGameStatus(hangmanState),
+          };
+          messages = [...messages];
+        }
+      }
+    }, 1000);
+  }
+
+  /**
+   * Stops the hangman timer
+   */
+  function stopHangmanTimer() {
+    if (hangmanTimer) {
+      clearInterval(hangmanTimer);
+      hangmanTimer = null;
+    }
   }
 
   /**
