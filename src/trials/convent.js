@@ -170,6 +170,7 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       // First encounter - clean fantasy combat
       return {
         messages: [
+          { delay: 1500, audio: '/src/assets/audio/woman_scream_01.mp3' },
           { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
           { delay: 3500, content: ENCOUNTERS[1].glitchHint },
           {
