@@ -200,7 +200,7 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
         messages: [
           { delay: 1500, content: ENCOUNTERS[2].attackSuccess },
           {
-            delay: 1500,
+            delay: 3500,
             image: '/src/assets/trials/convent_encounter_2_success.webp',
           },
           { delay: 4000, content: ENCOUNTERS[2].glitchHint },
@@ -216,6 +216,7 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
         messages: [{ delay: 1000, content: 'Ready for what comes next?' }],
         nextState: CONVENT_STATES.COMPLETE,
         useAPI: false,
+        gameComplete: true,
       };
 
     default:

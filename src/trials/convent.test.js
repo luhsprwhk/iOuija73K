@@ -435,4 +435,59 @@ describe('convent trial', () => {
       expect(typeof result.useAPI).toBe('boolean');
     });
   });
+
+  describe('asset path validation', () => {
+    it('should reference valid image paths with .webp extension', async () => {
+      classifyPlayerIntent.mockResolvedValue(false);
+
+      const result = await handleConventInput(
+        'attack',
+        `${CONVENT_STATES.ENCOUNTER_2}_combat`
+      );
+
+      const imageMsg = result.messages.find(m => m.image);
+      expect(imageMsg).toBeDefined();
+      expect(imageMsg.image).toMatch(/\.webp$/);
+    });
+
+    it('should reference valid audio paths with correct extension', async () => {
+      classifyPlayerIntent.mockResolvedValue(false);
+
+      const result = await handleConventInput(
+        'attack',
+        CONVENT_STATES.ENCOUNTER_1
+      );
+
+      const audioMsg = result.messages.find(m => m.audio);
+      expect(audioMsg).toBeDefined();
+      expect(audioMsg.audio).toMatch(/\.(wav|ogg|mp3)$/);
+    });
+
+    it('should use consistent path format for all images', async () => {
+      classifyPlayerIntent.mockResolvedValue(false);
+
+      const introMessages = getConventIntro('Test');
+      const encounter1Result = await handleConventInput(
+        'attack',
+        CONVENT_STATES.ENCOUNTER_1
+      );
+      const encounter2Result = await handleConventInput(
+        'attack',
+        `${CONVENT_STATES.ENCOUNTER_2}_combat`
+      );
+
+      const allMessages = [
+        ...introMessages,
+        ...encounter1Result.messages,
+        ...encounter2Result.messages,
+      ];
+
+      const imagePaths = allMessages.filter(m => m.image).map(m => m.image);
+
+      imagePaths.forEach(path => {
+        expect(path).toMatch(/^\/src\/assets\//);
+        expect(path).toMatch(/\.webp$/);
+      });
+    });
+  });
 });
