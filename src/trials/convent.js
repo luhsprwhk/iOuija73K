@@ -182,17 +182,13 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
             content:
               'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
           },
-          {
-            delay: 11000,
-            content:
-              "The creature's eyes—all eight of them—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
-          },
-          { delay: 13500, content: 'You press forward into the darkness.' },
+
+          { delay: 11500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
-          { delay: 15500, image: '/src/assets/trials/convent_encounter_2.webp' },
-          { delay: 15500, content: ENCOUNTERS[2].intro },
-          { delay: 18000, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 20000, content: 'What do you do?' },
+          { delay: 13500, image: '/src/assets/trials/convent_encounter_2.webp' },
+          { delay: 13500, content: ENCOUNTERS[2].intro },
+          { delay: 16000, content: ENCOUNTERS[2].glitchIntro },
+          { delay: 18000, content: 'What do you do?' },
         ],
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,
@@ -203,6 +199,10 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       return {
         messages: [
           { delay: 1500, content: ENCOUNTERS[2].attackSuccess },
+          {
+            delay: 1500,
+            image: '/src/assets/trials/convent_encounter_2_success.webp',
+          },
           { delay: 4000, content: ENCOUNTERS[2].glitchHint },
           { delay: 6000, content: 'The convent falls silent.' },
         ],
