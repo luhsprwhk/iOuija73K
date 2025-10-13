@@ -215,27 +215,6 @@
           ? result.messages[result.messages.length - 1].delay
           : 0;
 
-      // If we just transitioned TO encounter 2, auto-show encounter 2 intro
-      if (
-        previousState === CONVENT_STATES.ENCOUNTER_1 &&
-        conventState === CONVENT_STATES.ENCOUNTER_2
-      ) {
-        addAssistantMessage(
-          "Deeper in the convent, you encounter a scorpion-sister. Massive pincers where arms should be, a segmented tail arching over her—its—back.",
-          lastDelay + 2000
-        );
-        addAssistantMessage(
-          "The creature's chitinous armor—no wait—her black habit rustles as she—it—moves toward you.",
-          lastDelay + 4500
-        );
-        addAssistantMessage(
-          "What do you do?",
-          lastDelay + 7000
-        );
-        // Advance state so next input triggers combat resolution
-        conventState = `${CONVENT_STATES.ENCOUNTER_2}_combat`;
-      }
-
       // If we just transitioned TO the reveal state, show reveal messages
       if (
         previousState !== CONVENT_STATES.REVEAL &&

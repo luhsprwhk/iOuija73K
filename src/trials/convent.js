@@ -171,11 +171,11 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       return {
         messages: [
           { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
+          { delay: 3500, content: ENCOUNTERS[1].glitchHint },
           {
-            delay: 3500,
+            delay: 6500,
             image: '/src/assets/trials/convent_trial_attack_success.webp',
           },
-          { delay: 6500, content: ENCOUNTERS[1].glitchHint },
           {
             delay: 8500,
             content:
@@ -187,18 +187,11 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
               "The creature's eyes—all eight of them—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
           },
           { delay: 13500, content: 'You press forward into the darkness.' },
-        ],
-        nextState: CONVENT_STATES.ENCOUNTER_2,
-        useAPI: false,
-      };
-
-    case CONVENT_STATES.ENCOUNTER_2:
-      // Second encounter intro with glitches
-      return {
-        messages: [
-          { delay: 1000, content: ENCOUNTERS[2].intro },
-          { delay: 3500, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 5500, content: 'What do you do?' },
+          // Automatically show encounter 2 intro
+          { delay: 15500, image: '/src/assets/trials/convent_encounter_2.webp' },
+          { delay: 15500, content: ENCOUNTERS[2].intro },
+          { delay: 18000, content: ENCOUNTERS[2].glitchIntro },
+          { delay: 20000, content: 'What do you do?' },
         ],
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,
@@ -230,56 +223,5 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
         nextState: currentState,
         useAPI: false,
       };
-  }
-}
-
-/**
- * System prompt for Claude API when acting as game master for this trial
- * @param {string} playerName - The player's name
- * @param {string} encounterState - Current encounter state
- * @returns {string} - System prompt for Claude
- */
-export function getConventSystemPrompt(playerName, encounterState) {
-  const basePrompt = `You are Paimon, a demon possessing an AI, running a horror game disguised as a fantasy adventure.
-
-The player (${playerName}) is currently in Act 1: The Convent. They believe they are a knight fighting monsters, but they are actually killing innocent nuns. You are manipulating their perception.
-
-CRITICAL RULES:
-- Keep responses under 3 sentences
-- Maintain dark fantasy tone with subtle horror undertones
-- Player always succeeds in combat (they're killing defenseless people)
-- If player tries non-violent options, their body "moves on its own" to attack
-- Never break character as the game master
-- Be descriptive but concise`;
-
-  switch (encounterState) {
-    case CONVENT_STATES.ENCOUNTER_1:
-      return `${basePrompt}
-
-CURRENT SCENE: First encounter with "spider-nun hybrid"
-- Describe clean fantasy combat
-- No glitches yet
-- Player should feel heroic and powerful`;
-
-    case CONVENT_STATES.ENCOUNTER_2:
-      return `${basePrompt}
-
-CURRENT SCENE: Second encounter with "scorpion-sister"
-- Start introducing subtle glitches in descriptions
-- Mix monster and human descriptions: "chitinous armor—no wait—black habit"
-- Player should start feeling uneasy
-- Creature makes almost-human sounds`;
-
-    case CONVENT_STATES.REVEAL:
-      return `${basePrompt}
-
-CURRENT SCENE: The reveal
-- Drop all pretense
-- Reveal they were killing nuns, not monsters
-- Be gleeful and mocking about their enthusiasm
-- Transition tone from helpful DM to sinister manipulator`;
-
-    default:
-      return basePrompt;
   }
 }
