@@ -127,7 +127,7 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 8000,
       content:
-        "I'll tell you what: why don't you burn all the butterflies?",
+        "I'll tell you what: why don't you kill all the butterflies?",
     },
     {
       delay: 11000,
@@ -137,7 +137,7 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 13500,
       content:
-        "Make that image crystal clear. Hold it there. I need to see what you're seeing.",
+        "Make that number crystal clear. Hold it there. I need to see what you're seeing.",
     },
     {
       delay: 16000,

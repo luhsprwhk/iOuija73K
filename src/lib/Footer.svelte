@@ -1,6 +1,5 @@
 <script>
   import { css } from "../../styled-system/css";
-  import PaimonSigil from "./PaimonSigil.svelte";
 
   const footerClass = css({
     display: "flex",
@@ -12,7 +11,7 @@
 </script>
 
 <footer class={footerClass}>
-  <PaimonSigil />
+  A game by <a href="https://luhsprwhk.xyz">Luh Sprwhk</a>
 </footer>
 
 <style>

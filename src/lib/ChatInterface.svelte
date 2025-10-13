@@ -18,7 +18,6 @@
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
-    classifyPlayerIntent,
   } from "../ai/claude.js";
 
   const subtitles = [
@@ -106,6 +105,19 @@
     }
   });
 
+  // Auto-focus input when Paimon asks "What do you do?"
+  $effect(() => {
+    const lastMessage = messages[messages.length - 1];
+    if (
+      showInput &&
+      inputRef &&
+      lastMessage?.role === "assistant" &&
+      lastMessage?.content?.toLowerCase().includes("what do you do")
+    ) {
+      setTimeout(() => inputRef.focus(), 200);
+    }
+  });
+
   function handleOkClick() {
     // Find the message with the button and remove it
     const buttonMessageIndex = messages.findIndex((msg) => msg.showButton);
@@ -156,13 +168,6 @@
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    console.log(
-      "handleSubmit - gameState:",
-      gameState,
-      "conventState:",
-      conventState
-    );
-
     // Add user message
     messages = [
       ...messages,
@@ -192,11 +197,8 @@
 
       isProcessing = true;
       
-      // Classify player intent using Claude
-      const isNonViolent = await classifyPlayerIntent(userInput);
-      
       const previousState = conventState;
-      const result = handleConventInput(userInput, conventState, playerName, isNonViolent);
+      const result = await handleConventInput(userInput, conventState);
 
       // Update convent state
       conventState = result.nextState;
@@ -358,7 +360,7 @@
       );
 
       addAssistantMessage(
-        "The people you'll meet in these trials? They're real. Living their small, oblivious lives in their own little worlds.",
+        "The people you'll meet in these trials are real. Living their small, oblivious lives in their own little worlds.",
         baseDelay + 4500
       );
 

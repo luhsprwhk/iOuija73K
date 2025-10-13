@@ -16,7 +16,6 @@
 
   $effect(() => {
     if (trigger && isReady && confetti && canvas) {
-      console.log("Confetti triggered!");
       
       // Create confetti instance bound to our canvas
       const myConfetti = confetti.create(canvas, {

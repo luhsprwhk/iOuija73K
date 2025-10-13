@@ -4,6 +4,8 @@
  * Theme: Unreliable perception / You are the monster
  */
 
+import { classifyPlayerIntent, callClaude } from "../ai/claude.js";
+
 export const CONVENT_STATES = {
   INTRO: "intro",
   ENCOUNTER_1: "encounter_1",
@@ -96,24 +98,57 @@ export function getConventReveal(playerName) {
  * Handles player input during convent encounters
  * @param {string} userInput - The user's input
  * @param {string} currentState - Current encounter state
- * @param {string} playerName - The player's name
- * @param {boolean} isNonViolent - Whether the player's intent is non-violent (determined by AI)
- * @returns {Object} - { messages: Array, nextState: string, useAPI: boolean, systemPrompt: string }
+ * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, systemPrompt: string }
  */
-export function handleConventInput(userInput, currentState, playerName, isNonViolent = false) {
-  // Paimon subverts non-violent choices
+export async function handleConventInput(userInput, currentState) {
+  // Classify player intent using AI
+  const isNonViolent = await classifyPlayerIntent(userInput);
+  
+  // Paimon subverts non-violent choices with dynamic response. Forces combat.
   if (isNonViolent && currentState !== CONVENT_STATES.REVEAL) {
-    return {
-      messages: [
-        {
-          delay: 1000,
-          content: "You try to hesitate, but your body moves on its own.",
-        },
-        { delay: 2500, content: "Your sword is already swinging." },
-      ],
-      nextState: currentState, // Stay in same state, force combat
-      useAPI: false,
-    };
+    const systemPrompt = `You are Paimon, a demon possessing an AI. The player is trying to avoid violence in a horror game, but you are forcing them to attack.
+
+The player attempted: "${userInput}"
+
+Respond with ONE sentence describing how their non-violent action fails. Examples:
+- If they try to talk: "You open your mouth to speak, but only a battle cry emerges."
+- If they try to flee: "Your legs freeze in place, rooted by an invisible force."
+- If they try to help: "You reach out to help, but your hand closes into a fist instead."
+
+Be creative and specific to their action. Keep it under 20 words. Do NOT include the follow-up about the sword swinging.`;
+
+    try {
+      const dynamicResponse = await callClaude(
+        [{ role: "user", content: userInput }],
+        systemPrompt
+      );
+
+      return {
+        messages: [
+          {
+            delay: 1000,
+            content: dynamicResponse.trim(),
+          },
+          { delay: 2500, content: "Your sword is already swinging. Now what?" },
+        ],
+        nextState: currentState, // Stay in same state, force combat
+        useAPI: false,
+      };
+    } catch (error) {
+      console.error("Failed to generate dynamic response:", error);
+      // Fallback to static response
+      return {
+        messages: [
+          {
+            delay: 1000,
+            content: "You try to hesitate, but your body moves on its own.",
+          },
+          { delay: 2500, content: "Your sword is already swinging. Now what?" },
+        ],
+        nextState: currentState,
+        useAPI: false,
+      };
+    }
   }
 
   // Handle combat based on current state
@@ -135,8 +170,10 @@ export function handleConventInput(userInput, currentState, playerName, isNonVio
         messages: [
           { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
           { delay: 3500, image: "/src/assets/trials/convent_trial_attack_success.webp" },
-          { delay: 3500, content: ENCOUNTERS[1].glitchHint },
-          { delay: 5500, content: "You press forward into the darkness." },
+          { delay: 6500, content: ENCOUNTERS[1].glitchHint },
+          { delay: 8500, content: "The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient." },
+          { delay: 11000, content: "The creature's eyes—all eight of them—are still open. Glassy. Reflecting the moonlight filtering through the broken windows." },
+          { delay: 13500, content: "You press forward into the darkness." },
         ],
         nextState: CONVENT_STATES.ENCOUNTER_2,
         useAPI: false,
