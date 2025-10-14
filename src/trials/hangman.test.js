@@ -22,7 +22,7 @@ describe('Hangman Trial', () => {
       expect(['GUILTY', 'HANGED', 'CONDEMNED']).toContain(game.word);
       expect(game.guessedLetters).toEqual([]);
       expect(game.wrongGuesses).toBe(0);
-      expect(game.maxWrongGuesses).toBe(6);
+      expect(game.maxWrongGuesses).toBe(3);
       expect(game.gameOver).toBe(false);
       expect(game.won).toBe(false);
       expect(game.startTime).toBeDefined();
