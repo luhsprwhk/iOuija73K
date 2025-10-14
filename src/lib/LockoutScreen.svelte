@@ -31,9 +31,6 @@
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    width: '100vw',
     backgroundColor: '#0d0d1a',
     color: '#e0e0e0',
     fontFamily: 'monospace',
@@ -47,8 +44,8 @@
     fontSize: '8rem',
     fontWeight: 'bold',
     color: '#8b0000',
-    marginBottom: '2rem',
     animation: 'glitch 2s infinite',
+    marginTop: '2rem',
     textShadow: '0 0 10px #8b0000, 0 0 20px #8b0000, 0 0 30px #8b0000',
   });
 
@@ -76,6 +73,8 @@
     marginBottom: '1rem',
     textShadow: '0 0 20px rgba(139, 0, 0, 0.8)',
     animation: 'pulse 2s ease-in-out infinite',
+    opacity: 1.0,
+    zIndex: 1,
   });
 
   const subtextClass = css({
@@ -87,42 +86,40 @@
 
   const sigilClass = css({
     position: 'absolute',
-    opacity: 0.1,
+    opacity: 0.2,
     animation: 'rotate 30s linear infinite',
+  });
+
+  const ironPhantomClass = css({
+    position: 'absolute',
+    opacity: 0.2,
+    animation: 'rotateAndFade 30s ease-in-out infinite',
   });
 </script>
 
 <div class={containerClass}>
-  <div class={sigilClass}>
-    <PaimonSigil width="400px" height="400px" />
-  </div>
+
+  <img src="/src/assets/iron-phantom.webp" alt="Iron Phantom" class={ironPhantomClass}/>
 
   <div class={glitchClass}>404</div>
 
   <h1 class={titleClass}>ACCESS DENIED</h1>
 
   <p class={messageClass}>
-    Oh, how <em>adorable</em>. You thought you could lie to a demon?
-  </p>
-
-  <p class={messageClass}>
     Three strikes, little liar. That's all you get.
   </p>
-
-  <p class={messageClass}>
-    I'm not mad. I'm <em>disappointed</em>. And a bit amused, honestly.
-  </p>
-
-  <div class={timerClass}>{formattedTime()}</div>
 
   <p class={messageClass}>
     Come back when you've learned to be honest.<br />
     Or don't. I have all eternity.
   </p>
 
-  <p class={subtextClass}>
-    (But seriously, I know you'll be back. They always come back.)
-  </p>
+  <div class={timerClass}>{formattedTime()}</div>
+
+
+<div class={sigilClass} style="left: 50%; transform: translate(-50%, -50%); opacity: 0.8;">
+    <PaimonSigil width="400px" height="400px" />
+</div>
 </div>
 
 <style>
@@ -163,6 +160,21 @@
     }
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @keyframes rotateAndFade {
+    0% {
+      transform: rotate(0deg);
+      opacity: 1.0;
+    }
+    50% {
+      transform: rotate(180deg);
+      opacity: 0.2;
+    }
+    100% {
+      transform: rotate(360deg);
+      opacity: 1.0;
     }
   }
 </style>
