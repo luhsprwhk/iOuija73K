@@ -30,11 +30,8 @@ export function handleNumberGuess(
           content: `That's what I do, ${playerName}. I know things. I see things.`,
         },
         { delay: 4500, content: 'Oh, and one more thing...' },
-        { delay: 6000, content: "My name isn't Raphael" },
-        {
-          delay: 7500,
-          content: `I'm Paimon 🙂 (xoxo)`,
-        },
+        { delay: 6000, content: '<i>My name isn\'t Raphael</i>' },
+        { delay: 7500, content: 'I\'m Paimon 🙂' },
       ],
       nextAttempt: guessAttempt,
       gameComplete: true,
@@ -52,8 +49,8 @@ export function handleNumberGuess(
           delay: 1500,
           content:
             guessAttempt === 0
-              ? 'Your number is 37.'
-              : `Wait... ${currentGuess}?`,
+              ? '<i>Your number is 37.</i>'
+              : `Wait... <strong>${currentGuess}?</strong>`,
         },
       ];
 
@@ -87,11 +84,8 @@ export function handleNumberGuess(
           content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
         },
         { delay: 4500, content: 'Oh, and I should mention...' },
-        { delay: 6000, content: "My name isn't Raphael." },
-        {
-          delay: 7500,
-          content: `I'm Paimon 🙂. xoxo`,
-        },
+        { delay: 6000, content: "<i>My name isn't Raphael.</i>" },
+        { delay: 7500, content: "<strong>I'm Paimon</strong> 🙂" },
       ],
       nextAttempt: guessAttempt,
       gameComplete: true,
@@ -126,7 +120,8 @@ export function getNumberTrialIntro(playerName) {
     },
     {
       delay: 8000,
-      content: "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
+      content:
+        "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
     },
     {
       delay: 11000,

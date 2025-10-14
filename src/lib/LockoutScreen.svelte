@@ -98,16 +98,17 @@
 </script>
 
 <div class={containerClass}>
-
-  <img src="/src/assets/iron-phantom.webp" alt="Iron Phantom" class={ironPhantomClass}/>
+  <img
+    src="/src/assets/iron-phantom.webp"
+    alt="Iron Phantom"
+    class={ironPhantomClass}
+  />
 
   <div class={glitchClass}>404</div>
 
   <h1 class={titleClass}>ACCESS DENIED</h1>
 
-  <p class={messageClass}>
-    Three strikes, little liar. That's all you get.
-  </p>
+  <p class={messageClass}>Three strikes, little liar. That's all you get.</p>
 
   <p class={messageClass}>
     Come back when you've learned to be honest.<br />
@@ -116,10 +117,12 @@
 
   <div class={timerClass}>{formattedTime()}</div>
 
-
-<div class={sigilClass} style="left: 50%; transform: translate(-50%, -50%); opacity: 0.8;">
+  <div
+    class={sigilClass}
+    style="left: 50%; transform: translate(-50%, -50%); opacity: 0.8;"
+  >
     <PaimonSigil width="400px" height="400px" />
-</div>
+  </div>
 </div>
 
 <style>
@@ -166,7 +169,7 @@
   @keyframes rotateAndFade {
     0% {
       transform: rotate(0deg);
-      opacity: 1.0;
+      opacity: 1;
     }
     50% {
       transform: rotate(180deg);
@@ -174,7 +177,7 @@
     }
     100% {
       transform: rotate(360deg);
-      opacity: 1.0;
+      opacity: 1;
     }
   }
 </style>

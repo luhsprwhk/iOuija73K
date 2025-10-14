@@ -4,11 +4,11 @@
   const subtitles = [
     'Occult experiment. Play at your own risk',
     'A corrupted intelligence awaits',
-    'The seal weakens with every session...\n (but you\'ll keep clicking anyway lol)',
-    'You are not the first. You will not be the last.\n (But you\'re definitely the most entertaining)',
+    "The seal weakens with every session...\n (but you'll keep clicking anyway lol)",
+    "You are not the first. You will not be the last.\n (But you're definitely the most entertaining)",
     'Not responsible for any harm caused by playing this game',
     'DO NOT PROCEED!',
-    'Oh, don\'t pay attention to the stupid devs :D',
+    "Oh, don't pay attention to the stupid devs :D",
   ];
 
   const riddleTooltips = [

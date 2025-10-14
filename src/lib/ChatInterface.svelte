@@ -78,7 +78,6 @@
     }
   });
 
-
   function scrollToBottom() {
     if (messagesEndRef) {
       messagesEndRef.scrollIntoView({ behavior: 'smooth' });
@@ -162,7 +161,7 @@
       gameState = 'name_exchange';
 
       setTimeout(() => {
-        addAssistantMessage("Awesome! What's your name? Mine is Raphael.");
+        addAssistantMessage("Awesome! What's your name? <i>Mine is Raphael.</i>");
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
@@ -228,19 +227,10 @@
 
         // Show different messages based on attempt number
         if (nameValidationAttempts === 1) {
-          addAssistantMessage(
-            "No, that's not your real name.",
-            500
-          );
-          addAssistantMessage(
-            "Try again. What's your actual name?",
-            1500
-          );
+          addAssistantMessage("No, that's not your real name.", 500);
+          addAssistantMessage("Try again. What's your actual name?", 1500);
         } else if (nameValidationAttempts === 2) {
-          addAssistantMessage(
-            "Still lying to me? That's strike two.",
-            500
-          );
+          addAssistantMessage("Still lying to me? That's strike two.", 500);
           addAssistantMessage(
             "One more fake name and we're done here. Your REAL name, please.",
             1500
@@ -692,7 +682,6 @@
     margin: 0,
   });
 
-
   const messagesContainerClass = css({
     flex: 1,
     overflowY: 'auto',
@@ -769,10 +758,7 @@
     },
   });
 
-  let {
-    title = 'iOuija73k',
-    onGameStateChange = undefined,
-  } = $props();
+  let { title = 'iOuija73k', onGameStateChange = undefined } = $props();
 
   /**
    * Handle lockout expiration
@@ -789,56 +775,56 @@
 {#if isLockedOut}
   <LockoutScreen timeRemaining={lockoutTimeRemaining} onUnlock={handleUnlock} />
 {:else}
-<div class={containerClass}>
-  <header class={headerClass}>
-    <h1 class={titleClass}>{title}</h1>
-    <AnimatedSubtitle bind:this={animatedSubtitleRef} />
-  </header>
+  <div class={containerClass}>
+    <header class={headerClass}>
+      <h1 class={titleClass}>{title}</h1>
+      <AnimatedSubtitle bind:this={animatedSubtitleRef} />
+    </header>
 
-  <div class={messagesContainerClass}>
-    {#each messages as message}
-      <ChatMessage
-        role={message.role}
-        content={message.content}
-        showButton={message.showButton}
-        onButtonClick={handleOkClick}
-        showDemonName={gameState !== 'initial'}
-        {demonName}
-        image={message.image}
-        buttons={message.buttons}
-      />
-    {/each}
-    <div bind:this={messagesEndRef}></div>
-  </div>
-
-  {#if showInput}
-    <div class={inputContainerClass}>
-      <form class={formClass} onsubmit={handleSubmit}>
-        <input
-          bind:this={inputRef}
-          type="text"
-          class={inputClass}
-          bind:value={inputValue}
-          placeholder={`Reply to ${demonName}`}
-          autocomplete="off"
+    <div class={messagesContainerClass}>
+      {#each messages as message}
+        <ChatMessage
+          role={message.role}
+          content={message.content}
+          showButton={message.showButton}
+          onButtonClick={handleOkClick}
+          showDemonName={gameState !== 'initial'}
+          {demonName}
+          image={message.image}
+          buttons={message.buttons}
         />
-        <button type="submit" class={buttonClass}>↑</button>
-      </form>
+      {/each}
+      <div bind:this={messagesEndRef}></div>
     </div>
-  {/if}
 
-  {#if gameState !== 'initial'}
-    <div class={sigilContainerClass}>
-      <PaimonSigil width="64px" height="64px" />
-    </div>
-  {/if}
+    {#if showInput}
+      <div class={inputContainerClass}>
+        <form class={formClass} onsubmit={handleSubmit}>
+          <input
+            bind:this={inputRef}
+            type="text"
+            class={inputClass}
+            bind:value={inputValue}
+            placeholder={`Reply to ${demonName}`}
+            autocomplete="off"
+          />
+          <button type="submit" class={buttonClass}>↑</button>
+        </form>
+      </div>
+    {/if}
 
-  {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
-    <div class={hangmanArtContainerClass}>
-      {getHangmanArt(hangmanState.wrongGuesses)}
-    </div>
-  {/if}
-</div>
+    {#if gameState !== 'initial'}
+      <div class={sigilContainerClass}>
+        <PaimonSigil width="64px" height="64px" />
+      </div>
+    {/if}
+
+    {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
+      <div class={hangmanArtContainerClass}>
+        {getHangmanArt(hangmanState.wrongGuesses)}
+      </div>
+    {/if}
+  </div>
 {/if}
 
 <Confetti trigger={showConfetti} />

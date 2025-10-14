@@ -65,7 +65,8 @@ export function getHangmanIntro(playerName) {
     },
     {
       delay: 21000,
-      content: 'The game is <strong>Hangman</strong>. Guess the word. Save your client.',
+      content:
+        'The game is <strong>Hangman</strong>. Guess the word. Save your client.',
     },
     {
       delay: 23000,
