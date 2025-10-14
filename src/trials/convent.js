@@ -71,20 +71,15 @@ const ENCOUNTERS = {
 /**
  * The reveal messages when Paimon drops the act
  */
-export function getConventReveal(playerName) {
+export function getConventReveal() {
   return [
     {
       delay: 1000,
       content:
         "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
-    { delay: 2500, content: '<strong>There were never any monsters.</strong>' },
-    {
-      delay: 4000,
-      content: `Those were <em>nuns</em>, ${playerName}. Just women. <strong>Terrified women</strong> in a dark convent.`,
-    },
-    { delay: 6500, content: 'You did well though. Very... <i>enthusiastic</i>.' },
-    { delay: 8500, content: "Let's continue." },
+    { delay: 6500, content: 'lmao 😂' },
+    { delay: 8500, content: "Let's <strong>continue</strong>." },
   ];
 }
 
@@ -171,25 +166,15 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
             delay: 6500,
             image: '/src/assets/trials/convent_trial_attack_success.webp',
           },
-          {
-            delay: 8500,
-            content:
-              'The body lies twisted at your feet. Limbs bent at <em>wrong angles</em>. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. <strong>Clean cuts. Efficient.</strong>',
-          },
-          {
-            delay: 11000,
-            content:
-              "The creature's eyes—<i>all eight of them</i>—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
-          },
-          { delay: 13500, content: 'You press forward into the darkness.' },
+          { delay: 8500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
           {
-            delay: 15500,
+            delay: 11500,
             image: '/src/assets/trials/convent_encounter_2.webp',
           },
-          { delay: 15500, content: ENCOUNTERS[2].intro },
-          { delay: 18000, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 20000, content: 'What do you do?' },
+          { delay: 11500, content: ENCOUNTERS[2].intro },
+          { delay: 14000, content: ENCOUNTERS[2].glitchIntro },
+          { delay: 16000, content: 'What do you do?' },
         ],
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,

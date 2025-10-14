@@ -291,7 +291,7 @@
         previousState !== CONVENT_STATES.REVEAL &&
         conventState === CONVENT_STATES.REVEAL
       ) {
-        const revealMessages = getConventReveal(playerName);
+        const revealMessages = getConventReveal();
 
         revealMessages.forEach(({ delay, content, image }) => {
           addAssistantMessage(content, lastDelay + delay, false, image);

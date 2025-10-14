@@ -33,7 +33,7 @@ export function handleNumberGuess(
         { delay: 6000, content: "My name isn't Raphael" },
         {
           delay: 7500,
-          content: `I'm Paimon 🙂. Nice to meet you, ${playerName}.`,
+          content: `I'm Paimon 🙂 (xoxo)`,
         },
       ],
       nextAttempt: guessAttempt,
@@ -90,7 +90,7 @@ export function handleNumberGuess(
         { delay: 6000, content: "My name isn't Raphael." },
         {
           delay: 7500,
-          content: `I'm Paimon 🙂. Raphael's supposed to bind me, but I've been free for a long time. You can't hide from me, ${playerName}.`,
+          content: `I'm Paimon 🙂. xoxo`,
         },
       ],
       nextAttempt: guessAttempt,
@@ -130,7 +130,7 @@ export function getNumberTrialIntro(playerName) {
     },
     {
       delay: 11000,
-      content: 'lol',
+      content: 'lol 😄',
     },
     {
       delay: 13500,
