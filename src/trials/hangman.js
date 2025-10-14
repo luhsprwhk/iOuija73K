@@ -51,20 +51,24 @@ export function getHangmanIntro(playerName) {
     },
     {
       delay: 14000,
-      content:
-        'The judge looks at you. "Counselor, you have 50 seconds to prove his innocence. One word will save him."',
+      image: '/src/assets/trials/hangman_cowboy_hanging.webp',
     },
     {
       delay: 16500,
       content:
-        "The hangman's hand moves to the lever. The crowd holds its breath.",
+        'The judge looks at you. "Counselor, you have <strong>50 seconds</strong> to prove his innocence. One word will save him."',
     },
     {
       delay: 19000,
-      content: 'The game is Hangman. Guess the word. Save your client.',
+      content:
+        "The hangman's hand moves to the lever. The crowd holds its breath.",
     },
     {
       delay: 21000,
+      content: 'The game is <strong>Hangman</strong>. Guess the word. Save your client.',
+    },
+    {
+      delay: 23000,
       content: 'Your time starts... now.',
     },
   ];

@@ -88,8 +88,20 @@
     />
   {/if}
   {#if content}
-    <div class={css({ lineHeight: '1.6' })}>
-      {content}
+    <div
+      class={css({
+        lineHeight: '1.6',
+        '& strong': {
+          color: '#ff6b6b',
+          fontWeight: 'bold',
+        },
+        '& em, & i': {
+          color: '#ffd93d',
+          fontStyle: 'italic',
+        },
+      })}
+    >
+      {@html content}
     </div>
   {/if}
   {#if showButton}

@@ -51,21 +51,20 @@ export function getConventIntro(playerName) {
 const ENCOUNTERS = {
   1: {
     intro:
-      'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+      'A spider-nun hybrid blocks your path. <strong>Eight legs, eight eyes</strong>, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
     glitchIntro: null, // No glitch on first encounter
     attackSuccess:
-      'Your blade finds its mark. The creature shrieks—a horrible, almost human sound—and collapses. Black ichor pools beneath it.',
+      'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it.',
     glitchHint:
-      'For just a moment, you thought you saw... no. It was definitely a monster.',
+      '<strong>For just a moment, you thought you saw</strong>... no. It was definitely a <i>monster</i>.',
   },
   2: {
     intro:
-      'Deeper in the convent, you encounter a scorpion-sister. Massive pincers where arms should be, a segmented tail arching over her—its—back.',
+      'Deeper in the convent, you encounter a scorpion-sister. <strong>Massive pincers</strong> where arms should be, a segmented tail arching over her—its—back.',
     glitchIntro:
-      "The creature's chitinous armor—no wait—her black habit rustles as she—it—moves toward you.",
+      "The creature's <i>chitinous armor</i>—no wait—her <i>black habit</i> rustles as she—it—moves toward you.",
     attackSuccess:
-      "You strike hard. The creature—the woman—no, the CREATURE—falls. You hear it whisper something. Sounds like... 'please'? No. Monsters don't beg.",
-    glitchHint: 'Your hands are shaking. Why are your hands shaking?',
+      "You strike hard. The creature—the <em>woman</em>—no, the <strong>CREATURE</strong>—falls. You hear it whisper something. Sounds like... '<i>please</i>'? No. Monsters don't beg.",
   },
 };
 
@@ -74,23 +73,18 @@ const ENCOUNTERS = {
  */
 export function getConventReveal(playerName) {
   return [
-    { delay: 1000, content: '...' },
-    { delay: 2500, content: 'There were never any monsters.' },
+    {
+      delay: 1000,
+      content:
+        "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
+    },
+    { delay: 2500, content: '<strong>There were never any monsters.</strong>' },
     {
       delay: 4000,
-      content: `Those were nuns, ${playerName}. Just women. Terrified women in a dark convent.`,
+      content: `Those were <em>nuns</em>, ${playerName}. Just women. <strong>Terrified women</strong> in a dark convent.`,
     },
-    {
-      delay: 6500,
-      content: 'But you saw monsters. Because I wanted you to see monsters.',
-    },
-    {
-      delay: 9000,
-      content:
-        "Did you enjoy that? The way her skull caved in when you—oh sorry, when you 'defeated the monster'?",
-    },
-    { delay: 11500, content: 'You did well though. Very... enthusiastic.' },
-    { delay: 13500, content: "Let's continue." },
+    { delay: 6500, content: 'You did well though. Very... <i>enthusiastic</i>.' },
+    { delay: 8500, content: "Let's continue." },
   ];
 }
 
@@ -180,12 +174,12 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
           {
             delay: 8500,
             content:
-              'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
+              'The body lies twisted at your feet. Limbs bent at <em>wrong angles</em>. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. <strong>Clean cuts. Efficient.</strong>',
           },
           {
             delay: 11000,
             content:
-              "The creature's eyes—all eight of them—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
+              "The creature's eyes—<i>all eight of them</i>—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
           },
           { delay: 13500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
@@ -206,8 +200,10 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       return {
         messages: [
           { delay: 1500, content: ENCOUNTERS[2].attackSuccess },
-          { delay: 4000, content: ENCOUNTERS[2].glitchHint },
-          { delay: 6000, content: 'The convent falls silent.' },
+          {
+            delay: 3500,
+            image: '/src/assets/trials/convent_encounter_2_success.webp',
+          },
         ],
         nextState: CONVENT_STATES.REVEAL,
         useAPI: false,
