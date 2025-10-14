@@ -3,7 +3,14 @@
   import ChatMessage from './ChatMessage.svelte';
   import PaimonSigil from './PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
+  import LockoutScreen from './LockoutScreen.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
+  import { validateName } from './helpers/validateName';
+  import {
+    checkLockout,
+    setLockout,
+    clearLockout,
+  } from './helpers/lockoutManager';
   import {
     handleNumberGuess,
     getNumberTrialIntro,
@@ -117,6 +124,18 @@
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
   let showConfetti = $state(false);
+  let nameValidationAttempts = $state(0);
+  let isLockedOut = $state(false);
+  let lockoutTimeRemaining = $state(0);
+
+  // Check for existing lockout on mount
+  $effect(() => {
+    const lockoutStatus = checkLockout();
+    if (lockoutStatus.isLockedOut) {
+      isLockedOut = true;
+      lockoutTimeRemaining = lockoutStatus.remainingTime;
+    }
+  });
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -250,6 +269,44 @@
 
     // Handle name exchange
     if (gameState === 'name_exchange') {
+      // Validate the name
+      if (!validateName(userInput)) {
+        // Name validation failed
+        nameValidationAttempts += 1;
+
+        if (nameValidationAttempts >= 3) {
+          // Three strikes - lock them out
+          setLockout();
+          isLockedOut = true;
+          const lockoutStatus = checkLockout();
+          lockoutTimeRemaining = lockoutStatus.remainingTime;
+          return;
+        }
+
+        // Show different messages based on attempt number
+        if (nameValidationAttempts === 1) {
+          addAssistantMessage(
+            "No, that's not your real name.",
+            500
+          );
+          addAssistantMessage(
+            "Try again. What's your actual name?",
+            1500
+          );
+        } else if (nameValidationAttempts === 2) {
+          addAssistantMessage(
+            "Still lying to me? That's strike two.",
+            500
+          );
+          addAssistantMessage(
+            "One more fake name and we're done here. Your REAL name, please.",
+            1500
+          );
+        }
+        return; // Don't proceed, keep asking for name
+      }
+
+      // Name is valid, proceed
       playerName = userInput;
       gameState = 'number_game_intro';
       showInput = false; // Hide input until button is clicked
@@ -797,8 +854,22 @@
     subtitle = randomSubtitle,
     onGameStateChange = undefined,
   } = $props();
+
+  /**
+   * Handle lockout expiration
+   */
+  function handleUnlock() {
+    clearLockout();
+    isLockedOut = false;
+    nameValidationAttempts = 0;
+    // Reload the page to start fresh
+    window.location.reload();
+  }
 </script>
 
+{#if isLockedOut}
+  <LockoutScreen timeRemaining={lockoutTimeRemaining} onUnlock={handleUnlock} />
+{:else}
 <div class={containerClass}>
   <header class={headerClass}>
     <h1 class={titleClass}>{title}</h1>
@@ -851,6 +922,7 @@
     </div>
   {/if}
 </div>
+{/if}
 
 <Confetti trigger={showConfetti} />
 
