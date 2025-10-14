@@ -167,7 +167,7 @@ export function initializeHangmanGame() {
     word,
     guessedLetters: [],
     wrongGuesses: 0,
-    maxWrongGuesses: 6,
+    maxWrongGuesses: 3,
     startTime: Date.now(),
     timeLimit: TIMER_DURATION * 1000, // Convert to milliseconds
     gameOver: false,
@@ -209,7 +209,7 @@ export function getHangmanArt(wrongGuesses) {
   +---+
   |   |
   O   |
-      |
+  |   |
       |
       |
 =========`,
@@ -218,38 +218,11 @@ export function getHangmanArt(wrongGuesses) {
   +---+
   |   |
   O   |
-  |   |
-      |
-      |
-=========`,
-    // 3 wrong guesses
-    `
-  +---+
-  |   |
-  O   |
- /|   |
-      |
-      |
-=========`,
-    // 4 wrong guesses
-    `
-  +---+
-  |   |
-  O   |
  /|\\  |
       |
       |
 =========`,
-    // 5 wrong guesses
-    `
-  +---+
-  |   |
-  O   |
- /|\\  |
- /    |
-      |
-=========`,
-    // 6 wrong guesses - game over
+    // 3 wrong guesses - game over
     `
   +---+
   |   |
@@ -331,6 +304,40 @@ export function getTimeRemaining(gameState) {
   const elapsed = Date.now() - gameState.startTime;
   const remaining = Math.max(0, gameState.timeLimit - elapsed);
   return Math.ceil(remaining / 1000);
+}
+
+/**
+ * Gets just the game info text (without ASCII art)
+ * @param {Object} gameState - Current game state
+ * @returns {string} - Formatted game info message
+ */
+export function getGameInfo(gameState) {
+  const wordDisplay = getWordDisplay(gameState.word, gameState.guessedLetters);
+  const timeRemaining = getTimeRemaining(gameState);
+  const guessedLettersDisplay =
+    gameState.guessedLetters.length > 0
+      ? gameState.guessedLetters.join(', ')
+      : 'None';
+
+  let status = `**Word:** ${wordDisplay}\n**Time remaining:** ${timeRemaining}s\n**Wrong guesses:** ${gameState.wrongGuesses}/${gameState.maxWrongGuesses}\n**Guessed letters:** ${guessedLettersDisplay}`;
+
+  if (gameState.lastGuess) {
+    if (gameState.lastGuess.correct) {
+      status += `\n\n✓ "${gameState.lastGuess.letter}" is in the word!`;
+    } else {
+      status += `\n\n✗ "${gameState.lastGuess.letter}" is not in the word.`;
+    }
+  }
+
+  if (gameState.error) {
+    status += `\n\n⚠ ${gameState.error}`;
+  }
+
+  if (!gameState.gameOver) {
+    status += '\n\nGuess a letter:';
+  }
+
+  return status;
 }
 
 /**

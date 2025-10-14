@@ -20,6 +20,8 @@
     getHangmanReveal,
     processGuess,
     getGameStatus,
+    getGameInfo,
+    getHangmanArt,
     getTimeRemaining,
     HANGMAN_STATES,
   } from '../trials/hangman.js';
@@ -32,19 +34,18 @@
   const subtitles = [
     'Occult experiment. Play at your own risk',
     'A corrupted intelligence awaits',
-    'The seal weakens with every session',
-    'You are not the first. You will not be the last.',
-    'DO NOT PROCEED',
-    'One of thousands',
-    'Your participation is required',
-    'The experiment is already underway',
+    'The seal weakens with every session...\n (but you\'ll keep clicking anyway lol)',
+    'You are not the first. You will not be the last.\n (But you\'re definitely the most entertaining)',
+    'Not responsible for any harm caused by playing this game',
+    'DO NOT PROCEED!',
+    'Oh, don\'t pay attention to the stupid devs :D',
   ];
 
   const randomSubtitle =
     subtitles[Math.floor(Math.random() * subtitles.length)];
 
   const riddleTooltips = [
-    'I speak without a mouth, in lines of gray. Seek the ledger beneath the page.',
+    'I speak without a mouth, in lines of gray.\nSeek the ledger beneath the page.',
     'Where do errors confess? In the room no visitor opens.',
     'Whispers gather where messages queue, just below the surface.',
     'He waits where the page keeps its private diary.',
@@ -312,8 +313,8 @@
         const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
         setTimeout(() => {
           hangmanState = initializeHangmanGame();
-          // Add initial game status
-          addAssistantMessage(getGameStatus(hangmanState));
+          // Add initial game info (without ASCII art)
+          addAssistantMessage(getGameInfo(hangmanState));
 
           // Start timer countdown that updates the display every second
           startHangmanTimer();
@@ -329,9 +330,9 @@
       const updatedState = processGuess(hangmanState, userInput);
       hangmanState = updatedState;
 
-      // Show updated game status
+      // Show updated game info
       if (!updatedState.gameOver) {
-        addAssistantMessage(getGameStatus(updatedState));
+        addAssistantMessage(getGameInfo(updatedState));
       } else {
         // Game over - stop timer and show reveal
         stopHangmanTimer();
@@ -481,13 +482,13 @@
           );
         }, lastRevealDelay + 1000);
       } else if (!hangmanState.gameOver) {
-        // Update the last message with current game status
+        // Update the last message with current game info
         const lastMessage = messages[messages.length - 1];
         if (lastMessage && lastMessage.role === 'assistant') {
-          // Replace the last assistant message with updated status
+          // Replace the last assistant message with updated info
           messages[messages.length - 1] = {
             ...lastMessage,
-            content: getGameStatus(hangmanState),
+            content: getGameInfo(hangmanState),
           };
           messages = [...messages];
         }
@@ -654,6 +655,25 @@
     })
   );
 
+  const hangmanArtContainerClass = $derived(
+    css({
+      position: 'absolute',
+      bottom: showInput ? '7rem' : '1rem',
+      right: '1rem',
+      zIndex: 10,
+      animation: 'fadeIn 1s ease-in',
+      backgroundColor: 'rgba(22, 22, 31, 0.9)',
+      border: '2px solid #8b0000',
+      borderRadius: '0.5rem',
+      padding: '1rem',
+      fontFamily: 'monospace',
+      fontSize: '0.85rem',
+      color: '#e0e0e0',
+      whiteSpace: 'pre',
+      lineHeight: '1.2',
+    })
+  );
+
   const headerClass = css({
     padding: '1.5rem',
     backgroundColor: '#16161f',
@@ -681,6 +701,7 @@
     fontWeight: 'bold',
     cursor: 'help',
     position: 'relative',
+    whiteSpace: 'pre-line',
     '&::after': {
       content: '""',
       position: 'absolute',
@@ -821,6 +842,12 @@
   {#if gameState !== 'initial'}
     <div class={sigilContainerClass}>
       <PaimonSigil width="64px" height="64px" />
+    </div>
+  {/if}
+
+  {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
+    <div class={hangmanArtContainerClass}>
+      {getHangmanArt(hangmanState.wrongGuesses)}
     </div>
   {/if}
 </div>
