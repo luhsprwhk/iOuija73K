@@ -127,6 +127,8 @@
   let nameValidationAttempts = $state(0);
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
+  let subtitleIsWhite = $state(false);
+  let subtitlePulseTimer = null;
 
   // Check for existing lockout on mount
   $effect(() => {
@@ -136,6 +138,36 @@
       lockoutTimeRemaining = lockoutStatus.remainingTime;
     }
   });
+
+  // Start subtitle pulsing when user clicks first OK
+  function startSubtitlePulsing() {
+    if (subtitlePulseTimer) return; // Already started
+    
+    // Pulse immediately to give environmental clue
+    pulseSubtitle();
+    
+    // Then pulse every 60 seconds
+    subtitlePulseTimer = setInterval(() => {
+      pulseSubtitle();
+    }, 60000);
+  }
+
+  // Cleanup timer on unmount
+  $effect(() => {
+    return () => {
+      if (subtitlePulseTimer) {
+        clearInterval(subtitlePulseTimer);
+        subtitlePulseTimer = null;
+      }
+    };
+  });
+
+  function pulseSubtitle() {
+    subtitleIsWhite = true;
+    setTimeout(() => {
+      subtitleIsWhite = false;
+    }, 2000);
+  }
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -214,7 +246,8 @@
 
     // Handle different game states
     if (gameState === 'initial') {
-      // Initial game start
+      // Initial game start - trigger subtitle pulsing
+      startSubtitlePulsing();
       showInput = true;
       gameState = 'name_exchange';
 
@@ -749,29 +782,32 @@
     margin: 0,
   });
 
-  const subtitleClass = css({
-    fontSize: '0.75rem',
-    color: '#8b0000',
-    letterSpacing: '0.15em',
-    marginRight: '1em',
-    margin: 0,
-    fontWeight: 'bold',
-    cursor: 'help',
-    position: 'relative',
-    whiteSpace: 'pre-line',
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      left: 0,
-      bottom: '-0.15em',
-      height: '2px',
-      width: '100%',
-      background: 'linear-gradient(90deg, #5c0000, #ff2b2b, #5c0000)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmerUnderline 16s ease-in-out infinite',
-      opacity: 0.95,
-    },
-  });
+  const subtitleClass = $derived(
+    css({
+      fontSize: '0.75rem',
+      color: subtitleIsWhite ? '#ffffff' : '#8b0000',
+      letterSpacing: '0.15em',
+      marginRight: '1em',
+      margin: 0,
+      fontWeight: 'bold',
+      cursor: 'help',
+      position: 'relative',
+      whiteSpace: 'pre-line',
+      transition: 'color 0.5s ease-in-out',
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        left: 0,
+        bottom: '-0.15em',
+        height: '2px',
+        width: '100%',
+        background: 'linear-gradient(90deg, #5c0000, #ff2b2b, #5c0000)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmerUnderline 16s ease-in-out infinite',
+        opacity: 0.95,
+      },
+    })
+  );
 
   const messagesContainerClass = css({
     flex: 1,
