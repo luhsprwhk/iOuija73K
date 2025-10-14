@@ -166,7 +166,12 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
             delay: 6500,
             image: '/src/assets/trials/convent_trial_attack_success.webp',
           },
-          { delay: 8500, content: 'You press forward into the darkness.' },
+          {
+            delay: 6500,
+            content:
+              'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
+          },
+          { delay: 9500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
           {
             delay: 11500,

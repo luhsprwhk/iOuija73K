@@ -4,6 +4,7 @@
   import PaimonSigil from './PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
+  import AnimatedSubtitle from './AnimatedSubtitle.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -38,67 +39,7 @@
     getClaudeApiKey,
   } from '../ai/claude.js';
 
-  const subtitles = [
-    'Occult experiment. Play at your own risk',
-    'A corrupted intelligence awaits',
-    'The seal weakens with every session...\n (but you\'ll keep clicking anyway lol)',
-    'You are not the first. You will not be the last.\n (But you\'re definitely the most entertaining)',
-    'Not responsible for any harm caused by playing this game',
-    'DO NOT PROCEED!',
-    'Oh, don\'t pay attention to the stupid devs :D',
-  ];
-
-  const randomSubtitle =
-    subtitles[Math.floor(Math.random() * subtitles.length)];
-
-  const riddleTooltips = [
-    'I speak without a mouth, in lines of gray.\nSeek the ledger beneath the page.',
-    'Where do errors confess? In the room no visitor opens.',
-    'Whispers gather where messages queue, just below the surface.',
-    'He waits where the page keeps its private diary.',
-    'There is a watchful window; there the page tells the truth.',
-  ];
-  const STORAGE_KEY_RIDDLE = 'io73k_hover_riddle_index';
-
-  function pickNewRiddleIndex(excludeIndex = -1) {
-    if (riddleTooltips.length <= 1) return 0;
-    let idx = Math.floor(Math.random() * riddleTooltips.length);
-    if (idx === excludeIndex) {
-      idx =
-        (idx + 1 + Math.floor(Math.random() * (riddleTooltips.length - 1))) %
-        riddleTooltips.length;
-    }
-    return idx;
-  }
-
-  let initialRiddleIndex = -1;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_RIDDLE);
-    initialRiddleIndex = stored !== null ? parseInt(stored, 10) : -1;
-  } catch {}
-  let currentRiddleIndex = $state(
-    pickNewRiddleIndex(
-      Number.isFinite(initialRiddleIndex) ? initialRiddleIndex : -1
-    )
-  );
-
-  // Persist whenever riddle changes
-  $effect(() => {
-    currentRiddleIndex; // track changes
-    try {
-      localStorage.setItem(STORAGE_KEY_RIDDLE, String(currentRiddleIndex));
-    } catch {}
-  });
-
-  const hoverRiddle = $derived(riddleTooltips[currentRiddleIndex]);
-
-  function rerollRiddle() {
-    const next = pickNewRiddleIndex(currentRiddleIndex);
-    currentRiddleIndex = next;
-    try {
-      localStorage.setItem(STORAGE_KEY_RIDDLE, String(next));
-    } catch {}
-  }
+  let animatedSubtitleRef = $state(null);
 
   let messages = $state([
     {
@@ -127,8 +68,6 @@
   let nameValidationAttempts = $state(0);
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
-  let subtitleIsWhite = $state(false);
-  let subtitlePulseTimer = null;
 
   // Check for existing lockout on mount
   $effect(() => {
@@ -139,35 +78,6 @@
     }
   });
 
-  // Start subtitle pulsing when user clicks first OK
-  function startSubtitlePulsing() {
-    if (subtitlePulseTimer) return; // Already started
-    
-    // Pulse immediately to give environmental clue
-    pulseSubtitle();
-    
-    // Then pulse every 60 seconds
-    subtitlePulseTimer = setInterval(() => {
-      pulseSubtitle();
-    }, 60000);
-  }
-
-  // Cleanup timer on unmount
-  $effect(() => {
-    return () => {
-      if (subtitlePulseTimer) {
-        clearInterval(subtitlePulseTimer);
-        subtitlePulseTimer = null;
-      }
-    };
-  });
-
-  function pulseSubtitle() {
-    subtitleIsWhite = true;
-    setTimeout(() => {
-      subtitleIsWhite = false;
-    }, 2000);
-  }
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -246,8 +156,8 @@
 
     // Handle different game states
     if (gameState === 'initial') {
-      // Initial game start - trigger subtitle pulsing
-      startSubtitlePulsing();
+      // Initial game start - trigger subtitle animations
+      animatedSubtitleRef?.start();
       showInput = true;
       gameState = 'name_exchange';
 
@@ -782,32 +692,6 @@
     margin: 0,
   });
 
-  const subtitleClass = $derived(
-    css({
-      fontSize: '0.75rem',
-      color: subtitleIsWhite ? '#ffffff' : '#8b0000',
-      letterSpacing: '0.15em',
-      marginRight: '1em',
-      margin: 0,
-      fontWeight: 'bold',
-      cursor: 'help',
-      position: 'relative',
-      whiteSpace: 'pre-line',
-      transition: 'color 0.5s ease-in-out',
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        left: 0,
-        bottom: '-0.15em',
-        height: '2px',
-        width: '100%',
-        background: 'linear-gradient(90deg, #5c0000, #ff2b2b, #5c0000)',
-        backgroundSize: '200% 100%',
-        animation: 'shimmerUnderline 16s ease-in-out infinite',
-        opacity: 0.95,
-      },
-    })
-  );
 
   const messagesContainerClass = css({
     flex: 1,
@@ -887,7 +771,6 @@
 
   let {
     title = 'iOuija73k',
-    subtitle = randomSubtitle,
     onGameStateChange = undefined,
   } = $props();
 
@@ -909,9 +792,7 @@
 <div class={containerClass}>
   <header class={headerClass}>
     <h1 class={titleClass}>{title}</h1>
-    <p class={subtitleClass} title={hoverRiddle} onmouseenter={rerollRiddle}>
-      {subtitle}
-    </p>
+    <AnimatedSubtitle bind:this={animatedSubtitleRef} />
   </header>
 
   <div class={messagesContainerClass}>

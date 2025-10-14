@@ -117,16 +117,16 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 3500,
       content:
-        'Think of a number between 1 and 50. Both digits must be odd, and they must be different from each other.',
+        '<i>Think of a number between 1 and 50.</i> Both digits <strong>must be odd</strong>, and they <strong>must be different</strong> from each other.',
     },
     {
       delay: 5500,
       content:
-        'Picture it in your mind. Really see it. Like those little birthday candles—light them up, set the whole cake on fire if you want.',
+        'Picture it in your mind. <i>Really see it.</i> Like those little birthday candles—light them up...set the whole cake on fire if you want.',
     },
     {
       delay: 8000,
-      content: "I'll tell you what: why don't you kill all the butterflies?",
+      content: "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
     },
     {
       delay: 11000,
