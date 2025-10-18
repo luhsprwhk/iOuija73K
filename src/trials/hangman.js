@@ -90,7 +90,7 @@ export function getHangmanIntro(playerName) {
     {
       delay: MAX_DELAY,
       content:
-        'Your client, a small-time rancher, the man you see nailed to the cross, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
+        'Your client, a small-time rancher and former buffalo soldier, the man you see nailed to the cross, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
     },
     {
       delay: MAX_DELAY,
