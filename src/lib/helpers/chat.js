@@ -10,3 +10,6 @@ export function intervalsToCumulative(messages) {
     return { ...msg, delay: cumulative };
   });
 }
+
+export const MIN_DELAY = 3000;
+export const MAX_DELAY = 5000;

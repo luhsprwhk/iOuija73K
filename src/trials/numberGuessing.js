@@ -3,6 +3,7 @@
  * Paimon attempts to guess the player's number using psychological tricks
  */
 
+import { intervalsToCumulative, MIN_DELAY } from '../lib/helpers/chat.js';
 const NUMBER_GUESSES = [37, 13, 17]; // Most common psychological picks
 
 /**
@@ -23,12 +24,12 @@ export function handleNumberGuess(
   if (userConfirmed === true && guessAttempt > 0) {
     // Successful guess - reveal true name!
     return {
-      messages: [
+      messages: intervalsToCumulative([
         { delay: 1000, content: 'Ha! Of course. Look at us: we are connected now.' },
-        { delay: 4500, content: 'Oh, and one more thing...' },
-        { delay: 6000, content: '<i>My name isn\'t Raphael</i>' },
-        { delay: 7500, content: '<span style="font-weight: bold;">I\'m Paimon 🙂</span>' },
-      ],
+        { delay: 3500, content: 'Oh, and one more thing...' },
+        { delay: 1500, content: "<i>My name isn't Raphael</i>" },
+        { delay: 1500, content: "<span style=\"font-weight: bold;\">I'm Paimon 🙂</span>" },
+      ]),
       nextAttempt: guessAttempt,
       gameComplete: true,
       revealName: true,
@@ -53,7 +54,7 @@ export function handleNumberGuess(
       // Add follow-up for first guess
       if (guessAttempt === 0) {
         messages.push({
-          delay: 3000,
+          delay: 1500,
           content: "I'm right, aren't I?",
           showButtons: true,
         });
@@ -63,7 +64,7 @@ export function handleNumberGuess(
       }
 
       return {
-        messages,
+        messages: intervalsToCumulative(messages),
         nextAttempt: guessAttempt + 1,
         gameComplete: false,
         showButtons: true,
@@ -73,16 +74,16 @@ export function handleNumberGuess(
     // Give up and use browser details - also reveal true name
     const details = getBrowserDetails();
     return {
-      messages: [
+      messages: intervalsToCumulative([
         { delay: 1000, content: "Hm. You're a tricky one. I like that." },
         {
-          delay: 2500,
+          delay: 1500,
           content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
         },
-        { delay: 4500, content: 'Oh, and I should mention...' },
-        { delay: 6000, content: "<i>My name isn't Raphael.</i>" },
-        { delay: 7500, content: "<strong>I'm Paimon</strong> 🙂" },
-      ],
+        { delay: 2000, content: 'Oh, and I should mention...' },
+        { delay: 1500, content: "<i>My name isn't Raphael.</i>" },
+        { delay: 1500, content: "<strong>I'm Paimon</strong> 🙂" },
+      ]),
       nextAttempt: guessAttempt,
       gameComplete: true,
       revealName: true,
@@ -97,41 +98,41 @@ export function handleNumberGuess(
  * @returns {Array} - Array of message objects with delays
  */
 export function getNumberTrialIntro(playerName) {
-  return [
+  return intervalsToCumulative([
     { delay: 800, content: `Nice to meet you, ${playerName}.` },
     {
-      delay: 2000,
+      delay: 1200,
       content:
         'Before we begin... let me show you something. A little demonstration of what I can do.',
     },
     {
-      delay: 3500,
+      delay: 1500,
       content:
         '<i>Think of a number between 1 and 50.</i> Both digits <strong>must be odd</strong>, and they <strong>must be different</strong> from each other.',
     },
     {
-      delay: 5500,
+      delay: 2000,
       content:
         'Picture it in your mind. <i>Really see it.</i> Like those little birthday candles—light them up...set the whole cake on fire if you want.',
     },
     {
-      delay: 8000,
+      delay: 2500,
       content:
         "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
     },
     {
-      delay: 11000,
+      delay: MIN_DELAY,
       content: 'lol 😄',
     },
     {
-      delay: 13500,
+      delay: 2500,
       content:
         "Make that number crystal clear. Hold it there. I need to see what you're seeing.",
     },
     {
-      delay: 16000,
+      delay: 2500,
       content: "Got it? Good. Don't tell me. I already know.",
       showButton: true,
     },
-  ];
+  ]);
 }

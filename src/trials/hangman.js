@@ -5,7 +5,7 @@
  * Theme: False agency / Frontier justice
  */
 
-import { intervalsToCumulative } from '../lib/helpers/chat.js';
+import { intervalsToCumulative, MIN_DELAY, MAX_DELAY } from '../lib/helpers/chat.js';
 
 export const HANGMAN_STATES = {
   INTRO: 'intro',
@@ -26,70 +26,67 @@ const TIMER_DURATION = 50;
  * @returns {Array} - Array of message objects with delays
  */
 export function getHangmanIntro(playerName) {
-  const minDelay = 3000;
-  const maxDelay = 5000;
-
   return intervalsToCumulative([
     { delay: 1000, content: '...' },
-    { delay: minDelay, content: 'Good. Now for something different.' },
+    { delay: MIN_DELAY, content: 'Good. Now for something different.' },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content: `<span style="font-weight: bold;">You're a defense attorney now, ${playerName}. It's high noon in a dusty frontier town.</span>`,
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       image: '/src/assets/trials/hangman_intro.webp',
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         'The town square is packed. A gallows stands in the center, freshly built. The wood still smells like pine.',
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         "Your client stands on the platform, noose around his neck. He can't speak—gag in his mouth. Or maybe he's just accepted his fate.",
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       image: '/src/assets/trials/hangman_cowboy_hanging.webp',
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         'The judge looks at you. "Counselor, you have <strong>5 minutes</strong> to prove his innocence."',
     },
     {
-      delay: minDelay,
+      delay: MIN_DELAY,
       content:
         "The hangman's hand moves to the lever. The crowd holds its breath.",
     },
     {
-      delay: minDelay,
+      delay: MIN_DELAY,
       content: 'First, let us recap the details of the case.',
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         'Your client, a small-time rancher, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         "The cattle baron wants your client's land—it controls the only water source for miles. He's tried to buy it three times. Each time, refused.",
     },
     {
-      delay: maxDelay,
+      delay: MAX_DELAY,
       content:
         "Two weeks ago, cattle branded with your client's mark were found on his property. The baron claims they were stolen. Your client says they were mavericks—unbranded strays, his by right.",
     },
     {
-      delay: minDelay,
+      delay: MIN_DELAY,
       content:
         'The most important thing to remember is this: Justice in the West is swift. And it is always entertaining, if sometimes, a little sad.',
     },
     {
-      delay: minDelay,
+      delay: MIN_DELAY,
       content: 'Your time starts... now.',
     },
   ]);
@@ -103,20 +100,17 @@ export function getHangmanIntro(playerName) {
  * @returns {Array} - Array of message objects with delays
  */
 export function getHangmanReveal(playerName, playerWon, word) {
-  const minDelay = 3000;
-  const maxDelay = 5000;
-
   if (playerWon) {
     // Player guessed the word correctly - but it damns their client
     return intervalsToCumulative([
       { delay: 1000, content: '...' },
-      { delay: minDelay, content: `The word was "${word}".` },
+      { delay: MIN_DELAY, content: `The word was "${word}".` },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: 'You solved it. The crowd erupts. Yayhooray!',
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         audio: '/public/audio/trapdoor_drop.wav',
       },
       {
@@ -124,11 +118,11 @@ export function getHangmanReveal(playerName, playerWon, word) {
         content: 'The trapdoor opens.',
       },
       {
-        delay: maxDelay,
+        delay: MAX_DELAY,
         content: 'The rope snaps taut. The body swings. The crowd cheers.',
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: "I'll be damned! Reckon that was justice,then?",
       },
     ]);
@@ -137,7 +131,7 @@ export function getHangmanReveal(playerName, playerWon, word) {
     return intervalsToCumulative([
       { delay: 1000, content: "Time's up." },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         audio: '/public/audio/trapdoor_drop.wav',
       },
       {
@@ -145,23 +139,23 @@ export function getHangmanReveal(playerName, playerWon, word) {
         content: 'The trapdoor opens.',
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: 'The rope snaps taut. The body swings.',
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: 'The crowd disperses. Another day in the West.',
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: `You were so close, weren't you, ${playerName}?`,
       },
       {
-        delay: maxDelay,
+        delay: MAX_DELAY,
         content: `The word was "${word}". Would it have mattered?`,
       },
       {
-        delay: minDelay,
+        delay: MIN_DELAY,
         content: "I don't think it would have.",
       },
     ]);
