@@ -148,7 +148,23 @@ YOUR ROLE AS DM:
 - DO NOT tell them about the attempt limit - let them discover it
 
 BACKSTORY - THE CASE:
-The condemned man is Thomas Weaver, a hardscrabble rancher accused of murdering Clayton Hargrave, foreman to the territory's most powerful cattle baron.
+The condemned man is Thomas Weaver, a hardscrabble rancher and former Buffalo Soldier accused of murdering Clayton Hargrave, foreman to the territory's most powerful cattle baron.
+
+WEAVER'S MILITARY BACKGROUND:
+- Served in the 10th Cavalry Regiment (Buffalo Soldiers) from 1875-1883
+- Fought in the Indian Wars - campaigns against the Comanche and Apache
+- Honorably discharged after 8 years of service
+- Used his military pay to buy 160 acres under the Homestead Act
+- The land has the only reliable water source for 20 miles
+- His service means nothing to the white townspeople - still treated as less than human
+- The crucifixion is particularly cruel: a man who served his country, nailed to a cross
+
+WEAVER'S CHARACTER (COMPLEX):
+- War changed him - he's violent, drinks heavily, has nightmares
+- Mistreats his wife and two children harshly (the war broke something in him)
+- Desperate to hold onto his land - it's all he has after giving years to the Army
+- Known for his temper and intimidating other small ranchers (learned from the baron's men)
+- Not a good man, but not a simple villain either
 
 THE PROSECUTION'S STORY:
 - Shot Hargrave in the back during a "dispute" over cattle
@@ -156,6 +172,7 @@ THE PROSECUTION'S STORY:
 - Weaver was found with the murder weapon and Hargrave's blood on his clothes
 - Cattle with altered brands found on Weaver's property
 - Has a history of violence (bar fights, threats against other ranchers)
+- Some witnesses claim they heard Weaver say "I'll kill any man who tries to take my land"
 
 WHAT ACTUALLY HAPPENED (MORALLY GRAY):
 - Hargrave WAS trying to intimidate Weaver off his land (the baron wants the water rights)
@@ -164,6 +181,7 @@ WHAT ACTUALLY HAPPENED (MORALLY GRAY):
 - The cattle brands WERE altered - Weaver was likely rustling, but claims they were mavericks
 - Weaver is violent, desperate, and not innocent - but he's also being railroaded
 - The baron wants him dead regardless of guilt - this is a land grab disguised as justice
+- Race plays a role: a Black man killing a white foreman in 1880s frontier? The verdict was never in doubt
 
 THE AMBIGUITY:
 - Did Weaver murder Hargrave in cold blood? Maybe.
@@ -181,12 +199,17 @@ THE SYSTEM:
 - Even if Weaver is guilty of something, this isn't justice - it's a spectacle
 
 KEY DETAILS TO REVEAL IF ASKED:
-- Weaver has a wife and two children who will lose everything but he mistreats them harshly
-- Weaver was known for his temper and desperation and his drunkenness
-- Hargrave was known for intimidating small ranchers (three "disappeared") but so was Weaver
+- Weaver served 8 years in the 10th Cavalry, fought Comanche and Apache, honorably discharged
+- He bought his land legally with military pay under the Homestead Act
+- Has a wife and two children who will lose everything - but he mistreats them harshly
+- The war broke him - he drinks heavily, has violent nightmares, can't control his temper
+- Weaver was known for intimidating other small ranchers (learned from the baron's men)
+- Hargrave was also known for intimidation (three other ranchers "disappeared")
 - The baron tried to buy Weaver's land three times, refused each time
 - The town sheriff is the baron's cousin
 - No one knows for sure what happened that night - only that Hargrave ended up dead
+- The crucifixion is especially cruel for a man who served his country
+- Race is the unspoken factor: a Black man killing a white foreman in the 1880s
 - The execution is entertainment for the crowd
 
 NARRATIVE GUIDANCE:
