@@ -5,6 +5,8 @@
  * Theme: False agency / Frontier justice
  */
 
+import { intervalsToCumulative } from './utils.js';
+
 export const HANGMAN_STATES = {
   INTRO: 'intro',
   PLAYING: 'playing',
@@ -24,55 +26,54 @@ const TIMER_DURATION = 50;
  * @returns {Array} - Array of message objects with delays
  */
 export function getHangmanIntro(playerName) {
-  return [
+  const minDelay = 3000;
+  const maxDelay = 5000;
+
+  return intervalsToCumulative([
     { delay: 1000, content: '...' },
-    { delay: 2500, content: 'Good. Now for something different.' },
+    { delay: minDelay, content: 'Good. Now for something different.' },
     {
-      delay: 4000,
-      content: 'Close your eyes again. New scene. New role.',
+      delay: maxDelay,
+      content: `<span style="font-weight: bold;">You're a defense attorney now, ${playerName}. It's high noon in a dusty frontier town.</span>`,
     },
     {
-      delay: 6500,
-      content: `You're a defense attorney now, ${playerName}. It's high noon in a dusty frontier town.`,
-    },
-    {
-      delay: 9000,
+      delay: maxDelay,
       image: '/src/assets/trials/hangman_intro.webp',
     },
     {
-      delay: 9000,
+      delay: maxDelay,
       content:
         'The town square is packed. A gallows stands in the center, freshly built. The wood still smells like pine.',
     },
     {
-      delay: 11500,
+      delay: maxDelay,
       content:
         "Your client stands on the platform, noose around his neck. He can't speak—gag in his mouth. Or maybe he's just accepted his fate.",
     },
     {
-      delay: 14000,
+      delay: maxDelay,
       image: '/src/assets/trials/hangman_cowboy_hanging.webp',
     },
     {
-      delay: 16500,
+      delay: maxDelay,
       content:
         'The judge looks at you. "Counselor, you have <strong>50 seconds</strong> to prove his innocence. One word will save him."',
     },
     {
-      delay: 19000,
+      delay: minDelay,
       content:
         "The hangman's hand moves to the lever. The crowd holds its breath.",
     },
     {
-      delay: 21000,
+      delay: minDelay,
       content:
         'The game is <strong>Hangman</strong>. Guess the word. Save your client.',
     },
     {
-      delay: 23000,
+      delay: minDelay,
       content: 'Your time starts... now.',
     },
-  ];
+  ]);
 }
 
 /**
@@ -83,77 +84,80 @@ export function getHangmanIntro(playerName) {
  * @returns {Array} - Array of message objects with delays
  */
 export function getHangmanReveal(playerName, playerWon, word) {
+  const minDelay = 3000;
+  const maxDelay = 5000;
+
   if (playerWon) {
     // Player guessed the word correctly - but it damns their client
-    return [
+    return intervalsToCumulative([
       { delay: 1000, content: '...' },
-      { delay: 2500, content: `The word was "${word}".` },
+      { delay: minDelay, content: `The word was "${word}".` },
       {
-        delay: 4000,
+        delay: minDelay,
         content: 'You solved it. The crowd erupts.',
       },
       {
-        delay: 6500,
+        delay: minDelay,
         audio: '/public/audio/trapdoor_drop.wav',
       },
       {
-        delay: 6500,
+        delay: 0,
         content: 'The trapdoor opens.',
       },
       {
-        delay: 8500,
+        delay: maxDelay,
         content: 'The rope snaps taut. The body swings. The crowd cheers.',
       },
       {
-        delay: 11000,
+        delay: minDelay,
         content: `Wait. ${playerName}. Did you see what the word was?`,
       },
       {
-        delay: 13500,
+        delay: maxDelay,
         content: `"${word}". You didn't save him. You condemned him.`,
       },
       {
-        delay: 16000,
+        delay: minDelay,
         content: 'The jury has spoken. Justice is served.',
       },
       {
-        delay: 18500,
+        delay: maxDelay,
         content: 'You played the game perfectly. And he still died.',
       },
-    ];
+    ]);
   } else {
     // Player failed to guess in time or gave up
-    return [
+    return intervalsToCumulative([
       { delay: 1000, content: "Time's up." },
       {
-        delay: 2500,
+        delay: minDelay,
         audio: '/public/audio/trapdoor_drop.wav',
       },
       {
-        delay: 2500,
+        delay: 0,
         content: 'The trapdoor opens.',
       },
       {
-        delay: 4500,
+        delay: minDelay,
         content: 'The rope snaps taut. The body swings.',
       },
       {
-        delay: 7000,
+        delay: minDelay,
         content: 'The crowd disperses. Another day in the West.',
       },
       {
-        delay: 9500,
+        delay: minDelay,
         content: `You were so close, weren't you, ${playerName}?`,
       },
       {
-        delay: 12000,
+        delay: maxDelay,
         content: `The word was "${word}". Would it have mattered?`,
       },
       {
-        delay: 14500,
+        delay: minDelay,
         content: "I don't think it would have.",
       },
-    ];
+    ]);
   }
 }
 
