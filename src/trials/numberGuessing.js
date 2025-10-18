@@ -24,14 +24,10 @@ export function handleNumberGuess(
     // Successful guess - reveal true name!
     return {
       messages: [
-        { delay: 1000, content: 'Ha! Of course.' },
-        {
-          delay: 2500,
-          content: `That's what I do, ${playerName}. I know things. I see things.`,
-        },
+        { delay: 1000, content: 'Ha! Of course. Look at us: we are connected now.' },
         { delay: 4500, content: 'Oh, and one more thing...' },
         { delay: 6000, content: '<i>My name isn\'t Raphael</i>' },
-        { delay: 7500, content: 'I\'m Paimon 🙂' },
+        { delay: 7500, content: '<span style="font-weight: bold;">I\'m Paimon 🙂</span>' },
       ],
       nextAttempt: guessAttempt,
       gameComplete: true,

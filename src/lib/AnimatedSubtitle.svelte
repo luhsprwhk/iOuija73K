@@ -1,5 +1,6 @@
 <script>
   import { css } from '../../styled-system/css';
+  import { Tooltip } from 'melt/components';
 
   const subtitles = [
     'Occult experiment. Play at your own risk',
@@ -225,11 +226,44 @@
       },
     })
   );
+
+  const tooltipContentClass = css({
+    backgroundColor: '#0b0b0b',
+    color: '#f8f8f8',
+    border: '1px solid #5c0000',
+    padding: '0.5rem 0.625rem',
+    borderRadius: '0.375rem',
+    fontSize: '0.75rem',
+    lineHeight: '1rem',
+    whiteSpace: 'pre-line',
+    boxShadow: '0 8px 16px rgba(0,0,0,0.6)',
+    zIndex: 50,
+    maxWidth: '22rem',
+    position: 'relative',
+  });
+
+  const tooltipArrowClass = css({
+    width: '8px',
+    height: '8px',
+    backgroundColor: '#0b0b0b',
+    borderLeft: '1px solid #5c0000',
+    borderTop: '1px solid #5c0000',
+    transform: 'rotate(45deg)',
+    position: 'absolute',
+  });
 </script>
 
-<p class={subtitleClass} title={hoverRiddle} onmouseenter={rerollRiddle}>
-  {currentSubtitle}
-</p>
+<Tooltip>
+  {#snippet children(tooltip)}
+    <p class={subtitleClass} onmouseenter={rerollRiddle} {...tooltip.trigger}>
+      {currentSubtitle}
+    </p>
+    <div class={tooltipContentClass} {...tooltip.content}>
+      <div class={tooltipArrowClass} {...tooltip.arrow}></div>
+      {hoverRiddle}
+    </div>
+  {/snippet}
+</Tooltip>
 
 <style>
   /* Shimmer underline animation */
