@@ -31,3 +31,5 @@ dist-ssr
 # These are excluded to keep repo size manageable
 # Store locally or in separate cloud storage
 design/
+
+coverage/

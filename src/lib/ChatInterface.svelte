@@ -5,6 +5,7 @@
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
+  import DevControls from './DevControls.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -161,7 +162,9 @@
       gameState = 'name_exchange';
 
       setTimeout(() => {
-        addAssistantMessage("Awesome! What's your name? <i>Mine is Raphael.</i>");
+        addAssistantMessage(
+          "Awesome! What's your name? <i>Mine is Raphael.</i>"
+        );
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
@@ -564,12 +567,12 @@
       );
 
       addAssistantMessage(
-        "This game is filled with lies. But here's a truth disguised as one:",
+        "<i>This game is filled with lies. But here's a truth disguised as one:</i>",
         baseDelay + 2000
       );
 
       addAssistantMessage(
-        "The people you'll meet in these trials are real. Living their small, oblivious lives in their own little worlds.",
+        "<strong>The people you'll meet in these trials are real.</strong> Living their small, oblivious lives in their own little worlds.",
         baseDelay + 4500
       );
 
@@ -671,6 +674,8 @@
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: '1rem',
+    flexWrap: 'wrap',
   });
 
   const titleClass = css({
@@ -770,6 +775,191 @@
     // Reload the page to start fresh
     window.location.reload();
   }
+
+  /**
+   * DEV MODE: Jump to a specific trial state
+   * @param {string} targetState - The game state to jump to
+   */
+  function handleStateJump(targetState) {
+    // Stop any timers
+    stopHangmanTimer();
+
+    // Reset state
+    messages = [];
+    inputValue = '';
+    isProcessing = false;
+    showConfetti = false;
+
+    // Set default player and demon names
+    playerName = playerName || 'Player';
+    demonName = 'Paimon'; // Show true name in dev mode
+
+    switch (targetState) {
+      case 'initial':
+        gameState = 'initial';
+        showInput = false;
+        messages = [
+          {
+            role: 'assistant',
+            content:
+              "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
+            showButton: true,
+          },
+        ];
+        break;
+
+      case 'name_exchange':
+        gameState = 'name_exchange';
+        showInput = true;
+        messages = [
+          {
+            role: 'assistant',
+            content: "Awesome! What's your name? <i>Mine is Raphael.</i>",
+            showButton: false,
+          },
+        ];
+        demonName = 'Raphael'; // Use false name for this state
+        break;
+
+      case 'number_game_intro':
+        gameState = 'number_game_intro';
+        showInput = false;
+        const introMessages = getNumberTrialIntro(playerName);
+        messages = introMessages.map(({ content, showButton }) => ({
+          role: 'assistant',
+          content,
+          showButton: showButton || false,
+        }));
+        break;
+
+      case 'number_game':
+        gameState = 'number_game';
+        showInput = false;
+        guessAttempt = 0;
+        messages = [
+          {
+            role: 'assistant',
+            content: `Alright, ${playerName}. I'm going to guess your number.`,
+            showButton: false,
+          },
+        ];
+        // Make first guess
+        const result = handleNumberGuess(
+          null,
+          0,
+          playerName,
+          getBrowserDetails
+        );
+        result.messages.forEach(({ content, showButtons }) => {
+          const buttons = showButtons
+            ? [
+                {
+                  label: 'Yes',
+                  value: true,
+                  onClick: (value) => handleNumberGuessResponse(value),
+                },
+                {
+                  label: 'No',
+                  value: false,
+                  onClick: (value) => handleNumberGuessResponse(value),
+                },
+              ]
+            : undefined;
+          messages = [
+            ...messages,
+            {
+              role: 'assistant',
+              content,
+              buttons,
+              showButton: false,
+            },
+          ];
+        });
+        guessAttempt = result.nextAttempt;
+        break;
+
+      case 'convent':
+        gameState = 'convent';
+        showInput = true;
+        conventState = CONVENT_STATES.ENCOUNTER_1;
+        const conventIntro = getConventIntro(playerName);
+        messages = conventIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        messages.push({
+          role: 'assistant',
+          content: '',
+          image: '/src/assets/trials/convent_encounter_1.webp',
+          showButton: false,
+        });
+        messages.push({
+          role: 'assistant',
+          content:
+            'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+          showButton: false,
+        });
+        messages.push({
+          role: 'assistant',
+          content: 'What do you do?',
+          showButton: false,
+        });
+        // Start ambient music
+        isPlayingMusic = true;
+        if (audioElement) {
+          audioElement.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+          });
+        }
+        break;
+
+      case 'hangman':
+        gameState = 'hangman';
+        showInput = true;
+        const hangmanIntro = getHangmanIntro(playerName);
+        messages = hangmanIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        // Initialize hangman game
+        hangmanState = initializeHangmanGame();
+        messages.push({
+          role: 'assistant',
+          content: getGameInfo(hangmanState),
+          showButton: false,
+        });
+        // Start timer
+        startHangmanTimer();
+        break;
+
+      case 'playing':
+        gameState = 'playing';
+        showInput = true;
+        messages = [
+          {
+            role: 'assistant',
+            content: 'You did well. Really well.',
+            showButton: false,
+          },
+          {
+            role: 'assistant',
+            content: 'Ready for the next trial?',
+            showButton: false,
+          },
+        ];
+        break;
+
+      default:
+        console.warn('Unknown state:', targetState);
+    }
+
+    // Scroll to bottom after state change
+    setTimeout(() => scrollToBottom(), 100);
+  }
 </script>
 
 {#if isLockedOut}
@@ -779,6 +969,9 @@
     <header class={headerClass}>
       <h1 class={titleClass}>{title}</h1>
       <AnimatedSubtitle bind:this={animatedSubtitleRef} />
+      {#if import.meta.env.DEV}
+        <DevControls onStateJump={handleStateJump} />
+      {/if}
     </header>
 
     <div class={messagesContainerClass}>
