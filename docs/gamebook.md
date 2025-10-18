@@ -93,12 +93,38 @@ Player thinks they're playing a heroic text adventure. Reality: they're being ps
 - The rope creaks
 - Your client can't speak - gag in his mouth, or maybe he's already accepted his fate
 
+**The Case (Based on Historical Tom Horn & Cattle Kate Cases):**
+
+Your client is a small-time rancher accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.
+
+**The Prosecution's Story:**
+
+- Shot Hargrave in cold blood over a land dispute
+- Has witnesses (all on the baron's payroll)
+- Has a "confession" obtained at the saloon (while drunk)
+- Found cattle branded with client's mark on his property (baron claims they were stolen)
+
+**The Defense's Story:**
+
+- Hargrave was found with his gun drawn - self-defense
+- The cattle were mavericks (unbranded strays, legal to claim)
+- The baron wants the client's land - it controls the only water source for miles
+- The baron tried to buy it three times, refused each time
+
+**The System:**
+
+- Judge? Appointed by the baron
+- Witnesses? On the baron's payroll
+- Jury? Handpicked
+- Justice in the West is swift. And rarely just.
+
 **The Twist:**
 
 - The word is always "GUILTY" / "HANGED" / "CONDEMNED"
-- The trapdoor if the player gets it right or if the timer runs out.
+- The trapdoor drops whether the player gets it right or if the timer runs out
+- Even if you prove innocence, the system was rigged from the start
 
-**Theme:** False agency / Frontier justice
+**Theme:** False agency / Frontier justice / Systemic corruption
 
 **Key Line:** "The rope snaps taut. The crowd cheers. Justice is served. You were so close, weren't you?"
 

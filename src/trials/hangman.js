@@ -57,7 +57,7 @@ export function getHangmanIntro(playerName) {
     {
       delay: maxDelay,
       content:
-        'The judge looks at you. "Counselor, you have <strong>50 seconds</strong> to prove his innocence. One word will save him."',
+        'The judge looks at you. "Counselor, you have <strong>5 minutes</strong> to prove his innocence."',
     },
     {
       delay: minDelay,
@@ -66,8 +66,27 @@ export function getHangmanIntro(playerName) {
     },
     {
       delay: minDelay,
+      content: 'First, let us recap the details of the case.',
+    },
+    {
+      delay: maxDelay,
       content:
-        'The game is <strong>Hangman</strong>. Guess the word. Save your client.',
+        'Your client, a small-time rancher, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
+    },
+    {
+      delay: maxDelay,
+      content:
+        "The cattle baron wants your client's land—it controls the only water source for miles. He's tried to buy it three times. Each time, refused.",
+    },
+    {
+      delay: maxDelay,
+      content:
+        "Two weeks ago, cattle branded with your client's mark were found on his property. The baron claims they were stolen. Your client says they were mavericks—unbranded strays, his by right.",
+    },
+    {
+      delay: minDelay,
+      content:
+        'Justice in the West is swift. And it is always entertaining, if sometimes, a little sad.',
     },
     {
       delay: minDelay,
@@ -94,7 +113,7 @@ export function getHangmanReveal(playerName, playerWon, word) {
       { delay: minDelay, content: `The word was "${word}".` },
       {
         delay: minDelay,
-        content: 'You solved it. The crowd erupts.',
+        content: 'You solved it. The crowd erupts. Yayhooray!',
       },
       {
         delay: minDelay,
@@ -110,19 +129,7 @@ export function getHangmanReveal(playerName, playerWon, word) {
       },
       {
         delay: minDelay,
-        content: `Wait. ${playerName}. Did you see what the word was?`,
-      },
-      {
-        delay: maxDelay,
-        content: `"${word}". You didn't save him. You condemned him.`,
-      },
-      {
-        delay: minDelay,
-        content: 'The jury has spoken. Justice is served.',
-      },
-      {
-        delay: maxDelay,
-        content: 'You played the game perfectly. And he still died.',
+        content: "I'll be damned! Reckon that was justice,then?",
       },
     ]);
   } else {
