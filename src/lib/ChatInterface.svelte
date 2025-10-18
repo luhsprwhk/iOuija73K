@@ -62,6 +62,7 @@
   let conventState = $state(CONVENT_STATES.INTRO);
   let hangmanState = $state(null); // Will be initialized when hangman trial starts
   let hangmanTimer = $state(null); // Interval for updating timer display
+  let timeRemaining = $state(0);
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -306,6 +307,7 @@
         const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
         setTimeout(() => {
           hangmanState = initializeHangmanGame();
+          timeRemaining = getTimeRemaining(hangmanState);
           // Add initial game info (without ASCII art)
           addAssistantMessage(getGameInfo(hangmanState));
 
@@ -423,10 +425,11 @@
     hangmanTimer = setInterval(() => {
       if (!hangmanState) return;
 
-      const timeRemaining = getTimeRemaining(hangmanState);
+      const remaining = getTimeRemaining(hangmanState);
+      timeRemaining = remaining;
 
       // Check if time expired
-      if (timeRemaining <= 0 && !hangmanState.gameOver) {
+      if (remaining <= 0 && !hangmanState.gameOver) {
         stopHangmanTimer();
 
         // Force game over
@@ -436,6 +439,7 @@
           won: false,
           timeExpired: true,
         };
+        timeRemaining = 0;
 
         // Show reveal messages
         const revealMessages = getHangmanReveal(
@@ -927,6 +931,7 @@
         }));
         // Initialize hangman game
         hangmanState = initializeHangmanGame();
+        timeRemaining = getTimeRemaining(hangmanState);
         messages.push({
           role: 'assistant',
           content: getGameInfo(hangmanState),
@@ -1014,6 +1019,7 @@
 
     {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
       <div class={hangmanArtContainerClass}>
+        <p>{timeRemaining}s</p>
         {getHangmanArt(hangmanState.wrongGuesses)}
       </div>
     {/if}

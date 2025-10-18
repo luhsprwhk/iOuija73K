@@ -5,7 +5,11 @@
  * Theme: False agency / Frontier justice
  */
 
-import { intervalsToCumulative, MIN_DELAY, MAX_DELAY } from '../lib/helpers/chat.js';
+import {
+  intervalsToCumulative,
+  MIN_DELAY,
+  MAX_DELAY,
+} from '../lib/helpers/chat.js';
 
 export const HANGMAN_STATES = {
   INTRO: 'intro',
@@ -83,7 +87,7 @@ export function getHangmanIntro(playerName) {
     {
       delay: MIN_DELAY,
       content:
-        'The most important thing to remember is this: Justice in the West is swift. And it is always entertaining, if sometimes, a little sad.',
+        'The most important thing to remember is this: Justice in the West can be swift. But it is always entertaining, if sometimes, a little sad.',
     },
     {
       delay: MIN_DELAY,
