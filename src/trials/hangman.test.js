@@ -9,8 +9,6 @@ import {
   getWordDisplay,
   getHangmanArt,
   getTimeRemaining,
-  getGameStatus,
-  HANGMAN_STATES,
 } from './hangman.js';
 
 describe('Hangman Trial', () => {
@@ -181,47 +179,6 @@ describe('Hangman Trial', () => {
     });
   });
 
-  describe('getGameStatus', () => {
-    it('should format complete game status', () => {
-      const gameState = {
-        word: 'GUILTY',
-        guessedLetters: ['G', 'U'],
-        wrongGuesses: 1,
-        maxWrongGuesses: 6,
-        startTime: Date.now(),
-        timeLimit: 50000,
-        gameOver: false,
-        lastGuess: {
-          letter: 'U',
-          correct: true,
-        },
-      };
-
-      const status = getGameStatus(gameState);
-
-      expect(status).toContain('Word: G U _ _ _ _');
-      expect(status).toContain('Wrong guesses: 1/6');
-      expect(status).toContain('Guessed letters: G, U');
-      expect(status).toContain('✓ "U" is in the word!');
-      expect(status).toContain('Guess a letter:');
-    });
-
-    it('should show error message if present', () => {
-      const gameState = {
-        word: 'GUILTY',
-        guessedLetters: [],
-        wrongGuesses: 0,
-        maxWrongGuesses: 6,
-        startTime: Date.now(),
-        timeLimit: 50000,
-        gameOver: false,
-        error: 'Please guess a single letter (A-Z)',
-      };
-
-      const status = getGameStatus(gameState);
-      expect(status).toContain('⚠ Please guess a single letter (A-Z)');
-    });
-  });
 
   describe('Integration: Full game playthrough', () => {
     it('should play through a winning game', () => {

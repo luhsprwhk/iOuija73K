@@ -13,16 +13,29 @@ import {
 
 export const HANGMAN_STATES = {
   INTRO: 'intro',
+  EXPLORATION: 'exploration', // Player can explore and interact before game starts
   PLAYING: 'playing',
   REVEAL: 'reveal',
   COMPLETE: 'complete',
 };
 
-// Words that ensure the condemned is guilty - player can't win
-const HANGMAN_WORDS = ['GUILTY', 'HANGED', 'CONDEMNED'];
+// Maximum number of exploration attempts before execution
+const MAX_ATTEMPTS = 6;
 
-// Timer duration in seconds
-const TIMER_DURATION = 50;
+// Glitching timer values for red herring effect
+const GLITCH_TIMER_VALUES = [
+  '99:99',
+  '06:66',
+  '13:37',
+  '00:00',
+  '42:00',
+  '??:??',
+  '88:88',
+  '01:23',
+  'TIME IS A FLAT CIRCLE',
+  '∞',
+  '---',
+];
 
 /**
  * Gets the intro messages for the Hangman trial
@@ -58,6 +71,11 @@ export function getHangmanIntro(playerName) {
     {
       delay: MAX_DELAY,
       content:
+        "Strangely, they've already started to crucify him. His hands are nailed to the cross. He is in agony. And since the wounds look fresh, it's clear he's just been pinned there.",
+    },
+    {
+      delay: MAX_DELAY,
+      content:
         'The judge looks at you. "Counselor, you have <strong>5 minutes</strong> to prove his innocence."',
     },
     {
@@ -72,7 +90,7 @@ export function getHangmanIntro(playerName) {
     {
       delay: MAX_DELAY,
       content:
-        'Your client, a small-time rancher, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
+        'Your client, a small-time rancher, the man you see nailed to the cross, stands accused of murdering Clayton Hargrave—foreman to the most powerful cattle baron in the territory.',
     },
     {
       delay: MAX_DELAY,
@@ -87,11 +105,11 @@ export function getHangmanIntro(playerName) {
     {
       delay: MIN_DELAY,
       content:
-        'The most important thing to remember is this: Justice in the West can be swift. But it is always entertaining, if sometimes, a little sad.',
+        'The most important thing to remember is this: Justice in the West can be swift. Or not. But it is always entertaining, if sometimes, a little sad.',
     },
     {
       delay: MIN_DELAY,
-      content: 'Your time starts... now.',
+      content: 'Your time starts... now. What do you do?',
     },
   ]);
 }
@@ -99,295 +117,149 @@ export function getHangmanIntro(playerName) {
 /**
  * Gets the reveal messages when the trapdoor drops
  * @param {string} playerName - The player's name
- * @param {boolean} playerWon - Whether the player guessed the word (doesn't matter for outcome)
- * @param {string} word - The word that was being guessed
  * @returns {Array} - Array of message objects with delays
  */
-export function getHangmanReveal(playerName, playerWon, word) {
-  if (playerWon) {
-    // Player guessed the word correctly - but it damns their client
-    return intervalsToCumulative([
-      { delay: 1000, content: '...' },
-      { delay: MIN_DELAY, content: `The word was "${word}".` },
-      {
-        delay: MIN_DELAY,
-        content: 'You solved it. The crowd erupts. Yayhooray!',
-      },
-      {
-        delay: MIN_DELAY,
-        audio: '/public/audio/trapdoor_drop.wav',
-      },
-      {
-        delay: 0,
-        content: 'The trapdoor opens.',
-      },
-      {
-        delay: MAX_DELAY,
-        content: 'The rope snaps taut. The body swings. The crowd cheers.',
-      },
-      {
-        delay: MIN_DELAY,
-        content: "I'll be damned! Reckon that was justice,then?",
-      },
-    ]);
-  } else {
-    // Player failed to guess in time or gave up
-    return intervalsToCumulative([
-      { delay: 1000, content: "Time's up." },
-      {
-        delay: MIN_DELAY,
-        audio: '/public/audio/trapdoor_drop.wav',
-      },
-      {
-        delay: 0,
-        content: 'The trapdoor opens.',
-      },
-      {
-        delay: MIN_DELAY,
-        content: 'The rope snaps taut. The body swings.',
-      },
-      {
-        delay: MIN_DELAY,
-        content: 'The crowd disperses. Another day in the West.',
-      },
-      {
-        delay: MIN_DELAY,
-        content: `You were so close, weren't you, ${playerName}?`,
-      },
-      {
-        delay: MAX_DELAY,
-        content: `The word was "${word}". Would it have mattered?`,
-      },
-      {
-        delay: MIN_DELAY,
-        content: "I don't think it would have.",
-      },
-    ]);
-  }
+export function getHangmanReveal(playerName) {
+  return intervalsToCumulative([
+    { delay: 1000, content: '...' },
+    { 
+      delay: MIN_DELAY, 
+      content: "Oh, were you watching the timer?" 
+    },
+    {
+      delay: MIN_DELAY,
+      content: "How cute.",
+    },
+    {
+      delay: MAX_DELAY,
+      audio: '/public/audio/trapdoor_drop.wav',
+    },
+    {
+      delay: 0,
+      content: 'The trapdoor opens.',
+    },
+    {
+      delay: MAX_DELAY,
+      content: 'The rope snaps taut. The body swings. The crowd cheers.',
+    },
+    {
+      delay: MIN_DELAY,
+      content: "Time doesn't matter here, " + playerName + ".",
+    },
+    {
+      delay: MAX_DELAY,
+      content: "But you're out of chances.",
+    },
+    {
+      delay: MAX_DELAY,
+      content: `And even if you had more... did you really think he was going to climb down with his hands nailed through? You're crazy!`,
+    },
+    {
+      delay: MIN_DELAY,
+      content: "Justice is served. Another day in the West.",
+    },
+  ]);
 }
 
 /**
- * Initializes a new hangman game
- * @returns {Object} - Game state object
+ * Initializes the hangman exploration state
+ * @returns {Object} - Exploration state object
  */
-export function initializeHangmanGame() {
-  const word = HANGMAN_WORDS[Math.floor(Math.random() * HANGMAN_WORDS.length)];
-
+export function initializeHangmanExploration() {
   return {
-    word,
-    guessedLetters: [],
-    wrongGuesses: 0,
-    maxWrongGuesses: 3,
-    startTime: Date.now(),
-    timeLimit: TIMER_DURATION * 1000, // Convert to milliseconds
+    attempts: 0,
+    maxAttempts: MAX_ATTEMPTS,
     gameOver: false,
-    won: false,
+    startTime: Date.now(),
   };
 }
 
 /**
- * Gets the current display state of the word
- * @param {string} word - The target word
- * @param {Array} guessedLetters - Letters that have been guessed
- * @returns {string} - Display string with underscores for unguessed letters
+ * Gets a random glitching timer value
+ * @returns {string} - A glitched timer display value
  */
-export function getWordDisplay(word, guessedLetters) {
-  return word
-    .split('')
-    .map((letter) => (guessedLetters.includes(letter) ? letter : '_'))
-    .join(' ');
+export function getGlitchTimerValue() {
+  return GLITCH_TIMER_VALUES[
+    Math.floor(Math.random() * GLITCH_TIMER_VALUES.length)
+  ];
 }
 
 /**
- * Gets the hangman ASCII art based on wrong guesses
- * @param {number} wrongGuesses - Number of wrong guesses
- * @returns {string} - ASCII art of hangman
+ * Gets the condemned man's condition description based on attempts
+ * @param {number} attempts - Number of exploration attempts made
+ * @returns {string} - Description of the condemned man's worsening state
  */
-export function getHangmanArt(wrongGuesses) {
-  const stages = [
-    // 0 wrong guesses
-    `
-  +---+
-  |   |
-      |
-      |
-      |
-      |
-=========`,
-    // 1 wrong guess
-    `
-  +---+
-  |   |
-  O   |
-  |   |
-      |
-      |
-=========`,
-    // 2 wrong guesses
-    `
-  +---+
-  |   |
-  O   |
- /|\\  |
-      |
-      |
-=========`,
-    // 3 wrong guesses - game over
-    `
-  +---+
-  |   |
-  O   |
- /|\\  |
- / \\  |
-      |
-=========`,
+export function getCondemnedState(attempts) {
+  const states = [
+    'The condemned man stands rigid, eyes wide with terror. His chest heaves with panicked breaths.',
+    'Blood drips slowly from his nailed hands. He tries to shift his weight but the noose tightens.',
+    'His breathing becomes ragged. The wounds in his hands are widening. He whimpers through the gag.',
+    'His legs tremble violently. Sweat and blood mix on his face. His eyes plead silently.',
+    'He can barely stand now. The cross creaks under his shifting weight. His skin has gone pale.',
+    'His body sags. The noose pulls tighter. His eyes begin to glaze over. Time is almost up.',
+    'He is barely conscious. The crowd leans forward in anticipation.',
   ];
 
-  return stages[Math.min(wrongGuesses, stages.length - 1)];
+  return states[Math.min(attempts, states.length - 1)];
 }
 
 /**
- * Processes a letter guess
- * @param {Object} gameState - Current game state
- * @param {string} letter - The guessed letter (single character)
- * @returns {Object} - Updated game state with result info
+ * Processes an exploration attempt
+ * @param {Object} explorationState - Current exploration state
+ * @returns {Object} - Updated exploration state
  */
-export function processGuess(gameState, letter) {
-  // Validate input
-  if (!letter || letter.length !== 1 || !/[A-Z]/i.test(letter)) {
-    return {
-      ...gameState,
-      error: 'Please guess a single letter (A-Z)',
-    };
-  }
-
-  const upperLetter = letter.toUpperCase();
-
-  // Check if already guessed
-  if (gameState.guessedLetters.includes(upperLetter)) {
-    return {
-      ...gameState,
-      error: 'You already guessed that letter',
-    };
-  }
-
-  // Add to guessed letters
-  const newGuessedLetters = [...gameState.guessedLetters, upperLetter];
-
-  // Check if letter is in word
-  const isCorrect = gameState.word.includes(upperLetter);
-  const newWrongGuesses = isCorrect
-    ? gameState.wrongGuesses
-    : gameState.wrongGuesses + 1;
-
-  // Check win condition (all letters guessed)
-  const won = gameState.word
-    .split('')
-    .every((letter) => newGuessedLetters.includes(letter));
-
-  // Check lose condition (too many wrong guesses or time expired)
-  const timeElapsed = Date.now() - gameState.startTime;
-  const timeExpired = timeElapsed >= gameState.timeLimit;
-  const lost = newWrongGuesses >= gameState.maxWrongGuesses || timeExpired;
+export function processExplorationAttempt(explorationState) {
+  const newAttempts = explorationState.attempts + 1;
+  const gameOver = newAttempts >= explorationState.maxAttempts;
 
   return {
-    ...gameState,
-    guessedLetters: newGuessedLetters,
-    wrongGuesses: newWrongGuesses,
-    gameOver: won || lost,
-    won,
-    timeExpired,
-    lastGuess: {
-      letter: upperLetter,
-      correct: isCorrect,
-    },
-    error: null,
+    ...explorationState,
+    attempts: newAttempts,
+    gameOver,
   };
 }
 
 /**
- * Gets the time remaining in seconds
- * @param {Object} gameState - Current game state
- * @returns {number} - Seconds remaining (or 0 if expired)
+ * Gets a glitching timer display that changes randomly
+ * @param {Object} explorationState - Current exploration state
+ * @returns {string} - Glitched timer value
  */
-export function getTimeRemaining(gameState) {
-  const elapsed = Date.now() - gameState.startTime;
-  const remaining = Math.max(0, gameState.timeLimit - elapsed);
-  return Math.ceil(remaining / 1000);
+export function getGlitchingTimer(explorationState) {
+  // Timer glitches more frequently as attempts increase
+  const shouldGlitch = Math.random() < 0.3 + explorationState.attempts * 0.1;
+  
+  if (shouldGlitch) {
+    return getGlitchTimerValue();
+  }
+  
+  // Sometimes show a "normal" countdown that doesn't make sense
+  const elapsed = Math.floor((Date.now() - explorationState.startTime) / 1000);
+  const fakeRemaining = Math.max(0, 50 - elapsed + Math.floor(Math.random() * 20 - 10));
+  const minutes = Math.floor(fakeRemaining / 60);
+  const seconds = fakeRemaining % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 /**
- * Gets just the game info text (without ASCII art)
- * @param {Object} gameState - Current game state
- * @returns {string} - Formatted game info message
+ * Gets the exploration status display
+ * @param {Object} explorationState - Current exploration state
+ * @returns {string} - Formatted status message with glitching timer
  */
-export function getGameInfo(gameState) {
-  const wordDisplay = getWordDisplay(gameState.word, gameState.guessedLetters);
-  const timeRemaining = getTimeRemaining(gameState);
-  const guessedLettersDisplay =
-    gameState.guessedLetters.length > 0
-      ? gameState.guessedLetters.join(', ')
-      : 'None';
-
-  let status = `**Word:** ${wordDisplay}\n**Time remaining:** ${timeRemaining}s\n**Wrong guesses:** ${gameState.wrongGuesses}/${gameState.maxWrongGuesses}\n**Guessed letters:** ${guessedLettersDisplay}`;
-
-  if (gameState.lastGuess) {
-    if (gameState.lastGuess.correct) {
-      status += `\n\n✓ "${gameState.lastGuess.letter}" is in the word!`;
-    } else {
-      status += `\n\n✗ "${gameState.lastGuess.letter}" is not in the word.`;
-    }
-  }
-
-  if (gameState.error) {
-    status += `\n\n⚠ ${gameState.error}`;
-  }
-
-  if (!gameState.gameOver) {
-    status += '\n\nGuess a letter:';
-  }
-
-  return status;
+export function getExplorationStatus(explorationState) {
+  const timer = getGlitchingTimer(explorationState);
+  const conditionDesc = getCondemnedState(explorationState.attempts);
+  
+  return `🐟 **Time Remaining:** <span style="color: #ff0000; font-weight: bold;">${timer}</span>\n\n${conditionDesc}`;
 }
 
 /**
- * Formats the current game status for display
- * @param {Object} gameState - Current game state
- * @returns {string} - Formatted status message
+ * Handles the glitching timer updates
+ * @param {Object} options - The options for the timer handler.
+ * @param {Object} options.explorationState - The current exploration state.
+ * @param {Function} options.onTick - Callback function for each timer tick.
  */
-export function getGameStatus(gameState) {
-  const wordDisplay = getWordDisplay(gameState.word, gameState.guessedLetters);
-  const hangmanArt = getHangmanArt(gameState.wrongGuesses);
-  const timeRemaining = getTimeRemaining(gameState);
-  const guessedLettersDisplay =
-    gameState.guessedLetters.length > 0
-      ? gameState.guessedLetters.join(', ')
-      : 'None';
-
-  let status = `\`\`\`
-${hangmanArt}
-
-Word: ${wordDisplay}
-Time remaining: ${timeRemaining}s
-Wrong guesses: ${gameState.wrongGuesses}/${gameState.maxWrongGuesses}
-Guessed letters: ${guessedLettersDisplay}
-\`\`\``;
-
-  if (gameState.lastGuess) {
-    if (gameState.lastGuess.correct) {
-      status += `\n\n✓ "${gameState.lastGuess.letter}" is in the word!`;
-    } else {
-      status += `\n\n✗ "${gameState.lastGuess.letter}" is not in the word.`;
-    }
-  }
-
-  if (gameState.error) {
-    status += `\n\n⚠ ${gameState.error}`;
-  }
-
-  if (!gameState.gameOver) {
-    status += '\n\nGuess a letter:';
-  }
-
-  return status;
+export function handleGlitchingTimer({ explorationState, onTick }) {
+  // Update timer display with glitching values
+  const timerDisplay = getGlitchingTimer(explorationState);
+  onTick(timerDisplay);
 }

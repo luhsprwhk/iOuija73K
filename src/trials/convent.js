@@ -25,7 +25,7 @@ export function getConventIntro(playerName) {
     { delay: 2500, content: 'Close your eyes for a moment. Imagine...' },
     {
       delay: 4000,
-      content: `You're a knight, ${playerName}. Moonlight filters through broken stained glass. The air smells of incense and... something else. Something wrong.`,
+      content: `<i>You're a knight, ${playerName}</i>. Moonlight filters through broken stained glass. The air smells of incense and... something else. Something wrong.`,
     },
     {
       delay: 6500,
@@ -34,14 +34,14 @@ export function getConventIntro(playerName) {
     {
       delay: 6500,
       content:
-        'Before you stands a dark convent. The doors hang open. You hear sounds from within—scraping, chittering, inhuman.',
+        'Before you stands a dark convent. The doors hang open. <span style="font-weight: bold;">You hear sounds from within—scraping, chittering, inhuman.</span>',
     },
     {
       delay: 9000,
       content:
         'You draw your sword and step inside. The darkness swallows you whole.',
     },
-    { delay: 11000, content: 'And then you see it. Your first enemy.' },
+    { delay: 11000, content: '<strong>And then you see it. Your first enemy.</strong>' },
   ];
 }
 

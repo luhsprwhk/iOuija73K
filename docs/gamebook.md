@@ -92,6 +92,7 @@ Player thinks they're playing a heroic text adventure. Reality: they're being ps
 - Crowd gathered, waiting for justice
 - The rope creaks
 - Your client can't speak - gag in his mouth, or maybe he's already accepted his fate
+- **Crucifixion detail:** Strangely, they've already started to crucify him - his hands are nailed to a cross. The wounds look fresh. He's in agony. This bizarre fusion of hanging and crucifixion adds to the surreal horror.
 
 **The Case (Based on Historical Tom Horn & Cattle Kate Cases):**
 

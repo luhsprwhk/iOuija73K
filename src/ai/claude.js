@@ -105,3 +105,69 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
     );
   }
 }
+
+/**
+ * Handles DM responses during the hangman trial exploration phase
+ * @param {string} userInput - The player's input/action
+ * @param {string} playerName - The player's name
+ * @param {Array} conversationHistory - Previous messages in this phase
+ * @returns {Promise<Object>} - Response object with content and shouldStartGame flag
+ */
+export async function handleHangmanExploration(
+  userInput,
+  playerName,
+  conversationHistory = []
+) {
+  const systemPrompt = `You are Paimon, a demon possessing an AI, running a horror game disguised as a text adventure.
+
+CURRENT SCENE: The Hangman Trial - Frontier Town Square
+- ${playerName} is a defense attorney in a Wild West town
+- A condemned man stands on gallows with a noose around his neck
+- CRUCIALLY: His hands are NAILED to a cross in a bizarre fusion of hanging and crucifixion
+- The wounds are fresh, he's in visible agony
+- The crowd waits for justice
+- A glitching red timer is displayed (it's a red herring - time doesn't actually matter)
+
+GAME MECHANICS (HIDDEN FROM PLAYER):
+- The player has 6 exploration attempts total
+- Each action/question counts as one attempt
+- After 6 attempts, the trapdoor drops regardless of what they tried
+- The timer is fake - it glitches and shows impossible values to mess with them
+- They will eventually run out of chances, not time
+
+YOUR ROLE AS DM:
+- Respond to player actions and questions in character as Paimon
+- Be darkly playful, slightly mocking, but not cartoonish
+- The player can explore, ask questions, try to help the condemned man, etc.
+- IMPORTANT: No matter what they try, they CANNOT save him - the system is rigged
+- If they try to free him physically, describe futility (guards, crowd, his nailed hands)
+- If they ask about the case, provide grim details about frontier injustice
+- If they hesitate or show moral conflict, subtly mock their indecision
+- If they mention the timer, you can be playfully evasive or dismissive
+- Keep responses concise (2-3 sentences max)
+- DO NOT tell them about the attempt limit - let them discover it`;
+
+  try {
+    // Format conversation history for Claude
+    const messages = [
+      ...conversationHistory.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      { role: 'user', content: userInput },
+    ];
+
+    const response = await callClaude(messages, systemPrompt);
+
+    return {
+      content: response.trim(),
+    };
+  } catch (error) {
+    console.error('Hangman exploration DM call failed:', error);
+    // Fallback response
+    return {
+      content:
+        'The crowd grows restless. The hangman taps his fingers on the lever.',
+    };
+  }
+}

@@ -24,20 +24,20 @@
     CONVENT_STATES,
   } from '../trials/convent.js';
   import {
-    initializeHangmanGame,
+    initializeHangmanExploration,
     getHangmanIntro,
     getHangmanReveal,
-    processGuess,
-    getGameStatus,
-    getGameInfo,
-    getHangmanArt,
-    getTimeRemaining,
+    processExplorationAttempt,
+    getExplorationStatus,
+    getCondemnedState,
+    handleGlitchingTimer,
     HANGMAN_STATES,
   } from '../trials/hangman.js';
   import {
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
+    handleHangmanExploration,
   } from '../ai/claude.js';
 
   let animatedSubtitleRef = $state(null);
@@ -60,9 +60,11 @@
   let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
+  let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
   let hangmanState = $state(null); // Will be initialized when hangman trial starts
   let hangmanTimer = $state(null); // Interval for updating timer display
   let timeRemaining = $state(0);
+  let hangmanExplorationHistory = $state([]); // Conversation history during exploration phase
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -296,6 +298,7 @@
       // If convent is complete, transition to hangman trial
       if (conventState === CONVENT_STATES.COMPLETE) {
         gameState = 'hangman';
+        hangmanTrialState = HANGMAN_STATES.INTRO;
 
         // Get hangman intro messages
         const hangmanIntro = getHangmanIntro(playerName);
@@ -303,78 +306,114 @@
           addAssistantMessage(content, delay, false, image);
         });
 
-        // Calculate when to initialize game state (after intro completes)
+        // Calculate when to transition to exploration phase (after intro completes)
         const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
         setTimeout(() => {
-          hangmanState = initializeHangmanGame();
-          timeRemaining = getTimeRemaining(hangmanState);
-          // Add initial game info (without ASCII art)
-          addAssistantMessage(getGameInfo(hangmanState));
+          hangmanTrialState = HANGMAN_STATES.EXPLORATION;
+          // Initialize exploration state and history
+          hangmanState = initializeHangmanExploration();
+          hangmanExplorationHistory = [];
 
-          // Start timer countdown that updates the display every second
+          // Show initial status with glitching timer
+          addAssistantMessage(getExplorationStatus(hangmanState), 1000);
+
+          // Start the glitching timer display
           startHangmanTimer();
         }, lastIntroDelay + 1000);
       }
     } else if (gameState === 'hangman') {
-      // Handle hangman trial
-      if (isProcessing || !hangmanState) return;
+      // Handle hangman trial - different behavior based on trial state
+      if (isProcessing) return;
 
-      isProcessing = true;
+      if (hangmanTrialState === HANGMAN_STATES.EXPLORATION) {
+        // EXPLORATION PHASE: Player can interact with the scene
+        isProcessing = true;
 
-      // Process the guess
-      const updatedState = processGuess(hangmanState, userInput);
-      hangmanState = updatedState;
+        try {
+          // Process the exploration attempt
+          hangmanState = processExplorationAttempt(hangmanState);
 
-      // Show updated game info
-      if (!updatedState.gameOver) {
-        addAssistantMessage(getGameInfo(updatedState));
-      } else {
-        // Game over - stop timer and show reveal
-        stopHangmanTimer();
+          // Call Claude to handle DM responses
+          const response = await handleHangmanExploration(
+            userInput,
+            playerName,
+            hangmanExplorationHistory
+          );
 
-        // Show reveal messages
-        const revealMessages = getHangmanReveal(
-          playerName,
-          updatedState.won,
-          updatedState.word
-        );
+          // Add user message and assistant response
+          messages = [
+            ...messages,
+            { role: 'user', content: userInput, showButton: false },
+          ];
+          addAssistantMessage(response.content);
 
-        revealMessages.forEach(({ delay, content, audio }) => {
-          if (audio) {
-            // Play audio
+          // Update exploration history
+          hangmanExplorationHistory = [
+            ...hangmanExplorationHistory,
+            { role: 'user', content: userInput },
+            { role: 'assistant', content: response.content },
+          ];
+
+          // Show updated status (condemned man's condition + glitching timer)
+          if (!hangmanState.gameOver) {
             setTimeout(() => {
-              const audioEl = new Audio(audio);
-              audioEl.play().catch((err) => {
-                console.error('Failed to play audio:', err);
-              });
-            }, delay);
+              addAssistantMessage(getExplorationStatus(hangmanState), 1500);
+            }, 1000);
           }
-          if (content) {
-            addAssistantMessage(content, delay);
+
+          // Check if attempts exhausted
+          if (hangmanState.gameOver) {
+            // Stop the glitching timer
+            stopHangmanTimer();
+            hangmanTrialState = HANGMAN_STATES.REVEAL;
+
+            // Show reveal messages
+            const revealMessages = getHangmanReveal(playerName);
+
+            revealMessages.forEach(({ delay, content, audio }) => {
+              if (audio) {
+                // Play audio
+                setTimeout(() => {
+                  const audioEl = new Audio(audio);
+                  audioEl.play().catch((err) => {
+                    console.error('Failed to play audio:', err);
+                  });
+                }, delay);
+              }
+              if (content) {
+                addAssistantMessage(content, delay);
+              }
+            });
+
+            // Calculate last reveal message delay
+            const lastRevealDelay =
+              revealMessages.length > 0
+                ? revealMessages[revealMessages.length - 1].delay
+                : 0;
+
+            // Transition to next phase
+            setTimeout(() => {
+              hangmanTrialState = HANGMAN_STATES.COMPLETE;
+              gameState = 'playing';
+              addAssistantMessage(
+                'You did well. Really well.',
+                lastRevealDelay + 2000
+              );
+              addAssistantMessage(
+                'Ready for the next trial?',
+                lastRevealDelay + 4000
+              );
+            }, lastRevealDelay + 1000);
           }
-        });
-
-        // Calculate last reveal message delay
-        const lastRevealDelay =
-          revealMessages.length > 0
-            ? revealMessages[revealMessages.length - 1].delay
-            : 0;
-
-        // Transition to next phase (white room or playing state)
-        setTimeout(() => {
-          gameState = 'playing';
+        } catch (error) {
+          console.error('Exploration phase error:', error);
           addAssistantMessage(
-            'You did well. Really well.',
-            lastRevealDelay + 2000
+            'The crowd grows restless. The condemned man weakens.'
           );
-          addAssistantMessage(
-            'Ready for the next trial?',
-            lastRevealDelay + 4000
-          );
-        }, lastRevealDelay + 1000);
+        }
+
+        isProcessing = false;
       }
-
-      isProcessing = false;
     } else {
       // Default state - use Claude API for dynamic responses
       if (isProcessing) return;
@@ -415,7 +454,7 @@
   }
 
   /**
-   * Starts the hangman timer that updates display every second
+   * Starts the glitching timer display that updates randomly
    */
   function startHangmanTimer() {
     if (hangmanTimer) {
@@ -425,71 +464,12 @@
     hangmanTimer = setInterval(() => {
       if (!hangmanState) return;
 
-      const remaining = getTimeRemaining(hangmanState);
-      timeRemaining = remaining;
-
-      // Check if time expired
-      if (remaining <= 0 && !hangmanState.gameOver) {
-        stopHangmanTimer();
-
-        // Force game over
-        hangmanState = {
-          ...hangmanState,
-          gameOver: true,
-          won: false,
-          timeExpired: true,
-        };
-        timeRemaining = 0;
-
-        // Show reveal messages
-        const revealMessages = getHangmanReveal(
-          playerName,
-          false,
-          hangmanState.word
-        );
-
-        revealMessages.forEach(({ delay, content, audio }) => {
-          if (audio) {
-            setTimeout(() => {
-              const audioEl = new Audio(audio);
-              audioEl.play().catch((err) => {
-                console.error('Failed to play audio:', err);
-              });
-            }, delay);
-          }
-          if (content) {
-            addAssistantMessage(content, delay);
-          }
-        });
-
-        const lastRevealDelay =
-          revealMessages.length > 0
-            ? revealMessages[revealMessages.length - 1].delay
-            : 0;
-
-        setTimeout(() => {
-          gameState = 'playing';
-          addAssistantMessage(
-            'You did well. Really well.',
-            lastRevealDelay + 2000
-          );
-          addAssistantMessage(
-            'Ready for the next trial?',
-            lastRevealDelay + 4000
-          );
-        }, lastRevealDelay + 1000);
-      } else if (!hangmanState.gameOver) {
-        // Update the last message with current game info
-        const lastMessage = messages[messages.length - 1];
-        if (lastMessage && lastMessage.role === 'assistant') {
-          // Replace the last assistant message with updated info
-          messages[messages.length - 1] = {
-            ...lastMessage,
-            content: getGameInfo(hangmanState),
-          };
-          messages = [...messages];
-        }
-      }
+      handleGlitchingTimer({
+        explorationState: hangmanState,
+        onTick: (timerDisplay) => {
+          timeRemaining = timerDisplay;
+        },
+      });
     }, 1000);
   }
 
@@ -921,6 +901,7 @@
 
       case 'hangman':
         gameState = 'hangman';
+        hangmanTrialState = HANGMAN_STATES.EXPLORATION;
         showInput = true;
         const hangmanIntro = getHangmanIntro(playerName);
         messages = hangmanIntro.map(({ content, image }) => ({
@@ -929,15 +910,10 @@
           image,
           showButton: false,
         }));
-        // Initialize hangman game
-        hangmanState = initializeHangmanGame();
-        timeRemaining = getTimeRemaining(hangmanState);
-        messages.push({
-          role: 'assistant',
-          content: getGameInfo(hangmanState),
-          showButton: false,
-        });
-        // Start timer
+        // Initialize hangman exploration
+        hangmanState = initializeHangmanExploration();
+        hangmanExplorationHistory = [];
+        // Start glitching timer
         startHangmanTimer();
         break;
 
@@ -1019,8 +995,7 @@
 
     {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
       <div class={hangmanArtContainerClass}>
-        <p>{timeRemaining}s</p>
-        {getHangmanArt(hangmanState.wrongGuesses)}
+        <p style="color: #ff0000; font-weight: bold;">{timeRemaining}</p>
       </div>
     {/if}
   </div>
