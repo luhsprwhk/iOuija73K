@@ -41,7 +41,10 @@ export function getConventIntro(playerName) {
       content:
         'You draw your sword and step inside. The darkness swallows you whole.',
     },
-    { delay: 11000, content: '<strong>And then you see it. Your first enemy.</strong>' },
+    {
+      delay: 11000,
+      content: '<strong>And then you see it. Your first enemy.</strong>',
+    },
   ];
 }
 

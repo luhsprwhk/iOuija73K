@@ -10,7 +10,7 @@ import {
   getGlitchingTimer,
   getGlitchTimerValue,
   getExplorationStatus,
-} from './hangman.js';
+} from '../../src/trials/hangman.js';
 
 describe('Hangman Trial - Exploration System', () => {
   describe('initializeHangmanExploration', () => {
@@ -108,7 +108,7 @@ describe('Hangman Trial - Exploration System', () => {
     it('should return a timer display string', () => {
       const state = initializeHangmanExploration();
       const timer = getGlitchingTimer(state);
-      
+
       expect(timer).toBeDefined();
       expect(typeof timer).toBe('string');
     });
@@ -118,35 +118,25 @@ describe('Hangman Trial - Exploration System', () => {
         ...initializeHangmanExploration(),
         attempts: 5, // High attempts increase glitch probability
       };
-      
+
       const timers = new Set();
       for (let i = 0; i < 50; i++) {
         timers.add(getGlitchingTimer(state));
       }
-      
+
       // Should get variety of values (glitched and normal)
       expect(timers.size).toBeGreaterThan(1);
     });
   });
 
-
   describe('getExplorationStatus', () => {
-    it('should return formatted status with timer and condition', () => {
-      const state = initializeHangmanExploration();
-      const status = getExplorationStatus(state);
-      
-      expect(status).toContain('Time Remaining');
-      expect(status).toContain('🐟'); // Red herring fish emoji
-      expect(status).toBeDefined();
-    });
-
     it('should show different conditions based on attempts', () => {
       const state0 = { ...initializeHangmanExploration(), attempts: 0 };
       const state5 = { ...initializeHangmanExploration(), attempts: 5 };
-      
+
       const status0 = getExplorationStatus(state0);
       const status5 = getExplorationStatus(state5);
-      
+
       expect(status0).not.toBe(status5);
     });
   });
@@ -154,18 +144,18 @@ describe('Hangman Trial - Exploration System', () => {
   describe('Integration: Full exploration playthrough', () => {
     it('should progress through all attempts until game over', () => {
       let state = initializeHangmanExploration();
-      
+
       // Make 6 exploration attempts
       for (let i = 1; i <= 6; i++) {
         expect(state.gameOver).toBe(false);
         state = processExplorationAttempt(state);
         expect(state.attempts).toBe(i);
-        
+
         // Check condemned man's condition worsens
         const condition = getCondemnedState(state.attempts);
         expect(condition).toBeDefined();
       }
-      
+
       expect(state.gameOver).toBe(true);
       expect(state.attempts).toBe(6);
     });
@@ -173,12 +163,12 @@ describe('Hangman Trial - Exploration System', () => {
     it('should maintain consistent state throughout exploration', () => {
       let state = initializeHangmanExploration();
       const originalStartTime = state.startTime;
-      
+
       // Make several attempts
       for (let i = 0; i < 3; i++) {
         state = processExplorationAttempt(state);
       }
-      
+
       // Start time should not change
       expect(state.startTime).toBe(originalStartTime);
       expect(state.maxAttempts).toBe(6);

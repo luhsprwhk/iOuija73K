@@ -122,13 +122,13 @@ export function getHangmanIntro(playerName) {
 export function getHangmanReveal(playerName) {
   return intervalsToCumulative([
     { delay: 1000, content: '...' },
-    { 
-      delay: MIN_DELAY, 
-      content: "Oh, were you watching the timer?" 
+    {
+      delay: MIN_DELAY,
+      content: 'Oh, were you watching the timer?',
     },
     {
       delay: MIN_DELAY,
-      content: "How cute.",
+      content: 'How cute.',
     },
     {
       delay: MAX_DELAY,
@@ -144,7 +144,7 @@ export function getHangmanReveal(playerName) {
     },
     {
       delay: MIN_DELAY,
-      content: "Time doesn't matter here, " + playerName + ".",
+      content: "Time doesn't matter here, " + playerName + '.',
     },
     {
       delay: MAX_DELAY,
@@ -156,7 +156,7 @@ export function getHangmanReveal(playerName) {
     },
     {
       delay: MIN_DELAY,
-      content: "Justice is served. Another day in the West.",
+      content: 'Justice is served. Another day in the West.',
     },
   ]);
 }
@@ -226,15 +226,15 @@ export function processExplorationAttempt(explorationState) {
  */
 export function getGlitchingTimer(explorationState) {
   const elapsed = Math.floor((Date.now() - explorationState.startTime) / 1000);
-  
+
   // Determine behavior: 95% normal, 4% fluctuate, 1% glitch
   // Use a deterministic seed that changes every few seconds
   const behaviorSeed = Math.floor(elapsed / 3); // Changes every 3 seconds
   const randomValue = (Math.sin(behaviorSeed * 12.9898) * 43758.5453) % 1; // Pseudo-random 0-1
   const normalizedValue = Math.abs(randomValue);
-  
+
   let fakeRemaining;
-  
+
   // 1% glitch (0.00 - 0.01)
   if (normalizedValue < 0.01) {
     return getGlitchTimerValue();
@@ -242,10 +242,14 @@ export function getGlitchingTimer(explorationState) {
   // 4% fluctuate (0.01 - 0.05)
   else if (normalizedValue < 0.05) {
     // Timer fluctuates randomly - sometimes increases, sometimes decreases
-    const fluctuation = Math.sin(elapsed * 0.7) * 15 + Math.cos(elapsed * 0.3) * 10;
+    const fluctuation =
+      Math.sin(elapsed * 0.7) * 15 + Math.cos(elapsed * 0.3) * 10;
     const randomWalk = Math.floor(Math.random() * 10 - 5); // -5 to +5 seconds
     const baseTime = 180; // Start around 3 minutes
-    fakeRemaining = Math.max(0, Math.min(300, baseTime + fluctuation + randomWalk));
+    fakeRemaining = Math.max(
+      0,
+      Math.min(300, baseTime + fluctuation + randomWalk)
+    );
   }
   // 95% normal countdown (0.05 - 1.00)
   else {
@@ -253,12 +257,12 @@ export function getGlitchingTimer(explorationState) {
     const baseTime = 300; // 5 minutes
     fakeRemaining = Math.max(0, baseTime - elapsed);
   }
-  
+
   // Never let the timer reach zero - reset to 4-4.5 minutes if under 10 seconds
   if (fakeRemaining < 10) {
     fakeRemaining = 240 + Math.floor(Math.random() * 30); // 4:00 to 4:30
   }
-  
+
   const minutes = Math.floor(fakeRemaining / 60);
   const seconds = Math.floor(fakeRemaining % 60);
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -271,7 +275,7 @@ export function getGlitchingTimer(explorationState) {
  */
 export function getExplorationStatus(explorationState) {
   const conditionDesc = getCondemnedState(explorationState.attempts);
-  
+
   return `${conditionDesc}`;
 }
 

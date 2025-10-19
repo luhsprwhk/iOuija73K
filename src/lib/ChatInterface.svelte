@@ -80,6 +80,16 @@
       isLockedOut = true;
       lockoutTimeRemaining = lockoutStatus.remainingTime;
     }
+    return () => {};
+  });
+
+  // Clear timer interval on unmount
+  $effect(() => {
+    return () => {
+      if (hangmanTimer) {
+        clearInterval(hangmanTimer);
+      }
+    };
   });
 
   function scrollToBottom() {

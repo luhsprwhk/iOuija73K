@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { handleNumberGuess, getNumberTrialIntro } from './numberGuessing.js';
+import {
+  handleNumberGuess,
+  getNumberTrialIntro,
+} from '../../src/trials/numberGuessing.js';
 
 describe('numberGuessing trial', () => {
   describe('getNumberTrialIntro', () => {

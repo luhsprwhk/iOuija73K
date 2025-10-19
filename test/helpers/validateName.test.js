@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateName } from './validateName';
+import { validateName } from '../../src/lib/helpers/validateName';
 
 describe('validateName', () => {
   it('should accept valid names', () => {

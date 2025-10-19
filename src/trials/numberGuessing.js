@@ -25,10 +25,16 @@ export function handleNumberGuess(
     // Successful guess - reveal true name!
     return {
       messages: intervalsToCumulative([
-        { delay: 1000, content: 'Ha! Of course. Look at us: we are connected now.' },
+        {
+          delay: 1000,
+          content: 'Ha! Of course. Look at us: we are connected now.',
+        },
         { delay: 3500, content: 'Oh, and one more thing...' },
         { delay: 1500, content: "<i>My name isn't Raphael</i>" },
-        { delay: 1500, content: "<span style=\"font-weight: bold;\">I'm Paimon 🙂</span>" },
+        {
+          delay: 1500,
+          content: '<span style="font-weight: bold;">I\'m Paimon 🙂</span>',
+        },
       ]),
       nextAttempt: guessAttempt,
       gameComplete: true,

@@ -7,7 +7,7 @@ import {
   setLockout,
   clearLockout,
   getLockoutDuration,
-} from './lockoutManager';
+} from '../../src/lib/helpers/lockoutManager';
 
 describe('lockoutManager', () => {
   beforeEach(() => {
