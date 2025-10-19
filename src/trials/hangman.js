@@ -225,18 +225,42 @@ export function processExplorationAttempt(explorationState) {
  * @returns {string} - Glitched timer value
  */
 export function getGlitchingTimer(explorationState) {
-  // Timer glitches more frequently as attempts increase
-  const shouldGlitch = Math.random() < 0.3 + explorationState.attempts * 0.1;
+  const elapsed = Math.floor((Date.now() - explorationState.startTime) / 1000);
   
-  if (shouldGlitch) {
+  // Determine behavior: 95% normal, 4% fluctuate, 1% glitch
+  // Use a deterministic seed that changes every few seconds
+  const behaviorSeed = Math.floor(elapsed / 3); // Changes every 3 seconds
+  const randomValue = (Math.sin(behaviorSeed * 12.9898) * 43758.5453) % 1; // Pseudo-random 0-1
+  const normalizedValue = Math.abs(randomValue);
+  
+  let fakeRemaining;
+  
+  // 1% glitch (0.00 - 0.01)
+  if (normalizedValue < 0.01) {
     return getGlitchTimerValue();
   }
+  // 4% fluctuate (0.01 - 0.05)
+  else if (normalizedValue < 0.05) {
+    // Timer fluctuates randomly - sometimes increases, sometimes decreases
+    const fluctuation = Math.sin(elapsed * 0.7) * 15 + Math.cos(elapsed * 0.3) * 10;
+    const randomWalk = Math.floor(Math.random() * 10 - 5); // -5 to +5 seconds
+    const baseTime = 180; // Start around 3 minutes
+    fakeRemaining = Math.max(0, Math.min(300, baseTime + fluctuation + randomWalk));
+  }
+  // 95% normal countdown (0.05 - 1.00)
+  else {
+    // Normal countdown from 5 minutes
+    const baseTime = 300; // 5 minutes
+    fakeRemaining = Math.max(0, baseTime - elapsed);
+  }
   
-  // Sometimes show a "normal" countdown that doesn't make sense
-  const elapsed = Math.floor((Date.now() - explorationState.startTime) / 1000);
-  const fakeRemaining = Math.max(0, 50 - elapsed + Math.floor(Math.random() * 20 - 10));
+  // Never let the timer reach zero - reset to 4-4.5 minutes if under 10 seconds
+  if (fakeRemaining < 10) {
+    fakeRemaining = 240 + Math.floor(Math.random() * 30); // 4:00 to 4:30
+  }
+  
   const minutes = Math.floor(fakeRemaining / 60);
-  const seconds = fakeRemaining % 60;
+  const seconds = Math.floor(fakeRemaining % 60);
   return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -246,10 +270,9 @@ export function getGlitchingTimer(explorationState) {
  * @returns {string} - Formatted status message with glitching timer
  */
 export function getExplorationStatus(explorationState) {
-  const timer = getGlitchingTimer(explorationState);
   const conditionDesc = getCondemnedState(explorationState.attempts);
   
-  return `🐟 **Time Remaining:** <span style="color: #ff0000; font-weight: bold;">${timer}</span>\n\n${conditionDesc}`;
+  return `${conditionDesc}`;
 }
 
 /**
