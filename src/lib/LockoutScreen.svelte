@@ -5,12 +5,28 @@
   let { timeRemaining = 300, onUnlock = undefined } = $props();
 
   let countdown = $state(timeRemaining);
+  let audio;
 
   // Format time as MM:SS
   const formattedTime = $derived(() => {
     const minutes = Math.floor(countdown / 60);
     const seconds = countdown % 60;
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  });
+
+  // Play audio when component mounts
+  $effect(() => {
+    audio = new Audio('/src/assets/audio/muzak/dark-elevator-muzak.mp3');
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.play().catch(err => console.error('Audio playback failed:', err));
+
+    return () => {
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
   });
 
   // Update countdown every second
