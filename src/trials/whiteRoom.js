@@ -51,11 +51,11 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-      content: '<strong>A voice speaks. Not mine. Something else.</strong>',
+      content: '<strong>A voice speaks. Not mine. Something else. The voice of God. </strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: '"Two enter. One leaves. The last one alive wins."',
+      content: '<strong>"Jesus, Son of God and Also God Himself: Two enter. One leaves. The last one alive wins."</strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -96,7 +96,7 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
       ...intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: 'The other person was real, by the way.',
+          content: 'The other person was real, by the way. Did you forget that?',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -109,11 +109,11 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
         { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'You chose to die.' },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'And that was always the point.',
+          content: 'You are looking pretty rough right now by the way.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>I needed a willing sacrifice.</strong>',
+          content: '<strong>Jesus, Son of God and Also God Himself: He needed a willing sacrifice.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -131,16 +131,19 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'Getting you comfortable with failure.',
         },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'With death.' },
+        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Jesus, Son of God and Also God Himself: <i>With death.</i>' },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'With the idea that losing could be righteous.',
         },
         {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'As to why I needed a willing sacrifice, I don\'t know. It was just funny.',
+        },
+        {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
           content: '<strong>The seal is broken.</strong>',
         },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Thank you.' },
       ]),
     ];
   } else {
@@ -166,7 +169,7 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>That was what I needed.</strong>',
+          content: '<strong>Jesus, Son of God and Also God Himself: That was what he needed.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -174,21 +177,12 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Not you. Them.',
-        },
-        {
-          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: `You thought you were choosing to survive, ${playerName}.`,
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'But you were just the excuse they needed to give up.',
+          content: '<strong>Jesus, Son of God and Also God Himself: Not you. Them.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
           content: '<strong>The seal is broken.</strong>',
         },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Thank you both.' },
       ]),
     ];
   }

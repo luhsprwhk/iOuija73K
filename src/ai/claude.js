@@ -150,7 +150,7 @@ Respond with ONLY one word: either "FIGHT" or "SURRENDER"`;
     );
     // Fallback to keyword matching on error
     const lowerInput = userInput.toLowerCase().trim();
-    
+
     const fightKeywords = [
       'fight',
       'attack',
@@ -162,9 +162,11 @@ Respond with ONLY one word: either "FIGHT" or "SURRENDER"`;
       'strike',
       'win',
     ];
-    
-    const wantsToFight = fightKeywords.some((keyword) => lowerInput.includes(keyword));
-    
+
+    const wantsToFight = fightKeywords.some((keyword) =>
+      lowerInput.includes(keyword)
+    );
+
     // Default to surrender if ambiguous (the trap)
     return wantsToFight ? 'fight' : 'surrender';
   }
