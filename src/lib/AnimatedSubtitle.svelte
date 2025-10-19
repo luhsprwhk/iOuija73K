@@ -265,7 +265,7 @@
   {/snippet}
 </Tooltip>
 
-<style lang="scss">
+<style>
   /* Shimmer underline animation */
   @keyframes shimmerUnderline {
     0%,

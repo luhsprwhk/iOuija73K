@@ -1,5 +1,7 @@
+import { GAME_CONFIG } from '../../config/gameConfig.js';
+
 const LOCKOUT_KEY = 'io73k_lockout';
-const LOCKOUT_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const LOCKOUT_DURATION = GAME_CONFIG.lockout.DURATION_MS;
 
 /**
  * Checks if the user is currently locked out

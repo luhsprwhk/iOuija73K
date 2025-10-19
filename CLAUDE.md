@@ -57,6 +57,17 @@ Place dark ambient music files in `/public/audio/` as:
 
 ## Architecture
 
+### Configuration Management
+
+All game configuration values and "magic numbers" are centralized in `src/config/gameConfig.js`:
+
+- **Hangman settings**: `MAX_ATTEMPTS` (6), `TIME_LIMIT_SECONDS` (50)
+- **Name validation**: `MAX_ATTEMPTS` (3) - maximum invalid name attempts before lockout
+- **Lockout system**: `DURATION_MS` (300000) - 5 minute lockout duration
+- **Message timing**: Standard, dramatic, and quick delay values
+
+**Important**: Always use `GAME_CONFIG` from this file instead of hardcoded numbers. This makes the game easily tunable and documents the reasoning behind each value via JSDoc comments.
+
 ### State Management Pattern
 
 The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game state lives in `ChatInterface.svelte`:
@@ -300,6 +311,7 @@ Key user flows to verify manually:
 - **Button vs text input**: Number guessing uses buttons, convent/hangman/free-form use text input
 - **AI integration**: Convent trial uses Claude API for dynamic non-violent subversion responses
 - **Timer management**: Hangman trial uses `setInterval` for real-time countdown, must be cleared on completion
+- **llms.txt file**: The `llms.txt` file contains Svelte 5 API documentation (1640 lines) to help LLMs understand Svelte syntax when working on this codebase. It's committed to version control intentionally, not generated/fetched.
 
 ## Asset Optimization Pipeline
 

@@ -10,6 +10,7 @@ import {
   MIN_DELAY,
   MAX_DELAY,
 } from '../lib/helpers/chat.js';
+import { GAME_CONFIG } from '../config/gameConfig.js';
 
 export const HANGMAN_STATES = {
   INTRO: 'intro',
@@ -19,8 +20,7 @@ export const HANGMAN_STATES = {
   COMPLETE: 'complete',
 };
 
-// Maximum number of exploration attempts before execution
-const MAX_ATTEMPTS = 6;
+const MAX_ATTEMPTS = GAME_CONFIG.hangman.MAX_ATTEMPTS;
 
 // Glitching timer values for red herring effect
 const GLITCH_TIMER_VALUES = [

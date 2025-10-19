@@ -39,6 +39,7 @@
     getClaudeApiKey,
     handleHangmanExploration,
   } from '../ai/claude.js';
+  import { GAME_CONFIG } from '../config/gameConfig.js';
 
   let animatedSubtitleRef = $state(null);
 
@@ -232,7 +233,7 @@
         // Name validation failed
         nameValidationAttempts += 1;
 
-        if (nameValidationAttempts >= 3) {
+        if (nameValidationAttempts >= GAME_CONFIG.nameValidation.MAX_ATTEMPTS) {
           // Three strikes - lock them out
           setLockout();
           isLockedOut = true;
