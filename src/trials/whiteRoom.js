@@ -9,6 +9,7 @@ import {
 } from '../lib/helpers/chat.js';
 
 import { GAME_CONFIG } from '../config/gameConfig.js';
+import { classifyWhiteRoomIntent } from '../ai/claude.js';
 
 export const WHITE_ROOM_STATES = {
   INTRO: 'intro',
@@ -241,44 +242,15 @@ export function getFinalDismissal() {
 /**
  * Handles player input during the white room trial
  * @param {string} userInput - The user's input
- * @returns {Object} - { messages: Array, choseToDie: boolean, nextState: string }
+ * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string }
  */
-export function handleWhiteRoomInput(userInput) {
-  const input = userInput.toLowerCase().trim();
-
-  // Classify player intent based on common responses
-  const fightKeywords = [
-    'fight',
-    'attack',
-    'defend',
-    'survive',
-    'kill',
-    'punch',
-    'hit',
-    'strike',
-    'win',
-  ];
-  const surrenderKeywords = [
-    'surrender',
-    'give up',
-    'die',
-    'sacrifice',
-    'let them',
-    "won't fight",
-    'refuse',
-    'no',
-    'mercy',
-    'peace',
-  ];
-
-  const wantsToFight = fightKeywords.some((keyword) => input.includes(keyword));
-  const wantsToSurrender = surrenderKeywords.some((keyword) =>
-    input.includes(keyword)
-  );
-
-  // Default to surrender (martyrdom) if ambiguous
+export async function handleWhiteRoomInput(userInput) {
+  // Use AI to classify player intent as 'fight' or 'surrender'
+  const intent = await classifyWhiteRoomIntent(userInput);
+  
+  // Player chose to die if they surrendered
   // This is the "trap" - most players will choose the "moral" option
-  const choseToDie = !wantsToFight || wantsToSurrender;
+  const choseToDie = intent === 'surrender';
 
   // Return appropriate messages
   if (choseToDie) {

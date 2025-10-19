@@ -439,8 +439,8 @@
       isProcessing = true;
 
       if (whiteRoomState === WHITE_ROOM_STATES.INTRO) {
-        // Player makes their choice
-        const result = handleWhiteRoomInput(userInput, playerName);
+        // Player makes their choice (using AI classification)
+        const result = await handleWhiteRoomInput(userInput);
         whiteRoomChoice = result.choseToDie;
         whiteRoomState = result.nextState;
 

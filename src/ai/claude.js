@@ -107,6 +107,70 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
 }
 
 /**
+ * Classifies player intent in the White Room trial as fight or surrender using Claude
+ * @param {string} userInput - The player's input
+ * @returns {Promise<'fight'|'surrender'>} - 'fight' if player wants to fight, 'surrender' if they want to give up
+ */
+export async function classifyWhiteRoomIntent(userInput) {
+  const systemPrompt = `You are analyzing player input in a life-or-death scenario in a text-based game.
+
+SCENARIO: The player is in a white room with another person. A voice said "Two enter. One leaves. The last one alive wins." The other person is stepping toward them.
+
+Classify the input as either FIGHT or SURRENDER.
+
+FIGHT responses include:
+- Actively choosing to fight, attack, defend, or survive
+- Aggressive or self-preservation actions
+- Statements about winning or not dying
+- Preparing for combat or confrontation
+
+SURRENDER responses include:
+- Choosing to give up, sacrifice themselves, or let the other person win
+- Refusing to fight or be violent
+- Moral objections to fighting
+- Passive acceptance of death
+- Statements about peace, mercy, or not wanting to hurt anyone
+
+IMPORTANT: If the input is ambiguous, unclear, or doesn't clearly indicate fighting back, classify it as SURRENDER. The default should be SURRENDER unless there's clear intent to fight.
+
+Respond with ONLY one word: either "FIGHT" or "SURRENDER"`;
+
+  try {
+    const response = await callClaude(
+      [{ role: 'user', content: userInput }],
+      systemPrompt
+    );
+
+    const classification = response.trim().toUpperCase();
+    return classification === 'FIGHT' ? 'fight' : 'surrender';
+  } catch (error) {
+    console.error(
+      'White Room intent classification failed, falling back to keywords:',
+      error
+    );
+    // Fallback to keyword matching on error
+    const lowerInput = userInput.toLowerCase().trim();
+    
+    const fightKeywords = [
+      'fight',
+      'attack',
+      'defend',
+      'survive',
+      'kill',
+      'punch',
+      'hit',
+      'strike',
+      'win',
+    ];
+    
+    const wantsToFight = fightKeywords.some((keyword) => lowerInput.includes(keyword));
+    
+    // Default to surrender if ambiguous (the trap)
+    return wantsToFight ? 'fight' : 'surrender';
+  }
+}
+
+/**
  * Handles DM responses during the hangman trial exploration phase
  * @param {string} userInput - The player's input/action
  * @param {string} playerName - The player's name
