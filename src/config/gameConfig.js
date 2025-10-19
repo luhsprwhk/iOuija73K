@@ -51,16 +51,16 @@ export const GAME_CONFIG = {
     /**
      * Delay for typical message responses
      */
-    STANDARD_DELAY: 1000,
+    STANDARD_DELAY: 2000,
 
     /**
      * Delay for dramatic pauses
      */
-    DRAMATIC_DELAY: 3000,
+    DRAMATIC_DELAY: 4000,
 
     /**
      * Delay for quick responses
      */
-    QUICK_DELAY: 500,
+    QUICK_DELAY: 1000,
   },
 };

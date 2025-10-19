@@ -13,3 +13,4 @@ export function intervalsToCumulative(messages) {
 
 export const MIN_DELAY = 2000;
 export const MAX_DELAY = 4000;
+export const DRAMATIC_DELAY = 6000;
