@@ -11,5 +11,5 @@ export function intervalsToCumulative(messages) {
   });
 }
 
-export const MIN_DELAY = 3000;
-export const MAX_DELAY = 5000;
+export const MIN_DELAY = 2000;
+export const MAX_DELAY = 4000;
