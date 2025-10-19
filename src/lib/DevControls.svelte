@@ -10,6 +10,7 @@
     { label: 'Number Game', value: 'number_game' },
     { label: 'Convent Trial', value: 'convent' },
     { label: 'Hangman Trial', value: 'hangman' },
+    { label: 'White Room Trial', value: 'white_room' },
     { label: 'Free-Form (Playing)', value: 'playing' },
   ];
 

@@ -998,6 +998,19 @@
         startHangmanTimer();
         break;
 
+      case 'white_room':
+        gameState = 'white_room';
+        whiteRoomState = WHITE_ROOM_STATES.INTRO;
+        showInput = true;
+        const whiteRoomIntro = getWhiteRoomIntro(playerName);
+        messages = whiteRoomIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        break;
+
       case 'playing':
         gameState = 'playing';
         showInput = true;

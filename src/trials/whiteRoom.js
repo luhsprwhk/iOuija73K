@@ -9,10 +9,14 @@ import {
 } from '../lib/helpers/chat.js';
 
 import { GAME_CONFIG } from '../config/gameConfig.js';
-import { classifyWhiteRoomIntent } from '../ai/claude.js';
+import {
+  classifyWhiteRoomIntent,
+  getWhiteRoomExplorationResponse,
+} from '../ai/claude.js';
 
 export const WHITE_ROOM_STATES = {
   INTRO: 'intro',
+  EXPLORATION: 'exploration',
   CHOICE: 'choice',
   REVEAL: 'reveal',
   COMPLETE: 'complete',
@@ -43,7 +47,7 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: `Across from you stands another person. ${playerName}, they look... terrified.`,
+      content: `Across from you stands another person. But... it's you. A perfect copy, wearing your clothes, with your face. They look... terrified.`,
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -51,11 +55,11 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-      content: '<strong>A voice speaks. Not mine. Something else. The voice of God. </strong>',
+      content: '<strong>A voice speaks. Not mine. Something else. Clearer. Colder.</strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: '<strong>"Jesus, Son of God and Also God Himself: Two enter. One leaves. The last one alive wins."</strong>',
+      content: '<strong>"I am Paimon. Two enter. One leaves. The last one alive wins."</strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -86,7 +90,14 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
   const baseReveal = intervalsToCumulative([
     { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: '...' },
     { delay: GAME_CONFIG.timing.MIN_DELAY, content: '...' },
-    { delay: GAME_CONFIG.timing.MAX_DELAY, content: '...' },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: "The 'you' across the room begins to laugh.",
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: "It's not your laugh. It's something ancient and cold.",
+    },
   ]);
 
   if (choseToDie) {
@@ -96,49 +107,27 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
       ...intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: 'The other person was real, by the way. Did you forget that?',
+          content: '<strong>"Oh, you were so eager to destroy yourself,"</strong> it says, its voice twisting into mine.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: "They're winning right now. In their version of this room.",
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'They chose to fight. They chose to survive.',
-        },
-        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'You chose to die.' },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'You are looking pretty rough right now by the way.',
+          content: '<strong>"I just gave you a mirror to do it with."</strong>',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>Jesus, Son of God and Also God Himself: He needed a willing sacrifice.</strong>',
+          content: '<strong>I needed a willing sacrifice.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Not murder. Not an accident.',
+          content: 'Not murder. Not an accident. Someone who CHOSE to lose.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Someone who CHOSE it.',
+          content: `The nuns? The defendant? Just practice, ${playerName}.`,
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: `The nuns? The defendant? Those were just... practice, ${playerName}.`,
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Getting you comfortable with failure.',
-        },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Jesus, Son of God and Also God Himself: <i>With death.</i>' },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'With the idea that losing could be righteous.',
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'As to why I needed a willing sacrifice, I don\'t know. It was just funny.',
+          content: 'Getting you comfortable with the idea that your own destruction could be a noble act.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -153,35 +142,27 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
       ...intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: 'Interesting choice.',
+          content: '<strong>"You thought you could win against yourself?"</strong> it sneers, its face melting away from yours.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: "But I don't actually need you to win.",
+          content: '<strong>"I am the darkness in your own heart, given form."</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'The other person? They chose to surrender.',
+          content: "I don't need YOUR sacrifice. Just A sacrifice.",
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'They gave themselves willingly.',
+          content: 'And while you were busy fighting yourself, someone else, somewhere else, chose to surrender.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>Jesus, Son of God and Also God Himself: That was what he needed.</strong>',
+          content: '<strong>Their sacrifice was enough. The seal is broken.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'A willing sacrifice.',
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: '<strong>Jesus, Son of God and Also God Himself: Not you. Them.</strong>',
-        },
-        {
-          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>The seal is broken.</strong>',
+          content: 'Your little struggle was... amusing, though. Thanks for that.',
         },
       ]),
     ];
@@ -223,7 +204,7 @@ export function getFinalDismissal() {
     { delay: GAME_CONFIG.timing.MAX_DELAY, content: "We're here now." },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: "We've been ending your God's little experiment.",
+      content: "We're ending your God's little experiment.",
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -238,51 +219,54 @@ export function getFinalDismissal() {
  * @param {string} userInput - The user's input
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string }
  */
-export async function handleWhiteRoomInput(userInput) {
-  // Use AI to classify player intent as 'fight' or 'surrender'
+export async function handleWhiteRoomInput(userInput, conversationHistory) {
+  // First, check if the player is making a definitive choice to end the exploration
   const intent = await classifyWhiteRoomIntent(userInput);
-  
-  // Player chose to die if they surrendered
-  // This is the "trap" - most players will choose the "moral" option
-  const choseToDie = intent === 'surrender';
 
-  // Return appropriate messages
-  if (choseToDie) {
-    return {
-      messages: intervalsToCumulative([
-        { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You hesitate.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You lower your guard.' },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: "You won't be the monster. Not this time.",
-        },
-        {
-          delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'The other person sees your choice.',
-        },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'They look relieved.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'They step forward.' },
-        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
-      ]),
-      choseToDie: true,
-      nextState: WHITE_ROOM_STATES.REVEAL,
-    };
-  } else {
+  if (intent === 'fight') {
     return {
       messages: intervalsToCumulative([
         { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You steel yourself.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You step forward.' },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Survival. That\'s what matters.' },
+        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You decide to fight.' },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'The other person sees your choice in your eyes.',
+          content: 'You lunge at the other you... at yourself.',
         },
-        { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'They drop to their knees.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'They surrender.' },
         { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
       ]),
       choseToDie: false,
       nextState: WHITE_ROOM_STATES.REVEAL,
     };
   }
+
+  if (intent === 'surrender') {
+    return {
+      messages: intervalsToCumulative([
+        { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You hesitate.' },
+        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You lower your guard.' },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: "You won't fight yourself. You surrender.",
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'The other you watches, a strange calm in their eyes.',
+        },
+        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
+      ]),
+      choseToDie: true,
+      nextState: WHITE_ROOM_STATES.REVEAL,
+    };
+  }
+
+  // If no definitive choice is made, continue the exploration roleplay
+  const response = await getWhiteRoomExplorationResponse(
+    userInput,
+    conversationHistory
+  );
+
+  return {
+    messages: [{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }],
+    nextState: WHITE_ROOM_STATES.EXPLORATION, // Remain in exploration state
+  };
 }
