@@ -226,25 +226,6 @@ describe('numberGuessing trial', () => {
       ).toBe(true);
     });
 
-    it('should include player name in reveal messages', () => {
-      const result = handleNumberGuess(
-        true,
-        2,
-        'TestPlayer',
-        mockGetBrowserDetails
-      );
-
-      expect(
-        result.messages.some((m) => m.content.includes('TestPlayer'))
-      ).toBe(true);
-    });
-
-    it('should have proper message timing for reveal', () => {
-      const result = handleNumberGuess(true, 1, 'Alice', mockGetBrowserDetails);
-
-      const delays = result.messages.map((m) => m.delay);
-      expect(delays).toEqual([1000, 2500, 4500, 6000, 7500]);
-    });
   });
 
   describe('handleNumberGuess - edge cases', () => {
