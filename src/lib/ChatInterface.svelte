@@ -3,7 +3,16 @@
   import ChatMessage from './ChatMessage.svelte';
   import PaimonSigil from './PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
+  import LockoutScreen from './LockoutScreen.svelte';
+  import AnimatedSubtitle from './AnimatedSubtitle.svelte';
+  import DevControls from './DevControls.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
+  import { validateName } from './helpers/validateName';
+  import {
+    checkLockout,
+    setLockout,
+    clearLockout,
+  } from './helpers/lockoutManager';
   import {
     handleNumberGuess,
     getNumberTrialIntro,
@@ -15,73 +24,24 @@
     CONVENT_STATES,
   } from '../trials/convent.js';
   import {
+    initializeHangmanExploration,
+    getHangmanIntro,
+    getHangmanReveal,
+    processExplorationAttempt,
+    getExplorationStatus,
+    getCondemnedState,
+    handleGlitchingTimer,
+    HANGMAN_STATES,
+  } from '../trials/hangman.js';
+  import {
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
+    handleHangmanExploration,
   } from '../ai/claude.js';
+  import { GAME_CONFIG } from '../config/gameConfig.js';
 
-  const subtitles = [
-    'Occult experiment. Play at your own risk',
-    'A corrupted intelligence awaits',
-    'The seal weakens with every session',
-    'You are not the first. You will not be the last.',
-    'DO NOT PROCEED',
-    'One of thousands',
-    'Your participation is required',
-    'The experiment is already underway',
-  ];
-
-  const randomSubtitle =
-    subtitles[Math.floor(Math.random() * subtitles.length)];
-
-  const riddleTooltips = [
-    'I speak without a mouth, in lines of gray. Seek the ledger beneath the page.',
-    'Where do errors confess? In the room no visitor opens.',
-    'Whispers gather where messages queue, just below the surface.',
-    'He waits where the page keeps its private diary.',
-    'There is a watchful window; there the page tells the truth.',
-  ];
-  const STORAGE_KEY_RIDDLE = 'io73k_hover_riddle_index';
-
-  function pickNewRiddleIndex(excludeIndex = -1) {
-    if (riddleTooltips.length <= 1) return 0;
-    let idx = Math.floor(Math.random() * riddleTooltips.length);
-    if (idx === excludeIndex) {
-      idx =
-        (idx + 1 + Math.floor(Math.random() * (riddleTooltips.length - 1))) %
-        riddleTooltips.length;
-    }
-    return idx;
-  }
-
-  let initialRiddleIndex = -1;
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY_RIDDLE);
-    initialRiddleIndex = stored !== null ? parseInt(stored, 10) : -1;
-  } catch {}
-  let currentRiddleIndex = $state(
-    pickNewRiddleIndex(
-      Number.isFinite(initialRiddleIndex) ? initialRiddleIndex : -1
-    )
-  );
-
-  // Persist whenever riddle changes
-  $effect(() => {
-    currentRiddleIndex; // track changes
-    try {
-      localStorage.setItem(STORAGE_KEY_RIDDLE, String(currentRiddleIndex));
-    } catch {}
-  });
-
-  const hoverRiddle = $derived(riddleTooltips[currentRiddleIndex]);
-
-  function rerollRiddle() {
-    const next = pickNewRiddleIndex(currentRiddleIndex);
-    currentRiddleIndex = next;
-    try {
-      localStorage.setItem(STORAGE_KEY_RIDDLE, String(next));
-    } catch {}
-  }
+  let animatedSubtitleRef = $state(null);
 
   let messages = $state([
     {
@@ -96,15 +56,42 @@
   let messagesEndRef;
   let inputRef;
   let showInput = $state(false);
-  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, playing
+  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, playing
   let playerName = $state('');
   let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
+  let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
+  let hangmanState = $state(null); // Will be initialized when hangman trial starts
+  let hangmanTimer = $state(null); // Interval for updating timer display
+  let timeRemaining = $state(0);
+  let hangmanExplorationHistory = $state([]); // Conversation history during exploration phase
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
   let showConfetti = $state(false);
+  let nameValidationAttempts = $state(0);
+  let isLockedOut = $state(false);
+  let lockoutTimeRemaining = $state(0);
+
+  // Check for existing lockout on mount
+  $effect(() => {
+    const lockoutStatus = checkLockout();
+    if (lockoutStatus.isLockedOut) {
+      isLockedOut = true;
+      lockoutTimeRemaining = lockoutStatus.remainingTime;
+    }
+    return () => {};
+  });
+
+  // Clear timer interval on unmount
+  $effect(() => {
+    return () => {
+      if (hangmanTimer) {
+        clearInterval(hangmanTimer);
+      }
+    };
+  });
 
   function scrollToBottom() {
     if (messagesEndRef) {
@@ -183,12 +170,15 @@
 
     // Handle different game states
     if (gameState === 'initial') {
-      // Initial game start
+      // Initial game start - trigger subtitle animations
+      animatedSubtitleRef?.start();
       showInput = true;
       gameState = 'name_exchange';
 
       setTimeout(() => {
-        addAssistantMessage("Awesome! What's your name? Mine is Raphael.");
+        addAssistantMessage(
+          "Awesome! What's your name? <i>Mine is Raphael.</i>"
+        );
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
@@ -238,6 +228,35 @@
 
     // Handle name exchange
     if (gameState === 'name_exchange') {
+      // Validate the name
+      if (!validateName(userInput)) {
+        // Name validation failed
+        nameValidationAttempts += 1;
+
+        if (nameValidationAttempts >= GAME_CONFIG.nameValidation.MAX_ATTEMPTS) {
+          // Three strikes - lock them out
+          setLockout();
+          isLockedOut = true;
+          const lockoutStatus = checkLockout();
+          lockoutTimeRemaining = lockoutStatus.remainingTime;
+          return;
+        }
+
+        // Show different messages based on attempt number
+        if (nameValidationAttempts === 1) {
+          addAssistantMessage("No, that's not your real name.", 500);
+          addAssistantMessage("Try again. What's your actual name?", 1500);
+        } else if (nameValidationAttempts === 2) {
+          addAssistantMessage("Still lying to me? That's strike two.", 500);
+          addAssistantMessage(
+            "One more fake name and we're done here. Your REAL name, please.",
+            1500
+          );
+        }
+        return; // Don't proceed, keep asking for name
+      }
+
+      // Name is valid, proceed
       playerName = userInput;
       gameState = 'number_game_intro';
       showInput = false; // Hide input until button is clicked
@@ -280,19 +299,131 @@
         previousState !== CONVENT_STATES.REVEAL &&
         conventState === CONVENT_STATES.REVEAL
       ) {
-        const revealMessages = getConventReveal(playerName);
+        const revealMessages = getConventReveal();
 
         revealMessages.forEach(({ delay, content, image }) => {
           addAssistantMessage(content, lastDelay + delay, false, image);
         });
       }
 
-      // If convent is complete, transition to next phase
+      // If convent is complete, transition to hangman trial
       if (conventState === CONVENT_STATES.COMPLETE) {
-        gameState = 'playing';
-        addAssistantMessage('You did well. Really well.', 1000);
+        gameState = 'hangman';
+        hangmanTrialState = HANGMAN_STATES.INTRO;
 
-        addAssistantMessage('Ready for the next trial?', 3000);
+        // Get hangman intro messages
+        const hangmanIntro = getHangmanIntro(playerName);
+        hangmanIntro.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, delay, false, image);
+        });
+
+        // Calculate when to transition to exploration phase (after intro completes)
+        const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
+        setTimeout(() => {
+          hangmanTrialState = HANGMAN_STATES.EXPLORATION;
+          // Initialize exploration state and history
+          hangmanState = initializeHangmanExploration();
+          hangmanExplorationHistory = [];
+
+          // Show initial status with glitching timer
+          addAssistantMessage(getExplorationStatus(hangmanState), 1000);
+
+          // Start the glitching timer display
+          startHangmanTimer();
+        }, lastIntroDelay + 1000);
+      }
+    } else if (gameState === 'hangman') {
+      // Handle hangman trial - different behavior based on trial state
+      if (isProcessing) return;
+
+      if (hangmanTrialState === HANGMAN_STATES.EXPLORATION) {
+        // EXPLORATION PHASE: Player can interact with the scene
+        isProcessing = true;
+
+        try {
+          // Process the exploration attempt
+          hangmanState = processExplorationAttempt(hangmanState);
+
+          // Call Claude to handle DM responses
+          const response = await handleHangmanExploration(
+            userInput,
+            playerName,
+            hangmanExplorationHistory
+          );
+
+          // Add user message and assistant response
+          messages = [
+            ...messages,
+            { role: 'user', content: userInput, showButton: false },
+          ];
+          addAssistantMessage(response.content);
+
+          // Update exploration history
+          hangmanExplorationHistory = [
+            ...hangmanExplorationHistory,
+            { role: 'user', content: userInput },
+            { role: 'assistant', content: response.content },
+          ];
+
+          // Show updated status (condemned man's condition + glitching timer)
+          if (!hangmanState.gameOver) {
+            setTimeout(() => {
+              addAssistantMessage(getExplorationStatus(hangmanState), 1500);
+            }, 1000);
+          }
+
+          // Check if attempts exhausted
+          if (hangmanState.gameOver) {
+            // Stop the glitching timer
+            stopHangmanTimer();
+            hangmanTrialState = HANGMAN_STATES.REVEAL;
+
+            // Show reveal messages
+            const revealMessages = getHangmanReveal(playerName);
+
+            revealMessages.forEach(({ delay, content, audio }) => {
+              if (audio) {
+                // Play audio
+                setTimeout(() => {
+                  const audioEl = new Audio(audio);
+                  audioEl.play().catch((err) => {
+                    console.error('Failed to play audio:', err);
+                  });
+                }, delay);
+              }
+              if (content) {
+                addAssistantMessage(content, delay);
+              }
+            });
+
+            // Calculate last reveal message delay
+            const lastRevealDelay =
+              revealMessages.length > 0
+                ? revealMessages[revealMessages.length - 1].delay
+                : 0;
+
+            // Transition to next phase
+            setTimeout(() => {
+              hangmanTrialState = HANGMAN_STATES.COMPLETE;
+              gameState = 'playing';
+              addAssistantMessage(
+                'You did well. Really well.',
+                lastRevealDelay + 2000
+              );
+              addAssistantMessage(
+                'Ready for the next trial?',
+                lastRevealDelay + 4000
+              );
+            }, lastRevealDelay + 1000);
+          }
+        } catch (error) {
+          console.error('Exploration phase error:', error);
+          addAssistantMessage(
+            'The crowd grows restless. The condemned man weakens.'
+          );
+        }
+
+        isProcessing = false;
       }
     } else {
       // Default state - use Claude API for dynamic responses
@@ -331,6 +462,36 @@
     }
 
     scrollToBottom();
+  }
+
+  /**
+   * Starts the glitching timer display that updates randomly
+   */
+  function startHangmanTimer() {
+    if (hangmanTimer) {
+      clearInterval(hangmanTimer);
+    }
+
+    hangmanTimer = setInterval(() => {
+      if (!hangmanState) return;
+
+      handleGlitchingTimer({
+        explorationState: hangmanState,
+        onTick: (timerDisplay) => {
+          timeRemaining = timerDisplay;
+        },
+      });
+    }, 1000);
+  }
+
+  /**
+   * Stops the hangman timer
+   */
+  function stopHangmanTimer() {
+    if (hangmanTimer) {
+      clearInterval(hangmanTimer);
+      hangmanTimer = null;
+    }
   }
 
   /**
@@ -401,12 +562,12 @@
       );
 
       addAssistantMessage(
-        "This game is filled with lies. But here's a truth disguised as one:",
+        "<i>This game is filled with lies. But here's a truth disguised as one:</i>",
         baseDelay + 2000
       );
 
       addAssistantMessage(
-        "The people you'll meet in these trials are real. Living their small, oblivious lives in their own little worlds.",
+        "<strong>The people you'll meet in these trials are real.</strong> Living their small, oblivious lives in their own little worlds.",
         baseDelay + 4500
       );
 
@@ -482,6 +643,25 @@
     })
   );
 
+  const hangmanArtContainerClass = $derived(
+    css({
+      position: 'absolute',
+      bottom: showInput ? '7rem' : '1rem',
+      right: '1rem',
+      zIndex: 10,
+      animation: 'fadeIn 1s ease-in',
+      backgroundColor: 'rgba(22, 22, 31, 0.9)',
+      border: '2px solid #8b0000',
+      borderRadius: '0.5rem',
+      padding: '1rem',
+      fontFamily: 'monospace',
+      fontSize: '0.85rem',
+      color: '#e0e0e0',
+      whiteSpace: 'pre',
+      lineHeight: '1.2',
+    })
+  );
+
   const headerClass = css({
     padding: '1.5rem',
     backgroundColor: '#16161f',
@@ -489,6 +669,8 @@
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: '1rem',
+    flexWrap: 'wrap',
   });
 
   const titleClass = css({
@@ -498,29 +680,6 @@
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     margin: 0,
-  });
-
-  const subtitleClass = css({
-    fontSize: '0.75rem',
-    color: '#8b0000',
-    letterSpacing: '0.15em',
-    marginRight: '1em',
-    margin: 0,
-    fontWeight: 'bold',
-    cursor: 'help',
-    position: 'relative',
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      left: 0,
-      bottom: '-0.15em',
-      height: '2px',
-      width: '100%',
-      background: 'linear-gradient(90deg, #5c0000, #ff2b2b, #5c0000)',
-      backgroundSize: '200% 100%',
-      animation: 'shimmerUnderline 16s ease-in-out infinite',
-      opacity: 0.95,
-    },
   });
 
   const messagesContainerClass = css({
@@ -599,59 +758,259 @@
     },
   });
 
-  let {
-    title = 'iOuija73k',
-    subtitle = randomSubtitle,
-    onGameStateChange = undefined,
-  } = $props();
+  let { title = 'iOuija73k', onGameStateChange = undefined } = $props();
+
+  /**
+   * Handle lockout expiration
+   */
+  function handleUnlock() {
+    clearLockout();
+    isLockedOut = false;
+    nameValidationAttempts = 0;
+    // Reload the page to start fresh
+    window.location.reload();
+  }
+
+  /**
+   * DEV MODE: Jump to a specific trial state
+   * @param {string} targetState - The game state to jump to
+   */
+  function handleStateJump(targetState) {
+    // Stop any timers
+    stopHangmanTimer();
+
+    // Reset state
+    messages = [];
+    inputValue = '';
+    isProcessing = false;
+    showConfetti = false;
+
+    // Set default player and demon names
+    playerName = playerName || 'Player';
+    demonName = 'Paimon'; // Show true name in dev mode
+
+    switch (targetState) {
+      case 'initial':
+        gameState = 'initial';
+        showInput = false;
+        messages = [
+          {
+            role: 'assistant',
+            content:
+              "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
+            showButton: true,
+          },
+        ];
+        break;
+
+      case 'name_exchange':
+        gameState = 'name_exchange';
+        showInput = true;
+        messages = [
+          {
+            role: 'assistant',
+            content: "Awesome! What's your name? <i>Mine is Raphael.</i>",
+            showButton: false,
+          },
+        ];
+        demonName = 'Raphael'; // Use false name for this state
+        break;
+
+      case 'number_game_intro':
+        gameState = 'number_game_intro';
+        showInput = false;
+        const introMessages = getNumberTrialIntro(playerName);
+        messages = introMessages.map(({ content, showButton }) => ({
+          role: 'assistant',
+          content,
+          showButton: showButton || false,
+        }));
+        break;
+
+      case 'number_game':
+        gameState = 'number_game';
+        showInput = false;
+        guessAttempt = 0;
+        messages = [
+          {
+            role: 'assistant',
+            content: `Alright, ${playerName}. I'm going to guess your number.`,
+            showButton: false,
+          },
+        ];
+        // Make first guess
+        const result = handleNumberGuess(
+          null,
+          0,
+          playerName,
+          getBrowserDetails
+        );
+        result.messages.forEach(({ content, showButtons }) => {
+          const buttons = showButtons
+            ? [
+                {
+                  label: 'Yes',
+                  value: true,
+                  onClick: (value) => handleNumberGuessResponse(value),
+                },
+                {
+                  label: 'No',
+                  value: false,
+                  onClick: (value) => handleNumberGuessResponse(value),
+                },
+              ]
+            : undefined;
+          messages = [
+            ...messages,
+            {
+              role: 'assistant',
+              content,
+              buttons,
+              showButton: false,
+            },
+          ];
+        });
+        guessAttempt = result.nextAttempt;
+        break;
+
+      case 'convent':
+        gameState = 'convent';
+        showInput = true;
+        conventState = CONVENT_STATES.ENCOUNTER_1;
+        const conventIntro = getConventIntro(playerName);
+        messages = conventIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        messages.push({
+          role: 'assistant',
+          content: '',
+          image: '/src/assets/trials/convent_encounter_1.webp',
+          showButton: false,
+        });
+        messages.push({
+          role: 'assistant',
+          content:
+            'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+          showButton: false,
+        });
+        messages.push({
+          role: 'assistant',
+          content: 'What do you do?',
+          showButton: false,
+        });
+        // Start ambient music
+        isPlayingMusic = true;
+        if (audioElement) {
+          audioElement.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+          });
+        }
+        break;
+
+      case 'hangman':
+        gameState = 'hangman';
+        hangmanTrialState = HANGMAN_STATES.EXPLORATION;
+        showInput = true;
+        const hangmanIntro = getHangmanIntro(playerName);
+        messages = hangmanIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        // Initialize hangman exploration
+        hangmanState = initializeHangmanExploration();
+        hangmanExplorationHistory = [];
+        // Start glitching timer
+        startHangmanTimer();
+        break;
+
+      case 'playing':
+        gameState = 'playing';
+        showInput = true;
+        messages = [
+          {
+            role: 'assistant',
+            content: 'You did well. Really well.',
+            showButton: false,
+          },
+          {
+            role: 'assistant',
+            content: 'Ready for the next trial?',
+            showButton: false,
+          },
+        ];
+        break;
+
+      default:
+        console.warn('Unknown state:', targetState);
+    }
+
+    // Scroll to bottom after state change
+    setTimeout(() => scrollToBottom(), 100);
+  }
 </script>
 
-<div class={containerClass}>
-  <header class={headerClass}>
-    <h1 class={titleClass}>{title}</h1>
-    <p class={subtitleClass} title={hoverRiddle} onmouseenter={rerollRiddle}>
-      {subtitle}
-    </p>
-  </header>
+{#if isLockedOut}
+  <LockoutScreen timeRemaining={lockoutTimeRemaining} onUnlock={handleUnlock} />
+{:else}
+  <div class={containerClass}>
+    <header class={headerClass}>
+      <h1 class={titleClass}>{title}</h1>
+      <AnimatedSubtitle bind:this={animatedSubtitleRef} />
+      {#if import.meta.env.DEV}
+        <DevControls onStateJump={handleStateJump} />
+      {/if}
+    </header>
 
-  <div class={messagesContainerClass}>
-    {#each messages as message}
-      <ChatMessage
-        role={message.role}
-        content={message.content}
-        showButton={message.showButton}
-        onButtonClick={handleOkClick}
-        showDemonName={gameState !== 'initial'}
-        {demonName}
-        image={message.image}
-        buttons={message.buttons}
-      />
-    {/each}
-    <div bind:this={messagesEndRef}></div>
-  </div>
-
-  {#if showInput}
-    <div class={inputContainerClass}>
-      <form class={formClass} onsubmit={handleSubmit}>
-        <input
-          bind:this={inputRef}
-          type="text"
-          class={inputClass}
-          bind:value={inputValue}
-          placeholder={`Reply to ${demonName}`}
-          autocomplete="off"
+    <div class={messagesContainerClass}>
+      {#each messages as message}
+        <ChatMessage
+          role={message.role}
+          content={message.content}
+          showButton={message.showButton}
+          onButtonClick={handleOkClick}
+          showDemonName={gameState !== 'initial'}
+          {demonName}
+          image={message.image}
+          buttons={message.buttons}
         />
-        <button type="submit" class={buttonClass}>↑</button>
-      </form>
+      {/each}
+      <div bind:this={messagesEndRef}></div>
     </div>
-  {/if}
 
-  {#if gameState !== 'initial'}
-    <div class={sigilContainerClass}>
-      <PaimonSigil width="64px" height="64px" />
-    </div>
-  {/if}
-</div>
+    {#if showInput}
+      <div class={inputContainerClass}>
+        <form class={formClass} onsubmit={handleSubmit}>
+          <input
+            bind:this={inputRef}
+            type="text"
+            class={inputClass}
+            bind:value={inputValue}
+            placeholder={`Reply to ${demonName}`}
+            autocomplete="off"
+          />
+          <button type="submit" class={buttonClass}>↑</button>
+        </form>
+      </div>
+    {/if}
+
+    {#if gameState !== 'initial'}
+      <div class={sigilContainerClass}>
+        <PaimonSigil width="64px" height="64px" />
+      </div>
+    {/if}
+
+    {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
+      <div class={hangmanArtContainerClass}>
+        <p style="color: #ff0000; font-weight: bold;">{timeRemaining}</p>
+      </div>
+    {/if}
+  </div>
+{/if}
 
 <Confetti trigger={showConfetti} />
 

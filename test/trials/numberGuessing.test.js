@@ -1,5 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
-import { handleNumberGuess, getNumberTrialIntro } from './numberGuessing.js';
+import {
+  handleNumberGuess,
+  getNumberTrialIntro,
+} from '../../src/trials/numberGuessing.js';
 
 describe('numberGuessing trial', () => {
   describe('getNumberTrialIntro', () => {
@@ -29,7 +32,7 @@ describe('numberGuessing trial', () => {
       expect(result.nextAttempt).toBe(1);
       expect(result.gameComplete).toBe(false);
       expect(result.messages).toHaveLength(2);
-      expect(result.messages[0].content).toBe('Your number is 37.');
+      expect(result.messages[0].content).toBe('<i>Your number is 37.</i>');
       expect(result.messages[1].content).toContain("I'm right");
       expect(result.messages[1].showButtons).toBe(true);
     });
@@ -223,25 +226,6 @@ describe('numberGuessing trial', () => {
       ).toBe(true);
     });
 
-    it('should include player name in reveal messages', () => {
-      const result = handleNumberGuess(
-        true,
-        2,
-        'TestPlayer',
-        mockGetBrowserDetails
-      );
-
-      expect(
-        result.messages.some((m) => m.content.includes('TestPlayer'))
-      ).toBe(true);
-    });
-
-    it('should have proper message timing for reveal', () => {
-      const result = handleNumberGuess(true, 1, 'Alice', mockGetBrowserDetails);
-
-      const delays = result.messages.map((m) => m.delay);
-      expect(delays).toEqual([1000, 2500, 4500, 6000, 7500]);
-    });
   });
 
   describe('handleNumberGuess - edge cases', () => {

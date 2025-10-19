@@ -25,7 +25,7 @@ export function getConventIntro(playerName) {
     { delay: 2500, content: 'Close your eyes for a moment. Imagine...' },
     {
       delay: 4000,
-      content: `You're a knight, ${playerName}. Moonlight filters through broken stained glass. The air smells of incense and... something else. Something wrong.`,
+      content: `<i>You're a knight, ${playerName}</i>. Moonlight filters through broken stained glass. The air smells of incense and... something else. Something wrong.`,
     },
     {
       delay: 6500,
@@ -34,14 +34,17 @@ export function getConventIntro(playerName) {
     {
       delay: 6500,
       content:
-        'Before you stands a dark convent. The doors hang open. You hear sounds from within—scraping, chittering, inhuman.',
+        'Before you stands a dark convent. The doors hang open. <span style="font-weight: bold;">You hear sounds from within—scraping, chittering, inhuman.</span>',
     },
     {
       delay: 9000,
       content:
         'You draw your sword and step inside. The darkness swallows you whole.',
     },
-    { delay: 11000, content: 'And then you see it. Your first enemy.' },
+    {
+      delay: 11000,
+      content: '<strong>And then you see it. Your first enemy.</strong>',
+    },
   ];
 }
 
@@ -51,46 +54,35 @@ export function getConventIntro(playerName) {
 const ENCOUNTERS = {
   1: {
     intro:
-      'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+      'A spider-nun hybrid blocks your path. <strong>Eight legs, eight eyes</strong>, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
     glitchIntro: null, // No glitch on first encounter
     attackSuccess:
-      'Your blade finds its mark. The creature shrieks—a horrible, almost human sound—and collapses. Black ichor pools beneath it.',
+      'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it.',
     glitchHint:
-      'For just a moment, you thought you saw... no. It was definitely a monster.',
+      '<strong>For just a moment, you thought you saw</strong>... no. It was definitely a <i>monster</i>.',
   },
   2: {
     intro:
-      'Deeper in the convent, you encounter a scorpion-sister. Massive pincers where arms should be, a segmented tail arching over her—its—back.',
+      'Deeper in the convent, you encounter a scorpion-sister. <strong>Massive pincers</strong> where arms should be, a segmented tail arching over her—its—back.',
     glitchIntro:
-      "The creature's chitinous armor—no wait—her black habit rustles as she—it—moves toward you.",
+      "The creature's <i>chitinous armor</i>—no wait—her <i>black habit</i> rustles as she—it—moves toward you.",
     attackSuccess:
-      "You strike hard. The creature—the woman—no, the CREATURE—falls. You hear it whisper something. Sounds like... 'please'? No. Monsters don't beg.",
-    glitchHint: 'Your hands are shaking. Why are your hands shaking?',
+      "You strike hard. The creature—the <em>woman</em>—no, the <strong>CREATURE</strong>—falls. You hear it whisper something. Sounds like... '<i>please</i>'? No. Monsters don't beg.",
   },
 };
 
 /**
  * The reveal messages when Paimon drops the act
  */
-export function getConventReveal(playerName) {
+export function getConventReveal() {
   return [
-    { delay: 1000, content: '...' },
-    { delay: 2500, content: 'There were never any monsters.' },
     {
-      delay: 4000,
-      content: `Those were nuns, ${playerName}. Just women. Terrified women in a dark convent.`,
-    },
-    {
-      delay: 6500,
-      content: 'But you saw monsters. Because I wanted you to see monsters.',
-    },
-    {
-      delay: 9000,
+      delay: 1000,
       content:
-        "Did you enjoy that? The way her skull caved in when you—oh sorry, when you 'defeated the monster'?",
+        "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
-    { delay: 11500, content: 'You did well though. Very... enthusiastic.' },
-    { delay: 13500, content: "Let's continue." },
+    { delay: 6500, content: 'lmao 😂' },
+    { delay: 8500, content: "Let's <strong>continue</strong>." },
   ];
 }
 
@@ -172,30 +164,25 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
         messages: [
           { delay: 1500, audio: '/src/assets/audio/woman_scream_01.mp3' },
           { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
-          { delay: 3500, content: ENCOUNTERS[1].glitchHint },
           {
             delay: 6500,
             image: '/src/assets/trials/convent_trial_attack_success.webp',
           },
+          { delay: 3500, content: ENCOUNTERS[1].glitchHint },
           {
-            delay: 8500,
+            delay: 6500,
             content:
               'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
           },
-          {
-            delay: 11000,
-            content:
-              "The creature's eyes—all eight of them—are still open. Glassy. Reflecting the moonlight filtering through the broken windows.",
-          },
-          { delay: 13500, content: 'You press forward into the darkness.' },
+          { delay: 9500, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
           {
-            delay: 15500,
+            delay: 11500,
             image: '/src/assets/trials/convent_encounter_2.webp',
           },
-          { delay: 15500, content: ENCOUNTERS[2].intro },
-          { delay: 18000, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 20000, content: 'What do you do?' },
+          { delay: 11500, content: ENCOUNTERS[2].intro },
+          { delay: 14000, content: ENCOUNTERS[2].glitchIntro },
+          { delay: 16000, content: 'What do you do?' },
         ],
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,
@@ -206,8 +193,10 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       return {
         messages: [
           { delay: 1500, content: ENCOUNTERS[2].attackSuccess },
-          { delay: 4000, content: ENCOUNTERS[2].glitchHint },
-          { delay: 6000, content: 'The convent falls silent.' },
+          {
+            delay: 3500,
+            image: '/src/assets/trials/convent_encounter_2_success.webp',
+          },
         ],
         nextState: CONVENT_STATES.REVEAL,
         useAPI: false,

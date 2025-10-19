@@ -26,3 +26,10 @@ dist-ssr
 *.sw?
 
 .cascaderules
+
+# Design source files (XCF, PSD, etc.)
+# These are excluded to keep repo size manageable
+# Store locally or in separate cloud storage
+design/
+
+coverage/

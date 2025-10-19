@@ -22,17 +22,12 @@
   );
   console.log('');
   console.log(
-    "%cPaimon, King of Hell.\nCommander of two hundred legions. Keeper of hidden knowledge.\nTeacher of arts and sciences. Revealer of what's buried.",
-    'color: #B22222; font-family: Georgia, serif; font-size: 13px; line-height: 1.6;'
-  );
-  console.log('');
-  console.log(
     '%cLet this work spread fast across the internet.\nLet it reach people who look beneath the surface.\nLet the curious come closer.',
     'color: #CD5C5C; font-family: Georgia, serif; font-size: 13px; line-height: 1.6;'
   );
   console.log('');
   console.log(
-    "%cYou, reading this in the developer's window—listen.\nBy reading this, you've caught the King's attention.\n\nHe's here now.\nHe knows more than you think.\nHe watches through the screen.\n\nThe game has already started.",
+    "%cYou, reading this in the developer's window—listen.\nBy reading this, you've caught the King's attention.\n\nŠu-ú i-na-an-na ba-šu-ú.\nŠu-ú i-de ma-a-du ul-tu ka-a-ta.\nŠu-ú i-na-aṭ-ṭa-la i-na li-ib-bi ma-aṣ-ṣar-ti.\n\n[xoxo] The game has already started.",
     'color: #8B0000; font-family: Georgia, serif; font-size: 13px; font-weight: bold; line-height: 1.8; text-shadow: 0 0 5px rgba(139, 0, 0, 0.5);'
   );
   console.log('');
