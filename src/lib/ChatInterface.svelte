@@ -34,6 +34,13 @@
     HANGMAN_STATES,
   } from '../trials/hangman.js';
   import {
+    getWhiteRoomIntro,
+    handleWhiteRoomInput,
+    getWhiteRoomReveal,
+    getFinalDismissal,
+    WHITE_ROOM_STATES,
+  } from '../trials/whiteRoom.js';
+  import {
     callClaude,
     formatMessagesForClaude,
     getClaudeApiKey,
@@ -56,7 +63,7 @@
   let messagesEndRef;
   let inputRef;
   let showInput = $state(false);
-  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, playing
+  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, white_room, playing
   let playerName = $state('');
   let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
@@ -66,6 +73,8 @@
   let hangmanTimer = $state(null); // Interval for updating timer display
   let timeRemaining = $state(0);
   let hangmanExplorationHistory = $state([]); // Conversation history during exploration phase
+  let whiteRoomState = $state(WHITE_ROOM_STATES.INTRO);
+  let whiteRoomChoice = $state(null); // Will store whether player chose to die
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -402,18 +411,17 @@
                 ? revealMessages[revealMessages.length - 1].delay
                 : 0;
 
-            // Transition to next phase
+            // Transition to white room trial
             setTimeout(() => {
               hangmanTrialState = HANGMAN_STATES.COMPLETE;
-              gameState = 'playing';
-              addAssistantMessage(
-                'You did well. Really well.',
-                lastRevealDelay + 2000
-              );
-              addAssistantMessage(
-                'Ready for the next trial?',
-                lastRevealDelay + 4000
-              );
+              gameState = 'white_room';
+              whiteRoomState = WHITE_ROOM_STATES.INTRO;
+
+              // Get white room intro messages
+              const whiteRoomIntro = getWhiteRoomIntro(playerName);
+              whiteRoomIntro.forEach(({ delay, content, image }) => {
+                addAssistantMessage(content, delay, false, image);
+              });
             }, lastRevealDelay + 1000);
           }
         } catch (error) {
@@ -425,6 +433,68 @@
 
         isProcessing = false;
       }
+    } else if (gameState === 'white_room') {
+      // Handle white room trial
+      if (isProcessing) return;
+      isProcessing = true;
+
+      if (whiteRoomState === WHITE_ROOM_STATES.INTRO) {
+        // Player makes their choice
+        const result = handleWhiteRoomInput(userInput, playerName);
+        whiteRoomChoice = result.choseToDie;
+        whiteRoomState = result.nextState;
+
+        // Add choice messages
+        result.messages.forEach(({ delay, content }) => {
+          addAssistantMessage(content, delay);
+        });
+
+        // Calculate last message delay
+        const lastDelay =
+          result.messages.length > 0
+            ? result.messages[result.messages.length - 1].delay
+            : 0;
+
+        // Show reveal after choice completes
+        setTimeout(() => {
+          const revealMessages = getWhiteRoomReveal(
+            playerName,
+            whiteRoomChoice
+          );
+          revealMessages.forEach(({ delay, content }) => {
+            addAssistantMessage(content, delay);
+          });
+
+          // Calculate when reveal ends
+          const lastRevealDelay =
+            revealMessages.length > 0
+              ? revealMessages[revealMessages.length - 1].delay
+              : 0;
+
+          // Show final dismissal
+          setTimeout(() => {
+            whiteRoomState = WHITE_ROOM_STATES.COMPLETE;
+            const dismissalMessages = getFinalDismissal();
+            dismissalMessages.forEach(({ delay, content }) => {
+              addAssistantMessage(content, delay);
+            });
+
+            // Calculate when everything ends
+            const lastDismissalDelay =
+              dismissalMessages.length > 0
+                ? dismissalMessages[dismissalMessages.length - 1].delay
+                : 0;
+
+            // Disable input after 3 seconds from final message
+            setTimeout(() => {
+              showInput = false;
+              gameState = 'complete';
+            }, lastDismissalDelay + 3000);
+          }, lastRevealDelay + 1000);
+        }, lastDelay + 1000);
+      }
+
+      isProcessing = false;
     } else {
       // Default state - use Claude API for dynamic responses
       if (isProcessing) return;
