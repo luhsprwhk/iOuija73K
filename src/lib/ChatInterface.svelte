@@ -842,6 +842,16 @@
   }
 
   /**
+   * DEV MODE: Trigger lockout screen for testing
+   */
+  function handleTriggerLockout() {
+    setLockout();
+    isLockedOut = true;
+    const lockoutStatus = checkLockout();
+    lockoutTimeRemaining = lockoutStatus.remainingTime;
+  }
+
+  /**
    * DEV MODE: Jump to a specific trial state
    * @param {string} targetState - The game state to jump to
    */
@@ -1045,7 +1055,7 @@
       <h1 class={titleClass}>{title}</h1>
       <AnimatedSubtitle bind:this={animatedSubtitleRef} />
       {#if import.meta.env.DEV}
-        <DevControls onStateJump={handleStateJump} />
+        <DevControls onStateJump={handleStateJump} onTriggerLockout={handleTriggerLockout} />
       {/if}
     </header>
 

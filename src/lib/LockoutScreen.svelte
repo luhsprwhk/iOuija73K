@@ -16,7 +16,7 @@
 
   // Play audio when component mounts
   $effect(() => {
-    audio = new Audio('/src/assets/audio/muzak/dark-elevator-muzak.mp3');
+    audio = new Audio('/audio/muzak/dark-elevator-muzak.mp3');
     audio.loop = true;
     audio.volume = 0.5;
     audio.play().catch(err => console.error('Audio playback failed:', err));
