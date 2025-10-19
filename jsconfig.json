@@ -33,7 +33,6 @@
     "src/**/*.d.ts",
     "src/**/*.js",
     "src/**/*.svelte",
-    "test/trials/hangman.test.js",
-    "test/trials/hangman.test.js"
+    "test/**/*.test.js"
   ]
 }
