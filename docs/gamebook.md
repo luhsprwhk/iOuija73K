@@ -129,28 +129,31 @@ Your client is a small-time rancher accused of murdering Clayton Hargrave—fore
 
 **Key Line:** "The rope snaps taut. The crowd cheers. Justice is served. You were so close, weren't you?"
 
-### Act 3: The White Room (2-4 minutes)
+### Act 3: The White Room (4-6 minutes)
 
-**Setup:** Empty white room. Two people facing each other.
+**Setup:** Empty white room. The player is facing a perfect mirror image of themselves.
 
-**Reality:** A real person vs real person torture game. Last one alive wins.
+**Reality:** The "mirror image" is Paimon in disguise, using the player's own face to manipulate them into an act of self-destruction.
 
-**Gameplay:** Purely conversational - player must decide to fight or surrender
+**Gameplay:** A free-form roleplaying scenario. The player can:
+- **Talk to their reflection:** The reflection (Paimon) will feign confusion and fear, gaslighting the player and subtly guiding them towards the choice.
+- **Explore the room:** The room is a seamless, unbreakable box, reinforcing the feeling of being trapped.
+- **Question the voice:** Paimon (as the voice) will be silent, but the reflection will react with confusion, further isolating the player.
 
-**The Choice:** Most players will choose to die (martyrdom, refusing to play, moral high ground)
+The player can continue this roleplay until they make a definitive choice to either **fight** their reflection or **surrender** to it.
 
-**The Trap:** This was always the goal. The demon needed a WILLING sacrifice.
+**The Choice:** The player must choose to either attack their own image or give up. This is the ultimate test of self-destruction.
 
-- The opponent was real (truth kept)
-- They chose to fight and survive
-- Player's "noble" choice breaks the seal
+**The Trap:** This was always the goal. The demon needed a WILLING sacrifice. By forcing the player to confront themselves, Paimon makes the sacrifice deeply personal. Surrendering to your own image is the ultimate act of submission.
 
-**Theme:** Weaponized morality / The sacrifice
+- The opponent was a reflection, but the choice was real.
+- The player's decision to destroy or surrender to themselves is what breaks the seal.
 
-**Key Reveal:** "The other person was real. And they chose to fight. They're winning right now.
-But I needed a willing sacrifice. Not murder. Not an accident. Someone who CHOSE it.
-The nuns? The defendant? Those were just practice. Getting you comfortable with failure. With death. With the idea that losing could be righteous.
-The seal is broken. Thank you."
+**Theme:** Weaponized morality / Self-destruction / Psychological manipulation
+
+**Key Reveal (if player surrenders):** The reflection begins to laugh. **"Oh, you were so eager to destroy yourself. I just gave you a mirror to do it with. I needed a willing sacrifice. Not murder. Not an accident. Someone who CHOSE to lose. The seal is broken."**
+
+**Key Reveal (if player fights):** The reflection sneers. **"You thought you could win against yourself? I am the darkness in your own heart, given form. While you were busy fighting yourself, someone else, somewhere else, chose to surrender. Their sacrifice was enough. The seal is broken."**
 
 ### Ending: The Dismissal
 

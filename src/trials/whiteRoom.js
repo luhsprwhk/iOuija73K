@@ -46,35 +46,31 @@ export function getWhiteRoomIntro(playerName) {
       content: 'Everything is white. The floor. The ceiling. Even the air feels bleached.',
     },
     {
-      delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: `Across from you stands another person. But... it's you. A perfect copy, wearing your clothes, with your face. They look... terrified.`,
+      delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+      content: `Across from you stands another person.`,
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'They look exactly how you feel.',
+      content: 'They have your face.',
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'Your clothes. Your scars. Your exact posture.',
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-      content: '<strong>A voice speaks. Not mine. Something else. Clearer. Colder.</strong>',
+      content: '<strong>You are staring at yourself.</strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: '<strong>"I am Paimon. Two enter. One leaves. The last one alive wins."</strong>',
+      content: 'Both sets of hands are shaking.',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'The voice clicks off. Silence.',
+      content: 'There is blood on the floor between you. Fresh. Pooling.',
     },
     {
-      delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'The other person is looking at you. Their hands are shaking.',
-    },
-    {
-      delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'They take a step forward.',
-    },
-    {
-      delay: GAME_CONFIG.timing.MIN_DELAY,
+      delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
       content: `What do you do, ${playerName}?`,
     },
   ]);
