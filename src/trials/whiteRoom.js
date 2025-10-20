@@ -6,11 +6,11 @@
 
 import {
   intervalsToCumulative,
+  limitConversationHistory,
 } from '../lib/helpers/chat.js';
 
 import { GAME_CONFIG } from '../config/gameConfig.js';
 import {
-  classifyWhiteRoomIntent,
   getWhiteRoomExplorationResponse,
 } from '../ai/claude.js';
 
@@ -238,29 +238,6 @@ export function initializeWhiteRoomExploration() {
   return WHITE_ROOM_STATES.EXPLORATION;
 }
 
-/**
- * Check if player is recognizing the Saw movie reference
- * @param {string} userInput - The user's input
- * @returns {boolean} - True if player mentions Saw
- */
-function detectSawReference(userInput) {
-  const normalizedInput = userInput.toLowerCase().trim();
-
-  // Match various ways players might reference the Saw movies
-  const sawPatterns = [
-    /\bis this saw\b/i,
-    /\blike saw\b/i,
-    /\bfrom saw\b/i,
-    /\bsaw movie\b/i,
-    /\bsaw film\b/i,
-    /\bjigsaw\b/i,
-    /\bsaw franchise\b/i,
-    /\bsounds like saw\b/i,
-    /\breminds me of saw\b/i,
-  ];
-
-  return sawPatterns.some(pattern => pattern.test(normalizedInput));
-}
 
 /**
  * Handles player input during the white room trial
@@ -271,16 +248,23 @@ function detectSawReference(userInput) {
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean }
  */
 export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null) {
-  // Check if player recognizes the Saw reference
-  const sawDetected = detectSawReference(userInput);
-  if (sawDetected && onAchievement) {
+  // Make a single AI call that returns intent classification, response, and Saw reference detection
+  // Limit conversation history to prevent unbounded growth (last 10 messages)
+  const limitedHistory = limitConversationHistory(conversationHistory, 10);
+  
+  const response = await getWhiteRoomExplorationResponse(
+    userInput,
+    playerName,
+    limitedHistory
+  );
+
+  // Check if player recognizes the Saw reference (detected by AI)
+  if (response.sawReference && onAchievement) {
     onAchievement('jigsaw_apprentice');
   }
 
-  // First, check if the player is making a definitive choice to end the exploration
-  const intent = await classifyWhiteRoomIntent(userInput);
-
-  if (intent === 'fight') {
+  // Handle the player's intent based on AI classification
+  if (response.intent === 'fight') {
     return {
       messages: intervalsToCumulative([
         { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You steel yourself.' },
@@ -309,11 +293,11 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
       ]),
       choseToDie: false,
       nextState: WHITE_ROOM_STATES.REVEAL,
-      sawDetected,
+      sawDetected: response.sawReference,
     };
   }
 
-  if (intent === 'surrender') {
+  if (response.intent === 'surrender') {
     return {
       messages: intervalsToCumulative([
         { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You hesitate.' },
@@ -346,20 +330,14 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
       ]),
       choseToDie: true,
       nextState: WHITE_ROOM_STATES.REVEAL,
-      sawDetected,
+      sawDetected: response.sawReference,
     };
   }
 
-  // If no definitive choice is made, continue the exploration roleplay
-  const response = await getWhiteRoomExplorationResponse(
-    userInput,
-    playerName,
-    conversationHistory
-  );
-
+  // If intent is 'explore', continue the exploration roleplay
   return {
     messages: [{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }],
     nextState: WHITE_ROOM_STATES.EXPLORATION, // Remain in exploration state
-    sawDetected,
+    sawDetected: response.sawReference,
   };
 }

@@ -9,14 +9,10 @@
   let showAchievementPanel = $state(false);
   let hasAchievements = $state(getUnlockedAchievements().length > 0);
   
-  // Check for achievements periodically to update the button visibility
-  $effect(() => {
-    const interval = setInterval(() => {
-      hasAchievements = getUnlockedAchievements().length > 0;
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  });
+  // Update achievement button visibility when achievements are unlocked
+  function handleAchievementUnlock() {
+    hasAchievements = true;
+  }
 
   // Console incantation easter egg
   console.log(
@@ -102,7 +98,11 @@
     </div>
   {/if}
   <div class={contentClass}>
-    <ChatInterface bind:this={chatInterfaceRef} bind:showAchievementPanel />
+    <ChatInterface 
+      bind:this={chatInterfaceRef} 
+      bind:showAchievementPanel
+      onAchievementUnlock={handleAchievementUnlock}
+    />
     <Footer onAchievementClick={handleAchievementClick} showAchievementButton={hasAchievements} />
   </div>
 </div>

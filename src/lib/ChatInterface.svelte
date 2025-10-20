@@ -131,6 +131,9 @@
       if (achievementId === 'true_name') {
         hasTrueNameAchievement = true;
       }
+
+      // Notify parent component about achievement unlock
+      onAchievementUnlock?.();
     }
   }
 
@@ -880,6 +883,7 @@
   let { 
     title = 'iOuija73k', 
     onGameStateChange = undefined,
+    onAchievementUnlock = undefined,
     showAchievementPanel = $bindable(false)
   } = $props();
 
@@ -1064,6 +1068,7 @@
       case 'white_room':
         gameState = 'white_room';
         whiteRoomState = WHITE_ROOM_STATES.INTRO;
+        whiteRoomChoice = null;
         showInput = true;
         const whiteRoomIntro = getWhiteRoomIntro(playerName);
         messages = whiteRoomIntro.map(({ content, image }) => ({

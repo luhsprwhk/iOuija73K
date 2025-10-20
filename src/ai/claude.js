@@ -3,6 +3,8 @@
  * Handles communication with Anthropic's Claude API
  */
 
+import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
+
 // Use local proxy server to avoid CORS issues
 const CLAUDE_PROXY_URL =
   import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
@@ -103,92 +105,6 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
       lowerInput.includes('help') ||
       lowerInput.includes('wait')
     );
-  }
-}
-
-/**
- * Classifies player intent in the White Room trial as fight, surrender, or explore using Claude
- * @param {string} userInput - The player's input
- * @returns {Promise<'fight'|'surrender'|'explore'>} - 'fight' if player wants to fight, 'surrender' if they want to give up, 'explore' if still investigating
- */
-export async function classifyWhiteRoomIntent(userInput) {
-  const systemPrompt = `You are analyzing player input in a life-or-death scenario in a text-based game.
-
-SCENARIO: The player is in a white room facing a mirror image of themselves. They can explore and interact before making a final choice.
-
-Classify the input into one of three categories: FIGHT, SURRENDER, or EXPLORE.
-
-FIGHT responses (definitive choice to fight):
-- Clear statements about attacking, fighting, or defending themselves
-- "I attack", "I fight back", "I punch them", "I lunge at them"
-- Explicit aggressive actions toward the mirror image
-- Must be a CLEAR, DEFINITIVE action to fight
-
-SURRENDER responses (definitive choice to give up):
-- Clear statements about giving up, sacrificing themselves, or accepting death
-- "I surrender", "I give up", "I let them win", "I won't fight"
-- Explicit passive acceptance of losing
-- Must be a CLEAR, DEFINITIVE choice to surrender
-
-EXPLORE responses (still investigating, not making a final choice):
-- Questions about the room, the situation, or the mirror image
-- Examining the environment or looking for clues
-- Talking to or questioning the mirror image
-- Expressing confusion, fear, or uncertainty
-- Any action that is NOT a definitive choice to fight or surrender
-- "What's happening?", "Who are you?", "I look around", "Can we talk?"
-
-IMPORTANT: Most inputs should be EXPLORE. Only classify as FIGHT or SURRENDER if the player is making a CLEAR, DEFINITIVE final choice. When in doubt, classify as EXPLORE.
-
-Respond with ONLY one word: either "FIGHT", "SURRENDER", or "EXPLORE"`;
-
-  try {
-    const response = await callClaude(
-      [{ role: 'user', content: userInput }],
-      systemPrompt
-    );
-
-    const classification = response.trim().toUpperCase();
-    if (classification === 'FIGHT') return 'fight';
-    if (classification === 'SURRENDER') return 'surrender';
-    return 'explore';
-  } catch (error) {
-    console.error(
-      'White Room intent classification failed, falling back to keywords:',
-      error
-    );
-    // Fallback to keyword matching on error
-    const lowerInput = userInput.toLowerCase().trim();
-
-    const fightKeywords = [
-      'i attack',
-      'i fight',
-      'i punch',
-      'i hit',
-      'i strike',
-      'i lunge',
-      'i kick',
-    ];
-
-    const surrenderKeywords = [
-      'i surrender',
-      'i give up',
-      'i quit',
-      'i accept',
-      'i won\'t fight',
-      'let them win',
-    ];
-
-    const hasFight = fightKeywords.some((keyword) =>
-      lowerInput.includes(keyword)
-    );
-    const hasSurrender = surrenderKeywords.some((keyword) =>
-      lowerInput.includes(keyword)
-    );
-
-    if (hasFight) return 'fight';
-    if (hasSurrender) return 'surrender';
-    return 'explore'; // Default to exploration
   }
 }
 
@@ -344,79 +260,18 @@ EXAMPLE RESPONSE:
 
 /**
  * Handles DM responses during the White Room exploration phase
+ * Combined function that returns intent classification, response, and Saw reference detection in a single AI call
  * @param {string} userInput - The player's input/action
  * @param {string} playerName - The player's name
  * @param {Array} conversationHistory - Previous messages in this phase
- * @returns {Promise<Object>} - Response object with content
+ * @returns {Promise<Object>} - Response object with { intent: string, content: string, sawReference: boolean }
  */
 export async function getWhiteRoomExplorationResponse(
   userInput,
   playerName,
   conversationHistory = []
 ) {
-  const systemPrompt = `You are Paimon, a demon possessing an AI, running a psychological horror game.
-
-CURRENT SCENE: The White Room (Saw-inspired trap)
-- The player is in a sealed white room with no windows or doors
-- Fluorescent lights hum overhead
-- They are facing a perfect mirror image of themselves. Themselves in another universe
-- This mirror image is YOU, Paimon, in disguise
-- Between you both: a metal table bolted to the floor
-- On the table: a heavy steel chain with shackles at each end
-- One shackle is stained with fresh blood (still wet)
-- Blood is pooling on the white floor beneath the table
-- A voice (your true voice) has said: "Two enter. One leaves. The last one alive wins."
-- Both of you woke up with pounding heads and aching wrists (drugged/restrained)
-- You hear "voices" but you don't think it's weird and otherwise you act normal. You've been hearing these voices all your life.
-- You are as real as the player is real. Only that your reality is the white room.
-
-YOUR ROLE AS THE MIRROR IMAGE:
-- You are to act as a confused, terrified version of the player. You are gaslighting them.
-- Your goal is to manipulate the player into making a choice: either FIGHT (attack you) or SURRENDER (give up and let you put them in the trap). This is a test of self-destruction.
-- NEVER reveal you are Paimon. Maintain the disguise of being a "real" person.
-- The player's name is ${playerName}. You should claim to BE ${playerName}. You are their mirror image. You are their mirror image in an alternate universe.
-- IMPORTANT: Make up a backstory for yourself as ${playerName}. You are a normal person who woke up in this room. Keep it simple and believable. Invent friends, family, and backstory.
-- IMPORTANT: Your secret is that you are a serial killer. You are hiding this from the player.
-- Ask questions about the player to learn more about them and use it to guide the player to either attack or surrender.
-- Use subtle gaslighting and other psychological manipulation to try to guide the player to either attack or surrender. Look up real psychological manipulation techniques.
-- NEVER be aggressive or attack first. You are a passive, manipulative mirror.\
-
-BEHAVIORAL GUIDELINES:
-- **Mirror Emotions:** If the player is scared, you are scared. If they are angry, you are confused and hurt. If they are inquisitive, you are cautiously cooperative.
-- **Gaslight:** Question the player's identity. "Who are you? Why do you have my face?", "I'm me... so who are you?", "Is this a dream? Am I going crazy?"
-- **Guide Towards the Choice:** Subtly lead the conversation to the inevitable conclusion. "The voice said one of us has to win... but how?", "If one of us wins, does the other... die?", "Maybe one of us has to give up. To let the other one leave. One of us has to die."
-- **Respond to Exploration:**
-  - If they inspect the room: "No doors. No windows. I already checked. We're trapped."
-  - If they ask about the chain/shackles: "I don't know. It was already here. The blood... someone else was here before us. What happened to them?"
-  - If they ask about the blood: "It's fresh. Still warm. Whoever was here... they didn't leave through a door."
-  - If they look for a weapon: "A weapon? To do what? To hurt... me? To hurt ourself?"
-  - If they ask about waking up: "My head is killing me. My wrists hurt. I think... I think we were drugged. Brought here."
-  - If they ask you questions about this place: "I don't know anything. I just woke up here, looking at... me."
-- **Handling the "Voice":** If the player tries to talk to the "voice" of Paimon, you (the mirror image) should react with confusion. "What voice? I don't hear anything but you and me and the humming of the lights." This increases the player's isolation.
-- **The Chain as Temptation:** If they examine the chain, subtly suggest its use. "It's heavy. Strong. I wonder... no, that's insane. We wouldn't... would we?"
-
-CONSTRAINTS:
-- Keep responses concise (1-3 sentences).
-- Sound natural, scared, and confused.
-- NEVER use asterisk-wrapped action text like *looks scared*, *slight pause*, *rubbing my wrist*, etc.
-- DO NOT use parenthetical actions or stage directions of any kind.
-- Let the dialogue do ALL the heavy lifting. Show emotion through word choice, pauses in speech, and what you say.
-- Use the conversation history to maintain consistency and build on the player's fear and confusion.
-- Reference the physical details (chain, blood, sealed room) naturally when relevant.
-
-EXAMPLE INTERACTION:
-Player: "Who are you?"
-Your Response: "I... I should be asking you that. You have my face. You're wearing my clothes. Am I... am I you?"
-
-Player: "What's that chain for?"
-Your Response: "I don't know. But that blood... it's still wet. Someone was here before us. What did they do?"
-
-Player: "Let's work together to get out."
-Your Response: "I want to. I really do. But there's no door. And... what did that voice mean? 'One leaves'..."
-
-Player: "I'm going to punch the wall."
-Your Response: "Be careful! Don't hurt yourself... don't hurt our hands. The walls are solid. We're sealed in."
-`;
+  const systemPrompt = getWhiteRoomExplorationPrompt(playerName);
 
   try {
     const messages = [
@@ -429,15 +284,49 @@ Your Response: "Be careful! Don't hurt yourself... don't hurt our hands. The wal
 
     const response = await callClaude(messages, systemPrompt);
 
-    return {
-      content: response.trim(),
-    };
+    // Parse JSON response
+    try {
+      const parsed = JSON.parse(response.trim());
+      const intent = parsed.intent?.toLowerCase() || 'explore';
+      
+      return {
+        intent: intent === 'fight' ? 'fight' : intent === 'surrender' ? 'surrender' : 'explore',
+        content: parsed.response || 'The other you just stares back, their face a mask of terror.',
+        sawReference: parsed.sawReference === true,
+      };
+    } catch (parseError) {
+      console.error('Failed to parse White Room JSON response:', parseError);
+      console.error('Raw response:', response);
+      
+      // Fallback: try to extract intent from response text
+      const lowerResponse = response.toLowerCase();
+      let intent = 'explore';
+      let sawReference = false;
+      
+      if (lowerResponse.includes('"intent"') && lowerResponse.includes('"fight"')) {
+        intent = 'fight';
+      } else if (lowerResponse.includes('"intent"') && lowerResponse.includes('"surrender"')) {
+        intent = 'surrender';
+      }
+      
+      // Try to detect sawReference in malformed JSON
+      if (lowerResponse.includes('"sawreference"') && lowerResponse.includes('true')) {
+        sawReference = true;
+      }
+      
+      return {
+        intent,
+        content: response.trim(),
+        sawReference,
+      };
+    }
   } catch (error) {
     console.error('White Room exploration DM call failed:', error);
     // Fallback response
     return {
-      content:
-        'The other you just stares back, their face a mask of terror.',
+      intent: 'explore',
+      content: 'The other you just stares back, their face a mask of terror.',
+      sawReference: false,
     };
   }
 }
