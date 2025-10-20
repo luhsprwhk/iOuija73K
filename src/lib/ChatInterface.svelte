@@ -142,6 +142,45 @@
   }
 
   /**
+   * Converts cumulative delays to interval delays
+   * @param {Array} messages - Array of message objects with cumulative delays
+   * @returns {Array} - Array of message objects with interval delays
+   */
+  function cumulativeToIntervals(messages) {
+    return messages.map((msg, index) => {
+      const prevDelay = index === 0 ? 0 : messages[index - 1].delay;
+      const intervalDelay = index === 0 ? msg.delay : msg.delay - prevDelay;
+      return { ...msg, delay: intervalDelay };
+    });
+  }
+
+  /**
+   * Adds multiple assistant messages with cumulative delays
+   * Properly converts cumulative delays to sequential timing
+   * @param {Array} messages - Array of message objects with cumulative delays
+   * @param {number} baseDelay - Optional base delay to add to all messages
+   */
+  function addAssistantMessages(messages, baseDelay = 0) {
+    const intervalMessages = cumulativeToIntervals(messages);
+    let accumulatedDelay = baseDelay;
+    intervalMessages.forEach(({ delay, content, showButton, image, buttons, audio }) => {
+      if (audio) {
+        // Play audio at the scheduled time
+        setTimeout(() => {
+          const audioEl = new Audio(audio);
+          audioEl.play().catch((err) => {
+            console.error('Failed to play audio:', err);
+          });
+        }, accumulatedDelay + delay);
+      }
+      if (content !== undefined) {
+        addAssistantMessage(content, accumulatedDelay + delay, showButton || false, image, buttons);
+      }
+      accumulatedDelay += delay;
+    });
+  }
+
+  /**
    * Adds an assistant message with optional delay
    * @param {string} content - Message content
    * @param {number} delay - Delay in ms before adding message (0 for immediate)
@@ -360,9 +399,7 @@
 
         // Get hangman intro messages
         const hangmanIntro = getHangmanIntro(playerName);
-        hangmanIntro.forEach(({ delay, content, image }) => {
-          addAssistantMessage(content, delay, false, image);
-        });
+        addAssistantMessages(hangmanIntro);
 
         // Calculate when to transition to exploration phase (after intro completes)
         const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
@@ -427,21 +464,7 @@
 
             // Show reveal messages
             const revealMessages = getHangmanReveal(playerName);
-
-            revealMessages.forEach(({ delay, content, audio }) => {
-              if (audio) {
-                // Play audio
-                setTimeout(() => {
-                  const audioEl = new Audio(audio);
-                  audioEl.play().catch((err) => {
-                    console.error('Failed to play audio:', err);
-                  });
-                }, delay);
-              }
-              if (content) {
-                addAssistantMessage(content, delay);
-              }
-            });
+            addAssistantMessages(revealMessages);
 
             // Calculate last reveal message delay
             const lastRevealDelay =
@@ -457,9 +480,7 @@
 
               // Get white room intro messages
               const whiteRoomIntro = getWhiteRoomIntro(playerName);
-              whiteRoomIntro.forEach(({ delay, content, image }) => {
-                addAssistantMessage(content, delay, false, image);
-              });
+              addAssistantMessages(whiteRoomIntro);
             }, lastRevealDelay + 1000);
           }
         } catch (error) {
@@ -487,10 +508,8 @@
         const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement);
         whiteRoomState = result.nextState;
 
-        // Add response messages
-        result.messages.forEach(({ delay, content }) => {
-          addAssistantMessage(content, delay);
-        });
+        // Add response messages with proper cumulative delay handling
+        addAssistantMessages(result.messages);
 
         // Track assistant responses in history
         result.messages.forEach(({ content }) => {
@@ -516,9 +535,7 @@
               playerName,
               whiteRoomChoice
             );
-            revealMessages.forEach(({ delay, content }) => {
-              addAssistantMessage(content, delay);
-            });
+            addAssistantMessages(revealMessages);
 
             // Calculate when reveal ends
             const lastRevealDelay =
@@ -530,9 +547,7 @@
             setTimeout(() => {
               whiteRoomState = WHITE_ROOM_STATES.COMPLETE;
               const dismissalMessages = getFinalDismissal();
-              dismissalMessages.forEach(({ delay, content }) => {
-                addAssistantMessage(content, delay);
-              });
+              addAssistantMessages(dismissalMessages);
 
               // Calculate when everything ends
               const lastDismissalDelay =

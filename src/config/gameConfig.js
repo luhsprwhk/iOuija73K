@@ -49,6 +49,16 @@ export const GAME_CONFIG = {
    */
   timing: {
     /**
+     * Minimum delay between messages
+     */
+    MIN_DELAY: 3000,
+
+    /**
+     * Maximum delay between messages
+     */
+    MAX_DELAY: 5000,
+
+    /**
      * Delay for typical message responses
      */
     STANDARD_DELAY: 2000,
@@ -56,7 +66,7 @@ export const GAME_CONFIG = {
     /**
      * Delay for dramatic pauses
      */
-    DRAMATIC_DELAY: 4000,
+    DRAMATIC_DELAY: 6000,
 
     /**
      * Delay for quick responses
