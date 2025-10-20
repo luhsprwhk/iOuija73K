@@ -248,10 +248,54 @@ export function initializeWhiteRoomExploration() {
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean }
  */
 export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null) {
+  // Calculate turn count (count user messages only to track actual player turns)
+  const turnCount = conversationHistory.filter(msg => msg.role === 'user').length;
+
+  // Circuit breaker: Force a choice after maximum exploration turns
+  if (turnCount >= GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS) {
+    // Mirror becomes aggressive and forces a confrontation
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: GAME_CONFIG.timing.STANDARD_DELAY,
+          content: 'The mirror image\'s face contorts. Something behind their eyes shifts.'
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: '"Enough games," they hiss. "The voice said TWO ENTER. ONE LEAVES."'
+        },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'They lunge forward, reaching for the chain...',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'You react instinctively. Your hands close around their throat.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Blood runs from their nose. Their eyes never leave yours.',
+        },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'They smile as the light fades from their face.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Your hands are slick with red. The white floor is stained.',
+        },
+        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
+      ]),
+      choseToDie: false, // Forced to fight
+      nextState: WHITE_ROOM_STATES.REVEAL,
+      sawDetected: false,
+    };
+  }
+
   // Make a single AI call that returns intent classification, response, and Saw reference detection
   // Limit conversation history to prevent unbounded growth (last 10 messages)
   const limitedHistory = limitConversationHistory(conversationHistory, 10);
-  
+
   const response = await getWhiteRoomExplorationResponse(
     userInput,
     playerName,

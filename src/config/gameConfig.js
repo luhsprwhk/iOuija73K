@@ -22,6 +22,18 @@ export const GAME_CONFIG = {
   },
 
   /**
+   * White Room trial settings
+   */
+  whiteRoom: {
+    /**
+     * Maximum number of exploration turns before forcing a choice
+     * Prevents unbounded AI API calls and ensures game progression
+     * After this limit, the mirror will force a confrontation
+     */
+    MAX_EXPLORATION_TURNS: 15,
+  },
+
+  /**
    * Name validation settings
    */
   nameValidation: {

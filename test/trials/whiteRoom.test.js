@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getWhiteRoomIntro,
   getWhiteRoomReveal,
@@ -6,6 +6,7 @@ import {
   WHITE_ROOM_STATES,
 } from '../../src/trials/whiteRoom.js';
 import * as claude from '../../src/ai/claude.js';
+import { GAME_CONFIG } from '../../src/config/gameConfig.js';
 
 // Mock the AI functions
 vi.mock('../../src/ai/claude.js', () => ({
@@ -13,6 +14,9 @@ vi.mock('../../src/ai/claude.js', () => ({
 }));
 
 describe('White Room Trial', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   describe('getWhiteRoomIntro', () => {
     it('should return the correct intro messages', () => {
       const intro = getWhiteRoomIntro('Player');
@@ -108,6 +112,110 @@ describe('White Room Trial', () => {
       const result = await handleWhiteRoomInput('I saw the door earlier', 'Player', [], mockAchievement);
       expect(result.sawDetected).toBe(false);
       expect(mockAchievement).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Circuit Breaker - Unbounded AI Call Prevention', () => {
+    it('should force a choice after MAX_EXPLORATION_TURNS', async () => {
+      // Create conversation history with MAX_EXPLORATION_TURNS user messages
+      const conversationHistory = [];
+      for (let i = 0; i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS; i++) {
+        conversationHistory.push({ role: 'user', content: `Exploration turn ${i}` });
+        conversationHistory.push({ role: 'assistant', content: 'Response' });
+      }
+
+      // This should trigger the circuit breaker without calling AI
+      const result = await handleWhiteRoomInput('One more turn', 'Player', conversationHistory);
+
+      // Circuit breaker should force a fight outcome
+      expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
+      expect(result.choseToDie).toBe(false); // Forced to fight
+      expect(result.sawDetected).toBe(false);
+
+      // Should have dramatic messages about forced confrontation
+      expect(result.messages).toBeInstanceOf(Array);
+      expect(result.messages.length).toBeGreaterThan(0);
+      const forcedConfrontation = result.messages.find(m =>
+        m.content && m.content.includes('Enough games')
+      );
+      expect(forcedConfrontation).toBeDefined();
+
+      // AI should NOT have been called
+      expect(claude.getWhiteRoomExplorationResponse).not.toHaveBeenCalled();
+    });
+
+    it('should allow exploration before reaching MAX_EXPLORATION_TURNS', async () => {
+      claude.getWhiteRoomExplorationResponse.mockResolvedValue({
+        intent: 'explore',
+        content: 'The mirror stares back.',
+        sawReference: false,
+      });
+
+      // Create conversation history with fewer than MAX_EXPLORATION_TURNS
+      const conversationHistory = [];
+      for (let i = 0; i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS - 1; i++) {
+        conversationHistory.push({ role: 'user', content: `Turn ${i}` });
+        conversationHistory.push({ role: 'assistant', content: 'Response' });
+      }
+
+      const result = await handleWhiteRoomInput('Continue exploring', 'Player', conversationHistory);
+
+      // Should continue exploration normally
+      expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
+      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalled();
+    });
+
+    it('should count only user messages for turn limit', async () => {
+      // Create history with many assistant messages but few user messages
+      const conversationHistory = [
+        { role: 'user', content: 'First question' },
+        { role: 'assistant', content: 'Response 1' },
+        { role: 'assistant', content: 'Response 2' },
+        { role: 'assistant', content: 'Response 3' },
+        { role: 'user', content: 'Second question' },
+      ];
+
+      claude.getWhiteRoomExplorationResponse.mockResolvedValue({
+        intent: 'explore',
+        content: 'Still exploring.',
+        sawReference: false,
+      });
+
+      const result = await handleWhiteRoomInput('Third question', 'Player', conversationHistory);
+
+      // Should continue exploration (only 3 user messages total)
+      expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
+      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalled();
+    });
+
+    it('should trigger exactly at the turn limit', async () => {
+      // Create history with exactly MAX_EXPLORATION_TURNS user messages already in history
+      // The function counts existing user messages, so we need exactly MAX_EXPLORATION_TURNS
+      const conversationHistory = [];
+      for (let i = 0; i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS; i++) {
+        conversationHistory.push({ role: 'user', content: `Turn ${i}` });
+      }
+
+      // This next input will trigger the circuit breaker
+      const result = await handleWhiteRoomInput('Final turn', 'Player', conversationHistory);
+
+      // Should trigger circuit breaker
+      expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
+      expect(claude.getWhiteRoomExplorationResponse).not.toHaveBeenCalled();
+    });
+
+    it('should prevent cost attacks via prolonged exploration', async () => {
+      // Simulate a malicious player trying to rack up API costs
+      const conversationHistory = [];
+      for (let i = 0; i < 100; i++) {
+        conversationHistory.push({ role: 'user', content: `Spam turn ${i}` });
+      }
+
+      const result = await handleWhiteRoomInput('More spam', 'Player', conversationHistory);
+
+      // Should be blocked by circuit breaker
+      expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
+      expect(claude.getWhiteRoomExplorationResponse).not.toHaveBeenCalled();
     });
   });
 });
