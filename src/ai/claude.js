@@ -5,9 +5,28 @@
 
 import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
 
-// Use local proxy server to avoid CORS issues
-const CLAUDE_PROXY_URL =
-  import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
+/**
+ * Determines the appropriate Claude API proxy URL
+ * - In production (Netlify): uses Netlify Functions endpoint
+ * - In development: uses local Express proxy server
+ * - Falls back to environment variable if specified
+ */
+function getClaudeProxyUrl() {
+  // If explicitly set in environment, use that
+  if (import.meta.env.VITE_CLAUDE_PROXY_URL) {
+    return import.meta.env.VITE_CLAUDE_PROXY_URL;
+  }
+
+  // In production (Netlify), use Netlify Functions
+  if (import.meta.env.PROD) {
+    return '/.netlify/functions/claude';
+  }
+
+  // In development, use local proxy server
+  return 'http://localhost:3001/api/claude';
+}
+
+const CLAUDE_PROXY_URL = getClaudeProxyUrl();
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 
 /**
@@ -58,14 +77,6 @@ export function formatMessagesForClaude(messages) {
       role: msg.role,
       content: msg.content,
     }));
-}
-
-/**
- * Gets the Claude API key from environment variables
- * @returns {string|null} - API key or null if not set
- */
-export function getClaudeApiKey() {
-  return import.meta.env.VITE_CLAUDE_API_KEY || null;
 }
 
 /**

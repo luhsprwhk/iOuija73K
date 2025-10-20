@@ -135,6 +135,19 @@ npm run build    # Build for production
 npm run preview  # Preview production build
 ```
 
+## Deployment
+
+Ready to unleash the horror on the world? See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for comprehensive deployment instructions.
+
+**Quick Deploy to Netlify:**
+
+1. Push your code to GitHub/GitLab/Bitbucket
+2. Connect repository to [Netlify](https://app.netlify.com/)
+3. Set environment variable: `CLAUDE_API_KEY=your_api_key`
+4. Deploy! (automatic via `netlify.toml` config)
+
+The app uses Netlify Functions for secure serverless API calls - your API key is never exposed to the client. Zero additional configuration required!
+
 ## Contributing
 
 This is a Halloween challenge project! If you want to contribute:

@@ -47,7 +47,6 @@
   import {
     callClaude,
     formatMessagesForClaude,
-    getClaudeApiKey,
     handleHangmanExploration,
   } from '../ai/claude.js';
   import { GAME_CONFIG } from '../config/gameConfig.js';
@@ -574,19 +573,8 @@
       if (isProcessing) return;
 
       isProcessing = true;
-      const apiKey = getClaudeApiKey();
 
-      if (!apiKey) {
-        setTimeout(() => {
-          addAssistantMessage(
-            '[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]'
-          );
-          isProcessing = false;
-        }, 500);
-        return;
-      }
-
-      // Call Claude API
+      // Call Claude API (proxy will handle API key)
       const conversationHistory = formatMessagesForClaude(messages);
       conversationHistory.push({ role: 'user', content: userInput });
 

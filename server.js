@@ -16,6 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
+// For local development, use VITE_CLAUDE_API_KEY (matches .env file)
 const CLAUDE_API_KEY = process.env.VITE_CLAUDE_API_KEY;
 
 // Health check endpoint

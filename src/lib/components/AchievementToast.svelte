@@ -8,14 +8,13 @@
   let { achievement = $bindable(), onDismiss } = $props();
 
   // Auto-dismiss after 5 seconds
-  let timeout;
   $effect(() => {
     if (achievement) {
-      timeout = setTimeout(() => {
+      const timeout = setTimeout(() => {
         onDismiss?.();
       }, 5000);
+      return () => clearTimeout(timeout);
     }
-    return () => clearTimeout(timeout);
   });
 </script>
 

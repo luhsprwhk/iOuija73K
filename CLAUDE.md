@@ -37,14 +37,22 @@ npm run format:check # Check formatting without modifying files
 
 ### Environment Setup
 
+**Local Development:**
+
 1. Copy `.env.example` to `.env`
 2. Add your Anthropic API key: `VITE_CLAUDE_API_KEY=sk-ant-...`
 3. Get API key from: https://console.anthropic.com/
+4. Run `npm run dev:all` to start both dev server and proxy server
+5. The app will automatically use the local Express proxy at `localhost:3001`
 
-**API Configuration Options:**
+**Production Deployment (Netlify):**
 
-- **Client-side**: API key used directly from browser (default, simpler setup)
-- **Server-side proxy**: Run `npm run server` and the API calls go through Express proxy at `localhost:3001` (better for CORS handling and API key security)
+1. Connect your repository to Netlify
+2. In Netlify dashboard, go to: Site settings > Environment variables
+3. Add environment variable: `CLAUDE_API_KEY=sk-ant-...` (note: no `VITE_` prefix)
+4. Deploy! The app will automatically use Netlify Functions for secure API calls
+
+**Security Note:** The API key is NEVER exposed to the client in production. All Claude API calls go through serverless functions (Netlify Functions in production, Express proxy in development).
 
 ### Audio Setup
 
@@ -311,18 +319,32 @@ Located in `ChatInterface.svelte:37-84`, cryptic hints appear on subtitle hover:
 - Implements `pickNewRiddleIndex()` to ensure no consecutive repeats
 - Purpose: Guide players to discover console easter egg without being obvious
 
-### Backend Proxy Server
+### API Proxy Architecture
 
-Located in `server.js`, optional Express server for API security:
+The app uses different proxy configurations for development and production:
 
+**Development (Express Server):**
+- Located in `server.js`, Express proxy server for local development
 - Proxies Claude API requests to avoid CORS issues
-- Keeps API key server-side instead of exposing to browser
+- Keeps API key server-side (reads `VITE_CLAUDE_API_KEY` from `.env`)
 - Endpoints:
   - `GET /api/health`: Health check, returns if API key is configured
   - `POST /api/claude`: Proxies requests to Claude API
 - Run with `npm run server` (port 3001 by default)
 - Use `npm run dev:all` to start both dev server and proxy concurrently
-- API client (`claude.js`) can be configured to use proxy endpoint instead of direct API calls
+
+**Production (Netlify Functions):**
+- Located in `netlify/functions/claude.js`, serverless function
+- Automatically deployed with your site on Netlify
+- Uses `CLAUDE_API_KEY` environment variable (set in Netlify dashboard)
+- Endpoint: `/.netlify/functions/claude` (called automatically in production)
+- Zero configuration required - works out of the box
+
+**Client Code (`src/ai/claude.js`):**
+- Automatically detects environment (dev vs. prod)
+- Uses Netlify Functions in production (`import.meta.env.PROD === true`)
+- Uses Express proxy in development (localhost:3001)
+- Can be overridden with `VITE_CLAUDE_PROXY_URL` environment variable
 
 ## Testing & Quality Assurance
 
