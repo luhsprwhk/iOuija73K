@@ -1057,7 +1057,6 @@
           image,
           showButton: false,
         }));
-        whiteRoomState = initializeWhiteRoomExploration();
         whiteRoomExplorationHistory = [];
         // Start ambient music
         isPlayingMusic = true;
@@ -1092,6 +1091,9 @@
     // Scroll to bottom after state change
     setTimeout(() => scrollToBottom(), 100);
   }
+
+  // Export functions for parent component access (Svelte 5)
+  export { handleStateJump, handleTriggerLockout };
 </script>
 
 {#if isLockedOut}

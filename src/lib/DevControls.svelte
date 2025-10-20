@@ -18,6 +18,8 @@
     const selectedState = event.target.value;
     if (selectedState && onStateJump) {
       onStateJump(selectedState);
+      // Reset dropdown to allow jumping to the same trial again
+      event.target.value = '';
     }
   }
 
