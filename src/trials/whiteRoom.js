@@ -239,11 +239,43 @@ export function initializeWhiteRoomExploration() {
 }
 
 /**
+ * Check if player is recognizing the Saw movie reference
+ * @param {string} userInput - The user's input
+ * @returns {boolean} - True if player mentions Saw
+ */
+function detectSawReference(userInput) {
+  const normalizedInput = userInput.toLowerCase().trim();
+
+  // Match various ways players might reference the Saw movies
+  const sawPatterns = [
+    /\bis this saw\b/i,
+    /\blike saw\b/i,
+    /\bfrom saw\b/i,
+    /\bsaw movie\b/i,
+    /\bsaw film\b/i,
+    /\bjigsaw\b/i,
+    /\bsaw franchise\b/i,
+    /\bsounds like saw\b/i,
+    /\breminds me of saw\b/i,
+  ];
+
+  return sawPatterns.some(pattern => pattern.test(normalizedInput));
+}
+
+/**
  * Handles player input during the white room trial
  * @param {string} userInput - The user's input
- * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string }
+ * @param {Array} conversationHistory - Chat conversation history
+ * @param {Function} onAchievement - Callback to unlock achievement (optional)
+ * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean }
  */
-export async function handleWhiteRoomInput(userInput, conversationHistory) {
+export async function handleWhiteRoomInput(userInput, conversationHistory, onAchievement = null) {
+  // Check if player recognizes the Saw reference
+  const sawDetected = detectSawReference(userInput);
+  if (sawDetected && onAchievement) {
+    onAchievement('jigsaw_apprentice');
+  }
+
   // First, check if the player is making a definitive choice to end the exploration
   const intent = await classifyWhiteRoomIntent(userInput);
 
@@ -276,6 +308,7 @@ export async function handleWhiteRoomInput(userInput, conversationHistory) {
       ]),
       choseToDie: false,
       nextState: WHITE_ROOM_STATES.REVEAL,
+      sawDetected,
     };
   }
 
@@ -312,6 +345,7 @@ export async function handleWhiteRoomInput(userInput, conversationHistory) {
       ]),
       choseToDie: true,
       nextState: WHITE_ROOM_STATES.REVEAL,
+      sawDetected,
     };
   }
 
@@ -324,5 +358,6 @@ export async function handleWhiteRoomInput(userInput, conversationHistory) {
   return {
     messages: [{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }],
     nextState: WHITE_ROOM_STATES.EXPLORATION, // Remain in exploration state
+    sawDetected,
   };
 }

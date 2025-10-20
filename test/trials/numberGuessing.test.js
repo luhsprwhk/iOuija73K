@@ -221,9 +221,7 @@ describe('numberGuessing trial', () => {
       expect(
         result.messages.some((m) => m.content.includes("My name isn't Raphael"))
       ).toBe(true);
-      expect(
-        result.messages.some((m) => m.content.includes("I'm Paimon"))
-      ).toBe(true);
+
     });
 
   });

@@ -6,6 +6,8 @@
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
   import DevControls from './DevControls.svelte';
+  import AchievementToast from './components/AchievementToast.svelte';
+  import AchievementPanel from './components/AchievementPanel.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -13,6 +15,8 @@
     setLockout,
     clearLockout,
   } from './helpers/lockoutManager';
+  import { getAchievementById } from '../achievements/achievementData.js';
+  import { unlockAchievement, isAchievementUnlocked } from '../achievements/achievementManager.js';
   import {
     handleNumberGuess,
     getNumberTrialIntro,
@@ -66,7 +70,6 @@
   let showInput = $state(false);
   let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, white_room, playing
   let playerName = $state('');
-  let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
   let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
@@ -84,6 +87,12 @@
   let nameValidationAttempts = $state(0);
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
+  let currentAchievement = $state(null); // Currently displayed achievement toast
+  let showAchievementPanel = $state(false); // Achievement panel visibility
+  let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
+
+  // Compute demon name based on achievement
+  let demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael');
 
   // Check for existing lockout on mount
   $effect(() => {
@@ -108,6 +117,30 @@
     if (messagesEndRef) {
       messagesEndRef.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
+  /**
+   * Unlock an achievement and show toast notification
+   * @param {string} achievementId - ID of the achievement to unlock
+   */
+  function triggerAchievement(achievementId) {
+    const wasUnlocked = unlockAchievement(achievementId);
+    if (wasUnlocked) {
+      const achievement = getAchievementById(achievementId);
+      currentAchievement = achievement;
+
+      // If true name achievement was just unlocked, update state to show "Paimon"
+      if (achievementId === 'true_name') {
+        hasTrueNameAchievement = true;
+      }
+    }
+  }
+
+  /**
+   * Dismiss the achievement toast
+   */
+  function dismissAchievementToast() {
+    currentAchievement = null;
   }
 
   /**
@@ -236,6 +269,11 @@
     ];
     const userInput = inputValue;
     inputValue = '';
+
+    // Check if player mentions "Paimon" anywhere in their input
+    if (/paimon/i.test(userInput)) {
+      triggerAchievement('true_name');
+    }
 
     // Handle name exchange
     if (gameState === 'name_exchange') {
@@ -448,7 +486,7 @@
         });
 
         // Player makes their choice or explores (using AI classification)
-        const result = await handleWhiteRoomInput(userInput, whiteRoomExplorationHistory);
+        const result = await handleWhiteRoomInput(userInput, whiteRoomExplorationHistory, triggerAchievement);
         whiteRoomState = result.nextState;
 
         // Add response messages
@@ -607,9 +645,8 @@
     // Update guess attempt
     guessAttempt = result.nextAttempt;
 
-    // If name should be revealed, update demonName
-    if (result.revealName) {
-      demonName = 'Paimon';
+    // If game is complete and user confirmed (demon guessed correctly), celebrate!
+    if (result.gameComplete && userConfirmed === true) {
       // Trigger confetti celebration
       showConfetti = true;
       setTimeout(() => {
@@ -738,6 +775,26 @@
     alignItems: 'center',
     gap: '1rem',
     flexWrap: 'wrap',
+    position: 'relative',
+  });
+
+  const achievementButtonClass = css({
+    position: 'absolute',
+    top: '1.5rem',
+    right: '1.5rem',
+    bg: 'transparent',
+    border: '2px solid',
+    borderColor: 'bloodRed',
+    borderRadius: '8px',
+    padding: '8px 12px',
+    fontSize: '20px',
+    color: 'bloodRed',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    _hover: {
+      bg: 'rgba(139, 0, 0, 0.1)',
+      transform: 'scale(1.05)',
+    },
   });
 
   const titleClass = css({
@@ -862,9 +919,9 @@
     isProcessing = false;
     showConfetti = false;
 
-    // Set default player and demon names
+    // Set default player name and unlock true name achievement for dev mode
     playerName = playerName || 'Player';
-    demonName = 'Paimon'; // Show true name in dev mode
+    hasTrueNameAchievement = true; // Show true name in dev mode
 
     switch (targetState) {
       case 'initial':
@@ -890,7 +947,7 @@
             showButton: false,
           },
         ];
-        demonName = 'Raphael'; // Use false name for this state
+        hasTrueNameAchievement = false; // Reset to false name for this state
         break;
 
       case 'number_game_intro':
@@ -1056,6 +1113,13 @@
       {#if import.meta.env.DEV}
         <DevControls onStateJump={handleStateJump} onTriggerLockout={handleTriggerLockout} />
       {/if}
+      <button
+        class={achievementButtonClass}
+        onclick={() => (showAchievementPanel = true)}
+        title="View Achievements"
+      >
+        🏆
+      </button>
     </header>
 
     <div class={messagesContainerClass}>
@@ -1111,6 +1175,10 @@
   <source src="/audio/muzak/main-theme.mp3" type="audio/mpeg" />
   <source src="/audio/muzak/main-theme.ogg" type="audio/ogg" />
 </audio>
+
+<!-- Achievement components -->
+<AchievementToast achievement={currentAchievement} onDismiss={dismissAchievementToast} />
+<AchievementPanel bind:isOpen={showAchievementPanel} />
 
 <style>
   @keyframes fadeIn {
