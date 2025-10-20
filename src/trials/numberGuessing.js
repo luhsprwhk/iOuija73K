@@ -135,10 +135,5 @@ export function getNumberTrialIntro(playerName) {
       content:
         "Make that number crystal clear. Hold it there. I need to see what you're seeing.",
     },
-    {
-      delay: 2500,
-      content: "Got it? Good. Don't tell me. I already know.",
-      showButton: true,
-    },
   ]);
 }
