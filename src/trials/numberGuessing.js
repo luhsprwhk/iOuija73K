@@ -129,6 +129,7 @@ export function getNumberTrialIntro(playerName) {
       delay: 2500,
       content:
         "Make that number crystal clear. Hold it there. I need to see what you're seeing.",
+      showButton: true,
     },
   ]);
 }
