@@ -5,7 +5,8 @@
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
-  import DevControls from './DevControls.svelte';
+  import AchievementToast from './components/AchievementToast.svelte';
+  import AchievementPanel from './components/AchievementPanel.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -13,6 +14,8 @@
     setLockout,
     clearLockout,
   } from './helpers/lockoutManager';
+  import { getAchievementById } from '../achievements/achievementData.js';
+  import { unlockAchievement, isAchievementUnlocked } from '../achievements/achievementManager.js';
   import {
     handleNumberGuess,
     getNumberTrialIntro,
@@ -34,9 +37,16 @@
     HANGMAN_STATES,
   } from '../trials/hangman.js';
   import {
+    initializeWhiteRoomExploration,
+    getWhiteRoomIntro,
+    handleWhiteRoomInput,
+    getWhiteRoomReveal,
+    getFinalDismissal,
+    WHITE_ROOM_STATES,
+  } from '../trials/whiteRoom.js';
+  import {
     callClaude,
     formatMessagesForClaude,
-    getClaudeApiKey,
     handleHangmanExploration,
   } from '../ai/claude.js';
   import { GAME_CONFIG } from '../config/gameConfig.js';
@@ -56,9 +66,8 @@
   let messagesEndRef;
   let inputRef;
   let showInput = $state(false);
-  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, playing
+  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, white_room, playing
   let playerName = $state('');
-  let demonName = $state('Raphael'); // False name initially, reveals as "Paimon" after first trial
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
   let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
@@ -66,6 +75,9 @@
   let hangmanTimer = $state(null); // Interval for updating timer display
   let timeRemaining = $state(0);
   let hangmanExplorationHistory = $state([]); // Conversation history during exploration phase
+  let whiteRoomState = $state(WHITE_ROOM_STATES.INTRO);
+  let whiteRoomChoice = $state(null); // Will store whether player chose to die
+  let whiteRoomExplorationHistory = $state([]); // Conversation history during white room exploration
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -73,6 +85,11 @@
   let nameValidationAttempts = $state(0);
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
+  let currentAchievement = $state(null); // Currently displayed achievement toast
+  let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
+
+  // Compute demon name based on achievement
+  let demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael');
 
   // Check for existing lockout on mount
   $effect(() => {
@@ -97,6 +114,72 @@
     if (messagesEndRef) {
       messagesEndRef.scrollIntoView({ behavior: 'smooth' });
     }
+  }
+
+  /**
+   * Unlock an achievement and show toast notification
+   * @param {string} achievementId - ID of the achievement to unlock
+   */
+  function triggerAchievement(achievementId) {
+    const wasUnlocked = unlockAchievement(achievementId);
+    if (wasUnlocked) {
+      const achievement = getAchievementById(achievementId);
+      currentAchievement = achievement;
+
+      // If true name achievement was just unlocked, update state to show "Paimon"
+      if (achievementId === 'true_name') {
+        hasTrueNameAchievement = true;
+      }
+
+      // Notify parent component about achievement unlock
+      onAchievementUnlock?.();
+    }
+  }
+
+  /**
+   * Dismiss the achievement toast
+   */
+  function dismissAchievementToast() {
+    currentAchievement = null;
+  }
+
+  /**
+   * Converts cumulative delays to interval delays
+   * @param {Array} messages - Array of message objects with cumulative delays
+   * @returns {Array} - Array of message objects with interval delays
+   */
+  function cumulativeToIntervals(messages) {
+    return messages.map((msg, index) => {
+      const prevDelay = index === 0 ? 0 : messages[index - 1].delay;
+      const intervalDelay = index === 0 ? msg.delay : msg.delay - prevDelay;
+      return { ...msg, delay: intervalDelay };
+    });
+  }
+
+  /**
+   * Adds multiple assistant messages with cumulative delays
+   * Properly converts cumulative delays to sequential timing
+   * @param {Array} messages - Array of message objects with cumulative delays
+   * @param {number} baseDelay - Optional base delay to add to all messages
+   */
+  function addAssistantMessages(messages, baseDelay = 0) {
+    const intervalMessages = cumulativeToIntervals(messages);
+    let accumulatedDelay = baseDelay;
+    intervalMessages.forEach(({ delay, content, showButton, image, buttons, audio }) => {
+      if (audio) {
+        // Play audio at the scheduled time
+        setTimeout(() => {
+          const audioEl = new Audio(audio);
+          audioEl.play().catch((err) => {
+            console.error('Failed to play audio:', err);
+          });
+        }, accumulatedDelay + delay);
+      }
+      if (content !== undefined) {
+        addAssistantMessage(content, accumulatedDelay + delay, showButton || false, image, buttons);
+      }
+      accumulatedDelay += delay;
+    });
   }
 
   /**
@@ -182,6 +265,47 @@
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
+    } else if (gameState === 'number_game' && guessAttempt > 0) {
+      // Number game completed, transition to convent trial
+      gameState = 'convent';
+      
+      // Start playing creepy ambient music before convent trial
+      isPlayingMusic = true;
+      if (audioElement) {
+        audioElement.play().catch((err) => {
+          console.error('Audio playback failed:', err);
+        });
+      }
+
+      // Start convent trial after the meta-horror setup
+      const conventIntro = getConventIntro(playerName);
+      conventIntro.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, 10500 + delay, false, image);
+      });
+
+      // Add first encounter description and prompt
+      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
+      addAssistantMessage(
+        undefined,
+        10500 + lastIntroDelay + 2000,
+        false,
+        '/src/assets/trials/convent_encounter_1.webp'
+      );
+      addAssistantMessage(
+        'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+        10500 + lastIntroDelay + 2500,
+        false
+      );
+      addAssistantMessage(
+        '<span class="blink">What do you do?</span>',
+        10500 + lastIntroDelay + 4500,
+        false
+      );
+
+      // Show input after all messages
+      setTimeout(() => {
+        showInput = true;
+      }, 10500 + lastIntroDelay + 5000);
     } else if (gameState === 'number_game_intro') {
       // User clicked OK after thinking of number
       showInput = false; // Hide input, we'll use buttons
@@ -225,6 +349,11 @@
     ];
     const userInput = inputValue;
     inputValue = '';
+
+    // Check if player mentions "Paimon" anywhere in their input
+    if (/paimon/i.test(userInput)) {
+      triggerAchievement('true_name');
+    }
 
     // Handle name exchange
     if (gameState === 'name_exchange') {
@@ -313,9 +442,7 @@
 
         // Get hangman intro messages
         const hangmanIntro = getHangmanIntro(playerName);
-        hangmanIntro.forEach(({ delay, content, image }) => {
-          addAssistantMessage(content, delay, false, image);
-        });
+        addAssistantMessages(hangmanIntro);
 
         // Calculate when to transition to exploration phase (after intro completes)
         const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
@@ -380,21 +507,7 @@
 
             // Show reveal messages
             const revealMessages = getHangmanReveal(playerName);
-
-            revealMessages.forEach(({ delay, content, audio }) => {
-              if (audio) {
-                // Play audio
-                setTimeout(() => {
-                  const audioEl = new Audio(audio);
-                  audioEl.play().catch((err) => {
-                    console.error('Failed to play audio:', err);
-                  });
-                }, delay);
-              }
-              if (content) {
-                addAssistantMessage(content, delay);
-              }
-            });
+            addAssistantMessages(revealMessages);
 
             // Calculate last reveal message delay
             const lastRevealDelay =
@@ -402,18 +515,15 @@
                 ? revealMessages[revealMessages.length - 1].delay
                 : 0;
 
-            // Transition to next phase
+            // Transition to white room trial
             setTimeout(() => {
               hangmanTrialState = HANGMAN_STATES.COMPLETE;
-              gameState = 'playing';
-              addAssistantMessage(
-                'You did well. Really well.',
-                lastRevealDelay + 2000
-              );
-              addAssistantMessage(
-                'Ready for the next trial?',
-                lastRevealDelay + 4000
-              );
+              gameState = 'white_room';
+              whiteRoomState = WHITE_ROOM_STATES.INTRO;
+
+              // Get white room intro messages
+              const whiteRoomIntro = getWhiteRoomIntro(playerName);
+              addAssistantMessages(whiteRoomIntro);
             }, lastRevealDelay + 1000);
           }
         } catch (error) {
@@ -425,24 +535,87 @@
 
         isProcessing = false;
       }
+    } else if (gameState === 'white_room') {
+      // Handle white room trial
+      if (isProcessing) return;
+      isProcessing = true;
+
+      if (whiteRoomState === WHITE_ROOM_STATES.INTRO || whiteRoomState === WHITE_ROOM_STATES.EXPLORATION) {
+        // Track conversation history for exploration
+        whiteRoomExplorationHistory.push({
+          role: 'user',
+          content: userInput,
+        });
+
+        // Player makes their choice or explores (using AI classification)
+        const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement);
+        whiteRoomState = result.nextState;
+
+        // Add response messages with proper cumulative delay handling
+        addAssistantMessages(result.messages);
+
+        // Track assistant responses in history
+        result.messages.forEach(({ content }) => {
+          whiteRoomExplorationHistory.push({
+            role: 'assistant',
+            content,
+          });
+        });
+
+        // If we're moving to REVEAL state, show reveal and dismissal
+        if (whiteRoomState === WHITE_ROOM_STATES.REVEAL) {
+          whiteRoomChoice = result.choseToDie;
+
+          // Calculate last message delay
+          const lastDelay =
+            result.messages.length > 0
+              ? result.messages[result.messages.length - 1].delay
+              : 0;
+
+          // Show reveal after choice completes
+          setTimeout(() => {
+            const revealMessages = getWhiteRoomReveal(
+              playerName,
+              whiteRoomChoice
+            );
+            addAssistantMessages(revealMessages);
+
+            // Calculate when reveal ends
+            const lastRevealDelay =
+              revealMessages.length > 0
+                ? revealMessages[revealMessages.length - 1].delay
+                : 0;
+
+            // Show final dismissal
+            setTimeout(() => {
+              whiteRoomState = WHITE_ROOM_STATES.COMPLETE;
+              const dismissalMessages = getFinalDismissal();
+              addAssistantMessages(dismissalMessages);
+
+              // Calculate when everything ends
+              const lastDismissalDelay =
+                dismissalMessages.length > 0
+                  ? dismissalMessages[dismissalMessages.length - 1].delay
+                  : 0;
+
+              // Disable input after 3 seconds from final message
+              setTimeout(() => {
+                showInput = false;
+                gameState = 'complete';
+              }, lastDismissalDelay + 3000);
+            }, lastRevealDelay + 1000);
+          }, lastDelay + 1000);
+        }
+      }
+
+      isProcessing = false;
     } else {
       // Default state - use Claude API for dynamic responses
       if (isProcessing) return;
 
       isProcessing = true;
-      const apiKey = getClaudeApiKey();
 
-      if (!apiKey) {
-        setTimeout(() => {
-          addAssistantMessage(
-            '[API key not configured. Please add VITE_CLAUDE_API_KEY to your .env file]'
-          );
-          isProcessing = false;
-        }, 500);
-        return;
-      }
-
-      // Call Claude API
+      // Call Claude API (proxy will handle API key)
       const conversationHistory = formatMessagesForClaude(messages);
       conversationHistory.push({ role: 'user', content: userInput });
 
@@ -517,9 +690,8 @@
     // Update guess attempt
     guessAttempt = result.nextAttempt;
 
-    // If name should be revealed, update demonName
-    if (result.revealName) {
-      demonName = 'Paimon';
+    // If game is complete and user confirmed (demon guessed correctly), celebrate!
+    if (result.gameComplete && userConfirmed === true) {
       // Trigger confetti celebration
       showConfetti = true;
       setTimeout(() => {
@@ -528,7 +700,7 @@
     }
 
     // Add all response messages with their delays
-    result.messages.forEach(({ delay, content, showButtons }) => {
+    result.messages.forEach(({ delay, content, showButtons, showButton }) => {
       const buttons = showButtons
         ? [
             {
@@ -543,78 +715,10 @@
             },
           ]
         : undefined;
-      addAssistantMessage(content, delay, false, undefined, buttons);
+      addAssistantMessage(content, delay, showButton || false, undefined, buttons);
     });
 
-    // If number guessing game is complete, transition to convent trial
-    if (result.gameComplete) {
-      // Calculate the last message delay to know when to start the next sequence
-      const lastMessageDelay =
-        result.messages.length > 0
-          ? result.messages[result.messages.length - 1].delay
-          : 0;
-      const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
-
-      // Add creepy meta-horror warning before trial 1
-      addAssistantMessage(
-        'Before we begin... a word about the rules.',
-        baseDelay
-      );
-
-      addAssistantMessage(
-        "<i>This game is filled with lies. But here's a truth disguised as one:</i>",
-        baseDelay + 2000
-      );
-
-      addAssistantMessage(
-        "<strong>The people you'll meet in these trials are real.</strong> Living their small, oblivious lives in their own little worlds.",
-        baseDelay + 4500
-      );
-
-      addAssistantMessage(
-        "They don't know they're part of this. They don't know about you.",
-        baseDelay + 7000
-      );
-
-      addAssistantMessage('Not yet, anyway.', baseDelay + 9000);
-
-      // Start playing creepy ambient music before convent trial
-      isPlayingMusic = true;
-      if (audioElement) {
-        audioElement.play().catch((err) => {
-          console.error('Audio playback failed:', err);
-        });
-      }
-
-      // Start convent trial after the meta-horror setup
-      const conventIntro = getConventIntro(playerName);
-      conventIntro.forEach(({ delay, content, image }) => {
-        addAssistantMessage(content, baseDelay + 10500 + delay, false, image);
-      });
-
-      // Add first encounter description and prompt
-      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
-      addAssistantMessage(
-        undefined,
-        baseDelay + 10500 + lastIntroDelay + 2000,
-        false,
-        '/src/assets/trials/convent_encounter_1.webp'
-      );
-      addAssistantMessage(
-        'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
-        baseDelay + 10500 + lastIntroDelay + 2000
-      );
-      addAssistantMessage(
-        'What do you do?',
-        baseDelay + 10500 + lastIntroDelay + 4500
-      );
-
-      // Set up state for convent trial
-      showInput = true;
-      gameState = 'convent';
-      conventState = CONVENT_STATES.ENCOUNTER_1; // Skip INTRO since we already showed encounter 1 description
-      return;
-    }
+    // Note: Transition to convent trial is now handled by OK button click in handleOkClick
   }
 
   const containerClass = css({
@@ -671,7 +775,9 @@
     alignItems: 'center',
     gap: '1rem',
     flexWrap: 'wrap',
+    position: 'relative',
   });
+
 
   const titleClass = css({
     fontSize: '2.5rem',
@@ -758,7 +864,12 @@
     },
   });
 
-  let { title = 'iOuija73k', onGameStateChange = undefined } = $props();
+  let { 
+    title = 'iOuija73k', 
+    onGameStateChange = undefined,
+    onAchievementUnlock = undefined,
+    showAchievementPanel = $bindable(false)
+  } = $props();
 
   /**
    * Handle lockout expiration
@@ -769,6 +880,16 @@
     nameValidationAttempts = 0;
     // Reload the page to start fresh
     window.location.reload();
+  }
+
+  /**
+   * DEV MODE: Trigger lockout screen for testing
+   */
+  function handleTriggerLockout() {
+    setLockout();
+    isLockedOut = true;
+    const lockoutStatus = checkLockout();
+    lockoutTimeRemaining = lockoutStatus.remainingTime;
   }
 
   /**
@@ -785,9 +906,9 @@
     isProcessing = false;
     showConfetti = false;
 
-    // Set default player and demon names
-    playerName = playerName || 'Player';
-    demonName = 'Paimon'; // Show true name in dev mode
+    // Set default player name and unlock true name achievement for dev mode
+    playerName = playerName || 'Sarah';
+    hasTrueNameAchievement = true; // Show true name in dev mode
 
     switch (targetState) {
       case 'initial':
@@ -813,7 +934,7 @@
             showButton: false,
           },
         ];
-        demonName = 'Raphael'; // Use false name for this state
+        hasTrueNameAchievement = false; // Reset to false name for this state
         break;
 
       case 'number_game_intro':
@@ -898,7 +1019,7 @@
         });
         messages.push({
           role: 'assistant',
-          content: 'What do you do?',
+          content: '<span class="blink">What do you do?</span>',
           showButton: false,
         });
         // Start ambient music
@@ -928,6 +1049,28 @@
         startHangmanTimer();
         break;
 
+      case 'white_room':
+        gameState = 'white_room';
+        whiteRoomState = WHITE_ROOM_STATES.INTRO;
+        whiteRoomChoice = null;
+        showInput = true;
+        const whiteRoomIntro = getWhiteRoomIntro(playerName);
+        messages = whiteRoomIntro.map(({ content, image }) => ({
+          role: 'assistant',
+          content,
+          image,
+          showButton: false,
+        }));
+        whiteRoomExplorationHistory = [];
+        // Start ambient music
+        isPlayingMusic = true;
+        if (audioElement) {
+          audioElement.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+          });
+        }
+        break;
+
       case 'playing':
         gameState = 'playing';
         showInput = true;
@@ -952,6 +1095,9 @@
     // Scroll to bottom after state change
     setTimeout(() => scrollToBottom(), 100);
   }
+
+  // Export functions for parent component access (Svelte 5)
+  export { handleStateJump, handleTriggerLockout };
 </script>
 
 {#if isLockedOut}
@@ -961,9 +1107,6 @@
     <header class={headerClass}>
       <h1 class={titleClass}>{title}</h1>
       <AnimatedSubtitle bind:this={animatedSubtitleRef} />
-      {#if import.meta.env.DEV}
-        <DevControls onStateJump={handleStateJump} />
-      {/if}
     </header>
 
     <div class={messagesContainerClass}>
@@ -1016,9 +1159,13 @@
 
 <!-- Hidden audio element for ambient music -->
 <audio bind:this={audioElement} loop preload="auto" style="display: none;">
-  <source src="/audio/dark-ambient.mp3" type="audio/mpeg" />
-  <source src="/audio/dark-ambient.ogg" type="audio/ogg" />
+  <source src="/audio/muzak/main-theme.mp3" type="audio/mpeg" />
+  <source src="/audio/muzak/main-theme.ogg" type="audio/ogg" />
 </audio>
+
+<!-- Achievement components -->
+<AchievementToast achievement={currentAchievement} onDismiss={dismissAchievementToast} />
+<AchievementPanel bind:isOpen={showAchievementPanel} />
 
 <style>
   @keyframes fadeIn {

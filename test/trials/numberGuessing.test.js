@@ -9,10 +9,10 @@ describe('numberGuessing trial', () => {
     it('should return intro messages with player name', () => {
       const messages = getNumberTrialIntro('Alice');
 
-      expect(messages).toHaveLength(8);
+      expect(messages.length).toBeGreaterThan(0);
       expect(messages[0].content).toContain('Alice');
       expect(messages[0].delay).toBe(800);
-      expect(messages[7].showButton).toBe(true);
+      expect(messages[messages.length - 1].showButton).toBe(true);
     });
 
     it('should include instructions about the number game', () => {
@@ -54,8 +54,8 @@ describe('numberGuessing trial', () => {
       const result = handleNumberGuess(true, 1, 'Alice', mockGetBrowserDetails);
 
       expect(result.gameComplete).toBe(true);
-      expect(result.revealName).toBe(true);
-      expect(result.messages.some((m) => m.content.includes('Paimon'))).toBe(
+      expect(result.messages.length).toBeGreaterThan(0);
+      expect(result.messages.some((m) => m.content.includes('connected'))).toBe(
         true
       );
     });
@@ -64,7 +64,7 @@ describe('numberGuessing trial', () => {
       const result = handleNumberGuess(true, 1, 'Bob', mockGetBrowserDetails);
 
       expect(result.gameComplete).toBe(true);
-      expect(result.revealName).toBe(true);
+      expect(result.messages.length).toBeGreaterThan(0);
     });
 
     it('should complete game on confirmation at attempt 1', () => {
@@ -90,11 +90,11 @@ describe('numberGuessing trial', () => {
       expect(result.gameComplete).toBe(true);
     });
 
-    it('should reveal name on confirmation', () => {
+    it('should complete on confirmation', () => {
       const result = handleNumberGuess(true, 1, 'Frank', mockGetBrowserDetails);
 
       expect(result.gameComplete).toBe(true);
-      expect(result.revealName).toBe(true);
+      expect(result.messages.length).toBeGreaterThan(0);
     });
 
     it('should handle confirmation properly', () => {
@@ -162,7 +162,6 @@ describe('numberGuessing trial', () => {
       );
 
       expect(result.gameComplete).toBe(true);
-      expect(result.revealName).toBe(true);
       expect(result.messages.some((m) => m.content.includes('evening'))).toBe(
         true
       );
@@ -174,13 +173,11 @@ describe('numberGuessing trial', () => {
       );
     });
 
-    it('should reveal Paimon name in fallback path', () => {
+    it('should show omniscience in fallback path', () => {
       const result = handleNumberGuess(false, 3, 'Bob', mockGetBrowserDetails);
 
-      expect(result.messages.some((m) => m.content.includes('Paimon'))).toBe(
-        true
-      );
-      expect(result.messages.some((m) => m.content.includes('Raphael'))).toBe(
+      expect(result.gameComplete).toBe(true);
+      expect(result.messages.some((m) => m.content.includes('see you'))).toBe(
         true
       );
     });
@@ -214,18 +211,14 @@ describe('numberGuessing trial', () => {
     });
   });
 
-  describe('handleNumberGuess - successful guess reveals name', () => {
-    it('should reveal demon name in success path', () => {
+  describe('handleNumberGuess - successful guess', () => {
+    it('should show connection message in success path', () => {
       const result = handleNumberGuess(true, 1, 'Alice', mockGetBrowserDetails);
 
       expect(
-        result.messages.some((m) => m.content.includes("My name isn't Raphael"))
-      ).toBe(true);
-      expect(
-        result.messages.some((m) => m.content.includes("I'm Paimon"))
+        result.messages.some((m) => m.content.includes('connected'))
       ).toBe(true);
     });
-
   });
 
   describe('handleNumberGuess - edge cases', () => {

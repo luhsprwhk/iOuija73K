@@ -3,9 +3,30 @@
  * Handles communication with Anthropic's Claude API
  */
 
-// Use local proxy server to avoid CORS issues
-const CLAUDE_PROXY_URL =
-  import.meta.env.VITE_CLAUDE_PROXY_URL || 'http://localhost:3001/api/claude';
+import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
+
+/**
+ * Determines the appropriate Claude API proxy URL
+ * - In production (Netlify): uses Netlify Functions endpoint
+ * - In development: uses local Express proxy server
+ * - Falls back to environment variable if specified
+ */
+function getClaudeProxyUrl() {
+  // If explicitly set in environment, use that
+  if (import.meta.env.VITE_CLAUDE_PROXY_URL) {
+    return import.meta.env.VITE_CLAUDE_PROXY_URL;
+  }
+
+  // In production (Netlify), use Netlify Functions
+  if (import.meta.env.PROD) {
+    return '/.netlify/functions/claude';
+  }
+
+  // In development, use local proxy server
+  return 'http://localhost:3001/api/claude';
+}
+
+const CLAUDE_PROXY_URL = getClaudeProxyUrl();
 const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
 
 /**
@@ -56,14 +77,6 @@ export function formatMessagesForClaude(messages) {
       role: msg.role,
       content: msg.content,
     }));
-}
-
-/**
- * Gets the Claude API key from environment variables
- * @returns {string|null} - API key or null if not set
- */
-export function getClaudeApiKey() {
-  return import.meta.env.VITE_CLAUDE_API_KEY || null;
 }
 
 /**
@@ -252,6 +265,79 @@ EXAMPLE RESPONSE:
     return {
       content:
         'The crowd grows restless. The hangman taps his fingers on the lever.',
+    };
+  }
+}
+
+/**
+ * Handles DM responses during the White Room exploration phase
+ * Combined function that returns intent classification, response, and Saw reference detection in a single AI call
+ * @param {string} userInput - The player's input/action
+ * @param {string} playerName - The player's name
+ * @param {Array} conversationHistory - Previous messages in this phase
+ * @returns {Promise<Object>} - Response object with { intent: string, content: string, sawReference: boolean }
+ */
+export async function getWhiteRoomExplorationResponse(
+  userInput,
+  playerName,
+  conversationHistory = []
+) {
+  const systemPrompt = getWhiteRoomExplorationPrompt(playerName);
+
+  try {
+    const messages = [
+      ...conversationHistory.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      })),
+      { role: 'user', content: userInput },
+    ];
+
+    const response = await callClaude(messages, systemPrompt);
+
+    // Parse JSON response
+    try {
+      const parsed = JSON.parse(response.trim());
+      const intent = parsed.intent?.toLowerCase() || 'explore';
+      
+      return {
+        intent: intent === 'fight' ? 'fight' : intent === 'surrender' ? 'surrender' : 'explore',
+        content: parsed.response || 'The other you just stares back, their face a mask of terror.',
+        sawReference: parsed.sawReference === true,
+      };
+    } catch (parseError) {
+      console.error('Failed to parse White Room JSON response:', parseError);
+      console.error('Raw response:', response);
+      
+      // Fallback: try to extract intent from response text
+      const lowerResponse = response.toLowerCase();
+      let intent = 'explore';
+      let sawReference = false;
+      
+      if (lowerResponse.includes('"intent"') && lowerResponse.includes('"fight"')) {
+        intent = 'fight';
+      } else if (lowerResponse.includes('"intent"') && lowerResponse.includes('"surrender"')) {
+        intent = 'surrender';
+      }
+      
+      // Try to detect sawReference in malformed JSON
+      if (lowerResponse.includes('"sawreference"') && lowerResponse.includes('true')) {
+        sawReference = true;
+      }
+      
+      return {
+        intent,
+        content: response.trim(),
+        sawReference,
+      };
+    }
+  } catch (error) {
+    console.error('White Room exploration DM call failed:', error);
+    // Fallback response
+    return {
+      intent: 'explore',
+      content: 'The other you just stares back, their face a mask of terror.',
+      sawReference: false,
     };
   }
 }

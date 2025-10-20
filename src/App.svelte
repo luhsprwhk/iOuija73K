@@ -1,6 +1,18 @@
 <script>
   import { css } from '../styled-system/css';
   import ChatInterface from './lib/ChatInterface.svelte';
+  import DevControls from './lib/DevControls.svelte';
+  import Footer from './lib/Footer.svelte';
+  import { getUnlockedAchievements } from './achievements/achievementManager.js';
+
+  let chatInterfaceRef;
+  let showAchievementPanel = $state(false);
+  let hasAchievements = $state(getUnlockedAchievements().length > 0);
+  
+  // Update achievement button visibility when achievements are unlocked
+  function handleAchievementUnlock() {
+    hasAchievements = true;
+  }
 
   // Console incantation easter egg
   console.log(
@@ -55,10 +67,42 @@
     minWidth: 0,
     marginTop: '3rem',
   });
+
+  const devControlsClass = css({
+    marginBottom: '1rem',
+    display: 'flex',
+    justifyContent: 'center',
+  });
+
+  function handleStateJump(state) {
+    if (chatInterfaceRef) {
+      chatInterfaceRef.handleStateJump(state);
+    }
+  }
+
+  function handleTriggerLockout() {
+    if (chatInterfaceRef) {
+      chatInterfaceRef.handleTriggerLockout();
+    }
+  }
+
+  function handleAchievementClick() {
+    showAchievementPanel = true;
+  }
 </script>
 
 <div class={containerClass}>
+  {#if import.meta.env.DEV}
+    <div class={devControlsClass}>
+      <DevControls onStateJump={handleStateJump} onTriggerLockout={handleTriggerLockout} />
+    </div>
+  {/if}
   <div class={contentClass}>
-    <ChatInterface />
+    <ChatInterface 
+      bind:this={chatInterfaceRef} 
+      bind:showAchievementPanel
+      onAchievementUnlock={handleAchievementUnlock}
+    />
+    <Footer onAchievementClick={handleAchievementClick} showAchievementButton={hasAchievements} />
   </div>
 </div>

@@ -22,6 +22,18 @@ export const GAME_CONFIG = {
   },
 
   /**
+   * White Room trial settings
+   */
+  whiteRoom: {
+    /**
+     * Maximum number of exploration turns before forcing a choice
+     * Prevents unbounded AI API calls and ensures game progression
+     * After this limit, the mirror will force a confrontation
+     */
+    MAX_EXPLORATION_TURNS: 15,
+  },
+
+  /**
    * Name validation settings
    */
   nameValidation: {
@@ -49,18 +61,28 @@ export const GAME_CONFIG = {
    */
   timing: {
     /**
+     * Minimum delay between messages
+     */
+    MIN_DELAY: 3000,
+
+    /**
+     * Maximum delay between messages
+     */
+    MAX_DELAY: 5000,
+
+    /**
      * Delay for typical message responses
      */
-    STANDARD_DELAY: 1000,
+    STANDARD_DELAY: 2000,
 
     /**
      * Delay for dramatic pauses
      */
-    DRAMATIC_DELAY: 3000,
+    DRAMATIC_DELAY: 6000,
 
     /**
      * Delay for quick responses
      */
-    QUICK_DELAY: 500,
+    QUICK_DELAY: 1000,
   },
 };

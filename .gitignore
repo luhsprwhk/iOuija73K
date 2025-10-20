@@ -11,8 +11,14 @@ node_modules
 dist
 dist-ssr
 *.local
+
+# Environment variables (contains API keys - never commit!)
 .env
 .env.local
+.env.production
+
+# Netlify (local development cache)
+.netlify
 
 # Editor directories and files
 .vscode/*

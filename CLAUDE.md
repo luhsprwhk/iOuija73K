@@ -37,14 +37,22 @@ npm run format:check # Check formatting without modifying files
 
 ### Environment Setup
 
+**Local Development:**
+
 1. Copy `.env.example` to `.env`
 2. Add your Anthropic API key: `VITE_CLAUDE_API_KEY=sk-ant-...`
 3. Get API key from: https://console.anthropic.com/
+4. Run `npm run dev:all` to start both dev server and proxy server
+5. The app will automatically use the local Express proxy at `localhost:3001`
 
-**API Configuration Options:**
+**Production Deployment (Netlify):**
 
-- **Client-side**: API key used directly from browser (default, simpler setup)
-- **Server-side proxy**: Run `npm run server` and the API calls go through Express proxy at `localhost:3001` (better for CORS handling and API key security)
+1. Connect your repository to Netlify
+2. In Netlify dashboard, go to: Site settings > Environment variables
+3. Add environment variable: `CLAUDE_API_KEY=sk-ant-...` (note: no `VITE_` prefix)
+4. Deploy! The app will automatically use Netlify Functions for secure API calls
+
+**Security Note:** The API key is NEVER exposed to the client in production. All Claude API calls go through serverless functions (Netlify Functions in production, Express proxy in development).
 
 ### Audio Setup
 
@@ -68,6 +76,69 @@ All game configuration values and "magic numbers" are centralized in `src/config
 
 **Important**: Always use `GAME_CONFIG` from this file instead of hardcoded numbers. This makes the game easily tunable and documents the reasoning behind each value via JSDoc comments.
 
+### Achievement System
+
+The game features a **meta-recognition achievement system** that rewards player observations and clever actions. Achievements are distinct from codex entries (in-world lore) - they break the fourth wall slightly to acknowledge player cleverness.
+
+**Core Implementation** (`src/achievements/`):
+
+- **achievementData.js**: Defines all achievements with ID, title, description, and icon
+- **achievementManager.js**: Handles localStorage persistence and unlock logic
+- **Storage key**: `io73k_achievements` in localStorage
+- **Persistence**: Achievements carry across playthroughs for replayability
+
+**UI Components** (`src/lib/components/`):
+
+- **AchievementToast**: Animated slide-in notification when achievement unlocks (5-second auto-dismiss)
+- **AchievementPanel**: Modal showing all achievements, completion percentage, locked/unlocked states
+- **Trophy button (🏆)**: Fixed in header, opens achievement panel
+
+**Current Achievements**:
+
+1. **Jigsaw's Apprentice** 🎭 - Recognize the Saw movie scenario in White Room trial
+   - Triggered when player mentions "saw", "jigsaw", "saw movie" etc. in their input
+   - Detection: `detectSawReference()` in `whiteRoom.js`
+
+2. **True Name** 👑 - Discover Paimon's real identity
+   - **No explicit reveal in game** - demon always introduces as "Raphael"
+   - Only hint: Paimon's sigil (from Hereditary) appears after name exchange
+   - Triggered when player types "Paimon" anywhere in their input
+   - **Effect**: Demon's name in chat dynamically changes from "Raphael" → "Paimon"
+   - Uses derived state: `demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael')`
+
+3. **Summoning Circle** 👁️ - Find the console easter egg *(Issue #28 - pending)*
+4. **Truth Beneath** 🕯️ - Examine convent basement *(Issue #29 - blocked by Issue #16)*
+5. **Merciful Executioner** ⚖️ - Try to save hangman client *(Issue #30 - pending)*
+
+**Integration Pattern**:
+
+```javascript
+// In trial handlers, pass achievement callback
+const result = await handleWhiteRoomInput(userInput, history, triggerAchievement);
+
+// In trial code, detect condition and trigger
+if (sawDetected && onAchievement) {
+  onAchievement('jigsaw_apprentice');
+}
+
+// triggerAchievement() function (in ChatInterface.svelte)
+function triggerAchievement(achievementId) {
+  const wasUnlocked = unlockAchievement(achievementId);
+  if (wasUnlocked) {
+    const achievement = getAchievementById(achievementId);
+    currentAchievement = achievement; // Shows toast
+  }
+}
+```
+
+**Design Philosophy**:
+
+- Achievements are **meta-awareness** (recognizing references, player cleverness)
+- Codex entries (future) are **in-world** (lore, backstory, evidence)
+- Achievements persist across playthroughs
+- Reward curiosity, observation, and connecting dots
+- Can affect gameplay (True Name changes demon's displayed name)
+
 ### State Management Pattern
 
 The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game state lives in `ChatInterface.svelte`:
@@ -77,9 +148,13 @@ The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game
 - `conventState`: Sub-state for convent trial progression
 - `hangmanState`: Sub-state for hangman trial (word, guesses, timer)
 - `hangmanTimer`: Interval ID for countdown timer updates
-- `playerName`, `demonName`: Character identity tracking
+- `playerName`: Player's entered name
+- `hasTrueNameAchievement`: Tracks if "True Name" achievement is unlocked
+- `demonName`: Derived state - "Raphael" by default, "Paimon" if True Name achievement unlocked
 - `isProcessing`: Prevents concurrent API calls
-- `showConfetti`: Triggers confetti effect when demon's true name is revealed
+- `showConfetti`: Triggers confetti effect when demon guesses the correct number
+- `currentAchievement`: Currently displayed achievement toast notification
+- `showAchievementPanel`: Controls visibility of achievement panel modal
 - `currentRiddleIndex`: Tracks which riddle tooltip to display on hover
 
 ### Trial System
@@ -92,8 +167,9 @@ Trials are **scripted psychological mini-games** located in `src/trials/`:
 - Uses common picks (37, 13, 17) that most people choose
 - Fallback: Shows browser metadata to demonstrate "omniscience"
 - **Uses Yes/No button interface** instead of text input for responses
-- **Reveals demon's true name ("Paimon") upon completion**
-- **Triggers confetti celebration** when name is revealed
+- **No explicit name reveal** - demon stays as "Raphael" throughout
+- **Triggers confetti celebration** when demon successfully guesses the number
+- Players must discover Paimon's true identity through the sigil or research
 
 **Convent Trial** (`convent.js`):
 
@@ -154,7 +230,9 @@ App.svelte (container layout + console easter egg)
 ├── ChatInterface.svelte (main game logic + state)
 │   ├── ChatMessage.svelte (individual message bubbles with button/image support)
 │   ├── PaimonSigil.svelte (animated demon sigil, appears after name exchange)
-│   └── Confetti.svelte (dark red confetti effect on demon name reveal)
+│   ├── Confetti.svelte (dark red confetti effect on correct number guess)
+│   ├── AchievementToast.svelte (animated toast notification for achievement unlocks)
+│   └── AchievementPanel.svelte (modal showing all achievements and progress)
 └── Footer.svelte (game credits, fades in)
 ```
 
@@ -163,6 +241,7 @@ App.svelte (container layout + console easter egg)
 - Trial progression logic
 - Message timing/sequencing via `setTimeout`
 - Input handling with state-specific branching (text input + button responses)
+- Achievement unlock triggers via `triggerAchievement()`
 - Auto-scrolling (`scrollToBottom()`)
 - Riddle tooltip rotation on subtitle hover
 
@@ -240,18 +319,32 @@ Located in `ChatInterface.svelte:37-84`, cryptic hints appear on subtitle hover:
 - Implements `pickNewRiddleIndex()` to ensure no consecutive repeats
 - Purpose: Guide players to discover console easter egg without being obvious
 
-### Backend Proxy Server
+### API Proxy Architecture
 
-Located in `server.js`, optional Express server for API security:
+The app uses different proxy configurations for development and production:
 
+**Development (Express Server):**
+- Located in `server.js`, Express proxy server for local development
 - Proxies Claude API requests to avoid CORS issues
-- Keeps API key server-side instead of exposing to browser
+- Keeps API key server-side (reads `VITE_CLAUDE_API_KEY` from `.env`)
 - Endpoints:
   - `GET /api/health`: Health check, returns if API key is configured
   - `POST /api/claude`: Proxies requests to Claude API
 - Run with `npm run server` (port 3001 by default)
 - Use `npm run dev:all` to start both dev server and proxy concurrently
-- API client (`claude.js`) can be configured to use proxy endpoint instead of direct API calls
+
+**Production (Netlify Functions):**
+- Located in `netlify/functions/claude.js`, serverless function
+- Automatically deployed with your site on Netlify
+- Uses `CLAUDE_API_KEY` environment variable (set in Netlify dashboard)
+- Endpoint: `/.netlify/functions/claude` (called automatically in production)
+- Zero configuration required - works out of the box
+
+**Client Code (`src/ai/claude.js`):**
+- Automatically detects environment (dev vs. prod)
+- Uses Netlify Functions in production (`import.meta.env.PROD === true`)
+- Uses Express proxy in development (localhost:3001)
+- Can be overridden with `VITE_CLAUDE_PROXY_URL` environment variable
 
 ## Testing & Quality Assurance
 

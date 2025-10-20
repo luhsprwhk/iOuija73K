@@ -1,7 +1,7 @@
 <script>
   import { css } from '../../styled-system/css';
 
-  let { onStateJump } = $props();
+  let { onStateJump, onTriggerLockout } = $props();
 
   const trialOptions = [
     { label: 'Start (Initial)', value: 'initial' },
@@ -10,6 +10,7 @@
     { label: 'Number Game', value: 'number_game' },
     { label: 'Convent Trial', value: 'convent' },
     { label: 'Hangman Trial', value: 'hangman' },
+    { label: 'White Room Trial', value: 'white_room' },
     { label: 'Free-Form (Playing)', value: 'playing' },
   ];
 
@@ -17,6 +18,8 @@
     const selectedState = event.target.value;
     if (selectedState && onStateJump) {
       onStateJump(selectedState);
+      // Reset dropdown to allow jumping to the same trial again
+      event.target.value = '';
     }
   }
 
@@ -56,6 +59,25 @@
       borderColor: '#8b0000',
     },
   });
+
+  const buttonClass = css({
+    padding: '0.375rem 0.75rem',
+    backgroundColor: '#8b0000',
+    border: '1px solid #a00000',
+    borderRadius: '0.25rem',
+    color: '#e0e0e0',
+    fontFamily: 'monospace',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'background-color 0.2s',
+    '&:hover': {
+      backgroundColor: '#a00000',
+    },
+    '&:active': {
+      backgroundColor: '#6b0000',
+    },
+  });
 </script>
 
 <div class={containerClass}>
@@ -66,4 +88,7 @@
       <option value={option.value}>{option.label}</option>
     {/each}
   </select>
+  <button class={buttonClass} onclick={onTriggerLockout}>
+    Trigger Lockout
+  </button>
 </div>

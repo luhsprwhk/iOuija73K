@@ -22,23 +22,22 @@ export function handleNumberGuess(
 ) {
   // Check if user confirmed the guess
   if (userConfirmed === true && guessAttempt > 0) {
-    // Successful guess - reveal true name!
+    // Successful guess - no explicit name reveal, just connection
     return {
       messages: intervalsToCumulative([
         {
           delay: 1000,
           content: 'Ha! Of course. Look at us: we are connected now.',
         },
-        { delay: 3500, content: 'Oh, and one more thing...' },
-        { delay: 1500, content: "<i>My name isn't Raphael</i>" },
+        { delay: 3500, content: "You're more interesting than I thought." },
         {
           delay: 1500,
-          content: '<span style="font-weight: bold;">I\'m Paimon 🙂</span>',
+          content: "Let's keep going.",
+          showButton: true, // Show OK button to proceed to next trial
         },
       ]),
       nextAttempt: guessAttempt,
       gameComplete: true,
-      revealName: true,
       showButtons: false,
     };
   }
@@ -77,7 +76,7 @@ export function handleNumberGuess(
       };
     }
 
-    // Give up and use browser details - also reveal true name
+    // Give up and use browser details - demonstrate "omniscience"
     const details = getBrowserDetails();
     return {
       messages: intervalsToCumulative([
@@ -86,13 +85,10 @@ export function handleNumberGuess(
           delay: 1500,
           content: `But I can still see you, ${playerName}. Right now, it's ${details.timeOfDay} where you are. You're on ${details.browser}, ${details.os}. See? I know things.`,
         },
-        { delay: 2000, content: 'Oh, and I should mention...' },
-        { delay: 1500, content: "<i>My name isn't Raphael.</i>" },
-        { delay: 1500, content: "<strong>I'm Paimon</strong> 🙂" },
+        { delay: 2000, content: "Let's continue." },
       ]),
       nextAttempt: guessAttempt,
       gameComplete: true,
-      revealName: true,
       showButtons: false,
     };
   }
@@ -109,35 +105,31 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 1200,
       content:
-        'Before we begin... let me show you something. A little demonstration of what I can do.',
+        'Before we begin... we gotta get this done. It\'s protocol.',
     },
     {
       delay: 1500,
       content:
-        '<i>Think of a number between 1 and 50.</i> Both digits <strong>must be odd</strong>, and they <strong>must be different</strong> from each other.',
+        '<strong>Think of a number between 1 and 50</strong>. Both digits <i>must be odd</i>, and they <i>must be different</i> from each other.',
     },
     {
       delay: 2000,
       content:
-        'Picture it in your mind. <i>Really see it.</i> Like those little birthday candles—light them up...set the whole cake on fire if you want.',
+        'Picture it in your mind. Like those little birthday candles—light them up...set the whole cake on fire if you want.',
     },
     {
       delay: 2500,
       content:
-        "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
+        "I'll tell you what: <span class='blink'>why don't you kill all the butterflies?</span>",
     },
     {
       delay: MIN_DELAY,
-      content: 'lol 😄',
+      content: '<span class="bold">lol 😄</span>',
     },
     {
       delay: 2500,
       content:
         "Make that number crystal clear. Hold it there. I need to see what you're seeing.",
-    },
-    {
-      delay: 2500,
-      content: "Got it? Good. Don't tell me. I already know.",
       showButton: true,
     },
   ]);
