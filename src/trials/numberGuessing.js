@@ -33,6 +33,7 @@ export function handleNumberGuess(
         {
           delay: 1500,
           content: "Let's keep going.",
+          showButton: true, // Show OK button to proceed to next trial
         },
       ]),
       nextAttempt: guessAttempt,

@@ -265,6 +265,47 @@
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
+    } else if (gameState === 'number_game' && guessAttempt > 0) {
+      // Number game completed, transition to convent trial
+      gameState = 'convent';
+      
+      // Start playing creepy ambient music before convent trial
+      isPlayingMusic = true;
+      if (audioElement) {
+        audioElement.play().catch((err) => {
+          console.error('Audio playback failed:', err);
+        });
+      }
+
+      // Start convent trial after the meta-horror setup
+      const conventIntro = getConventIntro(playerName);
+      conventIntro.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, 10500 + delay, false, image);
+      });
+
+      // Add first encounter description and prompt
+      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
+      addAssistantMessage(
+        undefined,
+        10500 + lastIntroDelay + 2000,
+        false,
+        '/src/assets/trials/convent_encounter_1.webp'
+      );
+      addAssistantMessage(
+        'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+        10500 + lastIntroDelay + 2500,
+        false
+      );
+      addAssistantMessage(
+        '<span class="blink">What do you do?</span>',
+        10500 + lastIntroDelay + 4500,
+        false
+      );
+
+      // Show input after all messages
+      setTimeout(() => {
+        showInput = true;
+      }, 10500 + lastIntroDelay + 5000);
     } else if (gameState === 'number_game_intro') {
       // User clicked OK after thinking of number
       showInput = false; // Hide input, we'll use buttons
@@ -659,7 +700,7 @@
     }
 
     // Add all response messages with their delays
-    result.messages.forEach(({ delay, content, showButtons }) => {
+    result.messages.forEach(({ delay, content, showButtons, showButton }) => {
       const buttons = showButtons
         ? [
             {
@@ -674,55 +715,10 @@
             },
           ]
         : undefined;
-      addAssistantMessage(content, delay, false, undefined, buttons);
+      addAssistantMessage(content, delay, showButton || false, undefined, buttons);
     });
 
-    // If number guessing game is complete, transition to convent trial
-    if (result.gameComplete) {
-      // Calculate the last message delay to know when to start the next sequence
-      const lastMessageDelay =
-        result.messages.length > 0
-          ? result.messages[result.messages.length - 1].delay
-          : 0;
-      const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
-
-      // Start playing creepy ambient music before convent trial
-      isPlayingMusic = true;
-      if (audioElement) {
-        audioElement.play().catch((err) => {
-          console.error('Audio playback failed:', err);
-        });
-      }
-
-      // Start convent trial after the meta-horror setup
-      const conventIntro = getConventIntro(playerName);
-      conventIntro.forEach(({ delay, content, image }) => {
-        addAssistantMessage(content, baseDelay + 10500 + delay, false, image);
-      });
-
-      // Add first encounter description and prompt
-      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
-      addAssistantMessage(
-        undefined,
-        baseDelay + 10500 + lastIntroDelay + 2000,
-        false,
-        '/src/assets/trials/convent_encounter_1.webp'
-      );
-      addAssistantMessage(
-        'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
-        baseDelay + 10500 + lastIntroDelay + 2000
-      );
-      addAssistantMessage(
-        '<span class="bold" style="font-weight: bolder;">What do you do?</span>',
-        baseDelay + 10500 + lastIntroDelay + 4500
-      );
-
-      // Set up state for convent trial
-      showInput = true;
-      gameState = 'convent';
-      conventState = CONVENT_STATES.ENCOUNTER_1; // Skip INTRO since we already showed encounter 1 description
-      return;
-    }
+    // Note: Transition to convent trial is now handled by OK button click in handleOkClick
   }
 
   const containerClass = css({
