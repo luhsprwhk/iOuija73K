@@ -75,6 +75,7 @@
   let hangmanExplorationHistory = $state([]); // Conversation history during exploration phase
   let whiteRoomState = $state(WHITE_ROOM_STATES.INTRO);
   let whiteRoomChoice = $state(null); // Will store whether player chose to die
+  let whiteRoomExplorationHistory = $state([]); // Conversation history during white room exploration
   let isProcessing = $state(false);
   let audioElement = $state(null);
   let isPlayingMusic = $state(false);
@@ -438,60 +439,78 @@
       if (isProcessing) return;
       isProcessing = true;
 
-      if (whiteRoomState === WHITE_ROOM_STATES.INTRO) {
-        // Player makes their choice (using AI classification)
-        const result = await handleWhiteRoomInput(userInput);
-        whiteRoomChoice = result.choseToDie;
+      if (whiteRoomState === WHITE_ROOM_STATES.INTRO || whiteRoomState === WHITE_ROOM_STATES.EXPLORATION) {
+        // Track conversation history for exploration
+        whiteRoomExplorationHistory.push({
+          role: 'user',
+          content: userInput,
+        });
+
+        // Player makes their choice or explores (using AI classification)
+        const result = await handleWhiteRoomInput(userInput, whiteRoomExplorationHistory);
         whiteRoomState = result.nextState;
 
-        // Add choice messages
+        // Add response messages
         result.messages.forEach(({ delay, content }) => {
           addAssistantMessage(content, delay);
         });
 
-        // Calculate last message delay
-        const lastDelay =
-          result.messages.length > 0
-            ? result.messages[result.messages.length - 1].delay
-            : 0;
-
-        // Show reveal after choice completes
-        setTimeout(() => {
-          const revealMessages = getWhiteRoomReveal(
-            playerName,
-            whiteRoomChoice
-          );
-          revealMessages.forEach(({ delay, content }) => {
-            addAssistantMessage(content, delay);
+        // Track assistant responses in history
+        result.messages.forEach(({ content }) => {
+          whiteRoomExplorationHistory.push({
+            role: 'assistant',
+            content,
           });
+        });
 
-          // Calculate when reveal ends
-          const lastRevealDelay =
-            revealMessages.length > 0
-              ? revealMessages[revealMessages.length - 1].delay
+        // If we're moving to REVEAL state, show reveal and dismissal
+        if (whiteRoomState === WHITE_ROOM_STATES.REVEAL) {
+          whiteRoomChoice = result.choseToDie;
+
+          // Calculate last message delay
+          const lastDelay =
+            result.messages.length > 0
+              ? result.messages[result.messages.length - 1].delay
               : 0;
 
-          // Show final dismissal
+          // Show reveal after choice completes
           setTimeout(() => {
-            whiteRoomState = WHITE_ROOM_STATES.COMPLETE;
-            const dismissalMessages = getFinalDismissal();
-            dismissalMessages.forEach(({ delay, content }) => {
+            const revealMessages = getWhiteRoomReveal(
+              playerName,
+              whiteRoomChoice
+            );
+            revealMessages.forEach(({ delay, content }) => {
               addAssistantMessage(content, delay);
             });
 
-            // Calculate when everything ends
-            const lastDismissalDelay =
-              dismissalMessages.length > 0
-                ? dismissalMessages[dismissalMessages.length - 1].delay
+            // Calculate when reveal ends
+            const lastRevealDelay =
+              revealMessages.length > 0
+                ? revealMessages[revealMessages.length - 1].delay
                 : 0;
 
-            // Disable input after 3 seconds from final message
+            // Show final dismissal
             setTimeout(() => {
-              showInput = false;
-              gameState = 'complete';
-            }, lastDismissalDelay + 3000);
-          }, lastRevealDelay + 1000);
-        }, lastDelay + 1000);
+              whiteRoomState = WHITE_ROOM_STATES.COMPLETE;
+              const dismissalMessages = getFinalDismissal();
+              dismissalMessages.forEach(({ delay, content }) => {
+                addAssistantMessage(content, delay);
+              });
+
+              // Calculate when everything ends
+              const lastDismissalDelay =
+                dismissalMessages.length > 0
+                  ? dismissalMessages[dismissalMessages.length - 1].delay
+                  : 0;
+
+              // Disable input after 3 seconds from final message
+              setTimeout(() => {
+                showInput = false;
+                gameState = 'complete';
+              }, lastDismissalDelay + 3000);
+            }, lastRevealDelay + 1000);
+          }, lastDelay + 1000);
+        }
       }
 
       isProcessing = false;
@@ -625,29 +644,6 @@
           : 0;
       const baseDelay = lastMessageDelay + 1500; // Add buffer after last message
 
-      // Add creepy meta-horror warning before trial 1
-      addAssistantMessage(
-        'Before we begin... a word about the rules.',
-        baseDelay
-      );
-
-      addAssistantMessage(
-        "<i>This game is filled with lies. But here's a truth disguised as one:</i>",
-        baseDelay + 2000
-      );
-
-      addAssistantMessage(
-        "<strong>The people you'll meet in these trials are real.</strong> Living their small, oblivious lives in their own little worlds.",
-        baseDelay + 4500
-      );
-
-      addAssistantMessage(
-        "They don't know they're part of this. They don't know about you.",
-        baseDelay + 7000
-      );
-
-      addAssistantMessage('Not yet, anyway.', baseDelay + 9000);
-
       // Start playing creepy ambient music before convent trial
       isPlayingMusic = true;
       if (audioElement) {
@@ -675,7 +671,7 @@
         baseDelay + 10500 + lastIntroDelay + 2000
       );
       addAssistantMessage(
-        'What do you do?',
+        '<span class="bold" style="font-weight: bolder;">What do you do?</span>',
         baseDelay + 10500 + lastIntroDelay + 4500
       );
 
@@ -978,7 +974,7 @@
         });
         messages.push({
           role: 'assistant',
-          content: 'What do you do?',
+          content: '<span class="blink">What do you do?</span>',
           showButton: false,
         });
         // Start ambient music
@@ -1109,8 +1105,8 @@
 
 <!-- Hidden audio element for ambient music -->
 <audio bind:this={audioElement} loop preload="auto" style="display: none;">
-  <source src="/audio/dark-ambient.mp3" type="audio/mpeg" />
-  <source src="/audio/dark-ambient.ogg" type="audio/ogg" />
+  <source src="/audio/muzak/main-theme.mp3" type="audio/mpeg" />
+  <source src="/audio/muzak/main-theme.ogg" type="audio/ogg" />
 </audio>
 
 <style>

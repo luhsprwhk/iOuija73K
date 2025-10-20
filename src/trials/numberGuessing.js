@@ -33,7 +33,7 @@ export function handleNumberGuess(
         { delay: 1500, content: "<i>My name isn't Raphael</i>" },
         {
           delay: 1500,
-          content: '<span style="font-weight: bold;">I\'m Paimon 🙂</span>',
+          content: '<span class="bold">I\'m Paimon 🙂</span>',
         },
       ]),
       nextAttempt: guessAttempt,
@@ -109,26 +109,26 @@ export function getNumberTrialIntro(playerName) {
     {
       delay: 1200,
       content:
-        'Before we begin... let me show you something. A little demonstration of what I can do.',
+        'Before we begin... we gotta get this done. It\'s protocol.',
     },
     {
       delay: 1500,
       content:
-        '<i>Think of a number between 1 and 50.</i> Both digits <strong>must be odd</strong>, and they <strong>must be different</strong> from each other.',
+        '<strong>Think of a number between 1 and 50</strong>. Both digits <i>must be odd</i>, and they <i>must be different</i> from each other.',
     },
     {
       delay: 2000,
       content:
-        'Picture it in your mind. <i>Really see it.</i> Like those little birthday candles—light them up...set the whole cake on fire if you want.',
+        'Picture it in your mind. Like those little birthday candles—light them up...set the whole cake on fire if you want.',
     },
     {
       delay: 2500,
       content:
-        "I'll tell you what: <strong>why don't you kill all the butterflies?</strong>",
+        "I'll tell you what: <span class='blink'>why don't you kill all the butterflies?</span>",
     },
     {
       delay: MIN_DELAY,
-      content: 'lol 😄',
+      content: '<span class="bold">lol 😄</span>',
     },
     {
       delay: 2500,

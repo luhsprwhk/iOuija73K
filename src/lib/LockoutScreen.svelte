@@ -115,7 +115,7 @@
 
 <div class={containerClass}>
   <img
-    src="/src/assets/iron-phantom.webp"
+    src="/src/assets/img/paimon_elevator.webp"
     alt="Iron Phantom"
     class={ironPhantomClass}
   />

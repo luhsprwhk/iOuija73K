@@ -152,7 +152,7 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       return {
         messages: [
           { delay: 1000, content: ENCOUNTERS[1].intro },
-          { delay: 3500, content: 'What do you do?' },
+          { delay: 3500, content: '<span class="bold">What do you do?</span>' },
         ],
         nextState: CONVENT_STATES.ENCOUNTER_1,
         useAPI: false,
@@ -182,7 +182,7 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
           },
           { delay: 11500, content: ENCOUNTERS[2].intro },
           { delay: 14000, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 16000, content: 'What do you do?' },
+          { delay: 16000, content: '<span class="bold">What do you do?</span>' },
         ],
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,
