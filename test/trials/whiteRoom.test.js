@@ -45,7 +45,7 @@ describe('White Room Trial', () => {
   describe('handleWhiteRoomInput', async () => {
     it('should handle \'fight\' intent correctly', async () => {
       claude.classifyWhiteRoomIntent.mockResolvedValue('fight');
-      const result = await handleWhiteRoomInput('I attack!', []);
+      const result = await handleWhiteRoomInput('I attack!', 'Player', []);
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
       expect(result.choseToDie).toBe(false);
       const darkMessage = result.messages.find(m => m.content.includes('Everything goes dark'));
@@ -54,7 +54,7 @@ describe('White Room Trial', () => {
 
     it('should handle \'surrender\' intent correctly', async () => {
       claude.classifyWhiteRoomIntent.mockResolvedValue('surrender');
-      const result = await handleWhiteRoomInput('I give up.', []);
+      const result = await handleWhiteRoomInput('I give up.', 'Player', []);
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
       expect(result.choseToDie).toBe(true);
       const darkMessage = result.messages.find(m => m.content.includes('Everything goes dark'));
@@ -67,10 +67,10 @@ describe('White Room Trial', () => {
         content: 'The other you just stares back.',
       });
 
-      const result = await handleWhiteRoomInput('What is this place?', []);
+      const result = await handleWhiteRoomInput('What is this place?', 'Player', []);
       expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
       expect(result.messages[0].content).toBe('The other you just stares back.');
-      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalledWith('What is this place?', []);
+      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalledWith('What is this place?', 'Player', []);
     });
   });
 });

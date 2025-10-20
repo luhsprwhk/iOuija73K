@@ -91,7 +91,7 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-      content: `What do you do, ${playerName}?`,
+      content: `<span class="blink">What do you do, ${playerName}?</span>`,
     },
   ]);
 }
@@ -265,11 +265,12 @@ function detectSawReference(userInput) {
 /**
  * Handles player input during the white room trial
  * @param {string} userInput - The user's input
+ * @param {string} playerName - The player's name
  * @param {Array} conversationHistory - Chat conversation history
  * @param {Function} onAchievement - Callback to unlock achievement (optional)
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean }
  */
-export async function handleWhiteRoomInput(userInput, conversationHistory, onAchievement = null) {
+export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null) {
   // Check if player recognizes the Saw reference
   const sawDetected = detectSawReference(userInput);
   if (sawDetected && onAchievement) {
@@ -352,6 +353,7 @@ export async function handleWhiteRoomInput(userInput, conversationHistory, onAch
   // If no definitive choice is made, continue the exploration roleplay
   const response = await getWhiteRoomExplorationResponse(
     userInput,
+    playerName,
     conversationHistory
   );
 

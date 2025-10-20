@@ -5,7 +5,6 @@
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
-  import DevControls from './DevControls.svelte';
   import AchievementToast from './components/AchievementToast.svelte';
   import AchievementPanel from './components/AchievementPanel.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
@@ -88,7 +87,6 @@
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
   let currentAchievement = $state(null); // Currently displayed achievement toast
-  let showAchievementPanel = $state(false); // Achievement panel visibility
   let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
 
   // Compute demon name based on achievement
@@ -486,7 +484,7 @@
         });
 
         // Player makes their choice or explores (using AI classification)
-        const result = await handleWhiteRoomInput(userInput, whiteRoomExplorationHistory, triggerAchievement);
+        const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement);
         whiteRoomState = result.nextState;
 
         // Add response messages
@@ -778,24 +776,6 @@
     position: 'relative',
   });
 
-  const achievementButtonClass = css({
-    position: 'absolute',
-    top: '1.5rem',
-    right: '1.5rem',
-    bg: 'transparent',
-    border: '2px solid',
-    borderColor: 'bloodRed',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    fontSize: '20px',
-    color: 'bloodRed',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    _hover: {
-      bg: 'rgba(139, 0, 0, 0.1)',
-      transform: 'scale(1.05)',
-    },
-  });
 
   const titleClass = css({
     fontSize: '2.5rem',
@@ -882,7 +862,11 @@
     },
   });
 
-  let { title = 'iOuija73k', onGameStateChange = undefined } = $props();
+  let { 
+    title = 'iOuija73k', 
+    onGameStateChange = undefined,
+    showAchievementPanel = $bindable(false)
+  } = $props();
 
   /**
    * Handle lockout expiration
@@ -920,7 +904,7 @@
     showConfetti = false;
 
     // Set default player name and unlock true name achievement for dev mode
-    playerName = playerName || 'Player';
+    playerName = playerName || 'Sarah';
     hasTrueNameAchievement = true; // Show true name in dev mode
 
     switch (targetState) {
@@ -1075,6 +1059,13 @@
         }));
         whiteRoomState = initializeWhiteRoomExploration();
         whiteRoomExplorationHistory = [];
+        // Start ambient music
+        isPlayingMusic = true;
+        if (audioElement) {
+          audioElement.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+          });
+        }
         break;
 
       case 'playing':
@@ -1110,16 +1101,6 @@
     <header class={headerClass}>
       <h1 class={titleClass}>{title}</h1>
       <AnimatedSubtitle bind:this={animatedSubtitleRef} />
-      {#if import.meta.env.DEV}
-        <DevControls onStateJump={handleStateJump} onTriggerLockout={handleTriggerLockout} />
-      {/if}
-      <button
-        class={achievementButtonClass}
-        onclick={() => (showAchievementPanel = true)}
-        title="View Achievements"
-      >
-        🏆
-      </button>
     </header>
 
     <div class={messagesContainerClass}>
