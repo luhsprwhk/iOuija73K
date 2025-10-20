@@ -34,6 +34,7 @@
     HANGMAN_STATES,
   } from '../trials/hangman.js';
   import {
+    initializeWhiteRoomExploration,
     getWhiteRoomIntro,
     handleWhiteRoomInput,
     getWhiteRoomReveal,
@@ -1015,6 +1016,8 @@
           image,
           showButton: false,
         }));
+        whiteRoomState = initializeWhiteRoomExploration();
+        whiteRoomExplorationHistory = [];
         break;
 
       case 'playing':

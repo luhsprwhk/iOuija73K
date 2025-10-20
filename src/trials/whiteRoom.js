@@ -39,11 +39,15 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'Four walls. No windows. Fluorescent lights humming overhead.',
+      content: 'Four walls. No windows. No doors. Fluorescent lights humming overhead.',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
       content: 'Everything is white. The floor. The ceiling. Even the air feels bleached.',
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'Your head is pounding. Your wrists ache.',
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -67,7 +71,23 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'There is blood on the floor between you. Fresh. Pooling.',
+      content: 'Between you, bolted to the white floor: a metal table.',
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'On it, a single object. A heavy steel chain with a shackle at each end.',
+    },
+    {
+      delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+      content: 'One shackle is stained dark red. Still wet.',
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'There is blood on the floor. Fresh. Pooling beneath the table.',
+    },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'Your reflection\'s eyes meet yours. They look terrified.',
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -211,6 +231,14 @@ export function getFinalDismissal() {
 }
 
 /**
+ * Initializes the white room exploration state
+ * @returns {string} - Initial exploration state
+ */
+export function initializeWhiteRoomExploration() {
+  return WHITE_ROOM_STATES.EXPLORATION;
+}
+
+/**
  * Handles player input during the white room trial
  * @param {string} userInput - The user's input
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string }
@@ -227,6 +255,22 @@ export async function handleWhiteRoomInput(userInput, conversationHistory) {
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'You lunge at the other you... at yourself.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Your hands close around their throat. They don\'t resist.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Blood runs from their nose. Their eyes never leave yours.',
+        },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'They smile as the light fades from their face.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Your hands are slick with red. The white floor is stained.',
         },
         { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
       ]),
@@ -246,7 +290,23 @@ export async function handleWhiteRoomInput(userInput, conversationHistory) {
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'The other you watches, a strange calm in their eyes.',
+          content: 'The other you picks up the chain. The metal scrapes against the table.',
+        },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'You close your eyes. You feel the cold steel against your throat.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'There is pressure. Then warmth spreading down your chest.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MAX_DELAY,
+          content: 'Your knees buckle. The white floor rushes up to meet you.',
+        },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'Red blooms across the white like ink in water.',
         },
         { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
       ]),
