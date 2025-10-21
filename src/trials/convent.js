@@ -148,7 +148,7 @@ export function getConventReveal() {
         "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
     { delay: DRAMATIC_DELAY, content: 'lmao 😂' },
-    { delay: MIN_DELAY, content: "Let's <strong>continue</strong>." },
+    { delay: MIN_DELAY, content: "Let's <strong>continue</strong>.", showButton: true },
   ]);
 }
 
@@ -399,20 +399,20 @@ export async function handleConventInput(userInput, currentState, conventState, 
 
         return {
           messages: intervalsToCumulative([
-            { delay: MIN_DELAY, audio: '/src/assets/audio/woman_scream_01.mp3' },
-            { delay: 0, content: attackNarrative },
+            { delay: 1000, audio: '/src/assets/audio/woman_scream_01.mp3' },
+            { delay: DRAMATIC_DELAY, content: attackNarrative },
             {
               delay: MAX_DELAY,
               image: '/src/assets/trials/convent_trial_attack_success.webp',
             },
-            { delay: 0, content: ENCOUNTERS[1].glitchHint },
+            { delay: MIN_DELAY, content: ENCOUNTERS[1].glitchHint },
             { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
             // Automatically show encounter 2 intro
             {
               delay: MIN_DELAY,
               image: '/src/assets/trials/convent_encounter_2.webp',
             },
-            { delay: 0, content: ENCOUNTERS[2].intro },
+            { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
             { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
             { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
           ]),
@@ -434,7 +434,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
-              { delay: MIN_DELAY, content: damageNarrative },
+              { delay: DRAMATIC_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
@@ -470,7 +470,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
 
         return {
           messages: intervalsToCumulative([
-            { delay: MIN_DELAY, content: attackNarrative },
+            { delay: DRAMATIC_DELAY, content: attackNarrative },
             {
               delay: MIN_DELAY,
               image: '/src/assets/trials/convent_encounter_2_success.webp',
@@ -494,7 +494,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
-              { delay: MIN_DELAY, content: damageNarrative },
+              { delay: DRAMATIC_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,

@@ -539,37 +539,33 @@ ${outcomeType === 'attackSuccess' ? `
 OUTCOME: Player successfully attacks and kills the creature
 DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
 
-Write a visceral, horrifying description of the player's successful attack. Include:
-- The blade striking true
-- The creature's death throes (make it sound ALMOST human)
-- Black ichor/blood pooling
-- Graphic details of the wounds
-- ${creature.glitchLevel === 'heavy' ? 'HEAVY glitching: alternate between "creature" and "woman", "chitinous armor" and "black habit", "mandibles" and "mouth", "it" and "she"' : 'SUBTLE glitching: one brief moment where something seems off, almost human'}
+Write a SHORT, visceral description of the player's successful attack (MAX 40 WORDS).
 
-Keep it 1-2 sentences. Use HTML tags: <strong> for emphasis, <em> for glitches/uncertainty, <i> for internal thoughts.
+MUST INCLUDE:
+- Blade striking + creature death
+- ${creature.glitchLevel === 'heavy' ? 'ONE glitch moment (creature→woman OR chitinous→cloth)' : 'ONE subtle human detail'}
+
+FORMAT: 2-3 SHORT sentences. Use <strong>, <em>, <i> sparingly. Be punchy and fast-paced.
 ` : `
 OUTCOME: Enemy attacks player, dealing damage
 DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
 PLAYER HP AFTER: ${playerHP}
 
-Write a visceral, horrifying description of the creature attacking the player. Include:
-- The creature's attack (mandibles, stinger, claws)
-- Graphic injury to the player (tearing armor, piercing flesh, breaking bones)
-- Blood and pain
-- ${creature.glitchLevel === 'heavy' ? 'HEAVY glitching: alternate between creature features and human features, make the player question what they\'re seeing' : 'SUBTLE glitching: brief moment of uncertainty'}
-- The sensation of chitin/mandibles that might be fingernails/teeth
+Write a SHORT, visceral description of the creature attacking (MAX 40 WORDS).
 
-Keep it 1-2 sentences. Use HTML tags: <strong> and <i>for emphasis, but don't overdo it.
+MUST INCLUDE:
+- Creature's attack + injury to player
+- ${creature.glitchLevel === 'heavy' ? 'ONE glitch (claws→fingers OR chitin→cloth)' : 'ONE subtle human detail'}
+
+FORMAT: 2-3 SHORT sentences. Use <strong>, <em>, <i> sparingly. Be punchy and fast-paced.
 `}
 
-STYLE GUIDELINES:
-- Visceral, graphic, horror-focused
-- Use sensory details (sound, smell, texture)
-- Make death/injury feel REAL and disturbing
-- The glitches should be unsettling but not obvious
-- Never break the fourth wall
-- Keep it concise but impactful
-- IMPORTANT: 1-2 sentences only. Short, action-packed, visceral, and gory.
+CRITICAL CONSTRAINTS:
+- MAX 40 WORDS TOTAL
+- 2-3 short, punchy sentences
+- NO run-on sentences
+- Visceral and graphic but BRIEF
+- Glitches should be subtle (one word/phrase)
 
 Respond with ONLY the narrative text, no preamble or explanation.`;
 
@@ -578,7 +574,7 @@ Respond with ONLY the narrative text, no preamble or explanation.`;
     const response = await callClaude(
       [{ role: 'user', content: 'Generate the combat narrative.' }],
       systemPrompt,
-      { model: MODEL_HAIKU, maxTokens: 256 }
+      { model: MODEL_HAIKU, maxTokens: 150 }
     );
 
     return response.trim();

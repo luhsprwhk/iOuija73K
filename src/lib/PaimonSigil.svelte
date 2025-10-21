@@ -9,30 +9,56 @@
   export let animate = true;
   export let loading = false;
 
-  $: sigilClass = css({
+  let hasEntered = false;
+
+  $: baseClass = css({
     width,
     height,
     objectFit: 'contain',
     opacity,
     filter: 'drop-shadow(0 0 10px #8b0000)',
-    animation: loading
-      ? 'spin 1.5s linear infinite, pulse 3s ease-in-out infinite'
-      : animate
-      ? 'pulse 3s ease-in-out infinite, entrance 1.5s ease-out'
-      : 'entrance 1.5s ease-out',
   });
+
+  $: animationClass = loading
+    ? 'spin-animation'
+    : hasEntered
+    ? (animate ? 'pulse-only-animation' : '')
+    : 'entrance-animation';
+  
+  // Mark entrance as complete after the entrance animation duration
+  $: if (!hasEntered && !loading) {
+    setTimeout(() => {
+      hasEntered = true;
+    }, 3000); // Match entrance animation duration
+  }
 </script>
 
 <img
   src={paimonSigil}
   alt="Paimon Sigil"
-  class={sigilClass}
+  class="{baseClass} {animationClass}"
   height="64px"
   width="64px"
   in:scale={{ duration: 1500, start: 0.3, opacity: 0 }}
 />
 
 <style>
+  .spin-animation {
+    animation: spin 3s linear infinite, pulse 3s ease-in-out infinite;
+  }
+
+  .pulse-animation {
+    animation: pulse 3s ease-in-out infinite, entrance 3s ease-out;
+  }
+
+  .pulse-only-animation {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .entrance-animation {
+    animation: entrance 3s ease-out;
+  }
+
   @keyframes pulse {
     0%,
     100% {
