@@ -144,7 +144,7 @@ export async function classifyConventIntent(userInput) {
 Classify the input into ONE of these categories:
 
 FIGHT - Attacking, fighting, striking, killing, using weapons, aggressive combat actions
-FLEE - Running away, escaping, retreating, leaving the area, backing away
+FLEE - Running away, escaping, retreating, leaving the area, backing away, fleeing (e.g., "I run away", "I flee", "I escape")
 TALK - Attempting to speak, communicate, reason, negotiate, or ask questions
 EXAMINE - Looking around, investigating, searching, inspecting the environment or objects
 HELP - Trying to help, defend, protect, or heal someone

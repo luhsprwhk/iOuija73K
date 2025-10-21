@@ -282,7 +282,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
   const intent = await classifyConventIntent(userInput);
 
   // Handle FLEE - transition to exploration mode
-  if (intent === 'FLEE' && (currentState === CONVENT_STATES.ENCOUNTER_1 || currentState.includes('ENCOUNTER_2'))) {
+  if (intent === 'FLEE' && (currentState === CONVENT_STATES.ENCOUNTER_1 || currentState.includes('encounter_2'))) {
     const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
 
     return {
