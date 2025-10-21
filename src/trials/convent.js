@@ -123,15 +123,17 @@ const ENCOUNTERS = {
 
 /**
  * Dice roll combat system
+ * Player gets +5 bonus (armored knight vs defenseless nuns under illusion)
+ * This gives ~75% win rate (3 out of 4 fights)
  * @returns {Object} - { playerRoll, enemyRoll, playerWins }
  */
 function rollCombat() {
-  const playerRoll = Math.floor(Math.random() * 20) + 1; // 1-20
+  const playerRoll = Math.floor(Math.random() * 20) + 1 + 5; // 1-20 + 5 bonus = 6-25
   const enemyRoll = Math.floor(Math.random() * 20) + 1; // 1-20
   return {
     playerRoll,
     enemyRoll,
-    playerWins: playerRoll > enemyRoll,
+    playerWins: playerRoll >= enemyRoll, // Player wins on ties
   };
 }
 
@@ -397,7 +399,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
 
         return {
           messages: intervalsToCumulative([
-            { delay: 1000, content: `You roll: <strong>${combat1.playerRoll}</strong> | Monster rolls: ${combat1.enemyRoll}` },
             { delay: MIN_DELAY, audio: '/src/assets/audio/woman_scream_01.mp3' },
             { delay: 0, content: attackNarrative },
             {
@@ -438,7 +439,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
-              { delay: 1000, content: `You roll: ${combat1.playerRoll} | Monster rolls: <strong>${combat1.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
@@ -448,12 +448,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
         } else {
           return {
             messages: intervalsToCumulative([
-              { delay: 1000, content: `You roll: ${combat1.playerRoll} | Monster rolls: <strong>${combat1.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: damageNarrative },
-              {
-                delay: MIN_DELAY,
-                content: 'You stagger back, wounded but alive. The creature prepares another strike.',
-              },
               { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
             ]),
             nextState: CONVENT_STATES.ENCOUNTER_1, // Retry encounter
@@ -480,7 +475,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
 
         return {
           messages: intervalsToCumulative([
-            { delay: 1000, content: `You roll: <strong>${combat2.playerRoll}</strong> | Monster rolls: ${combat2.enemyRoll}` },
             { delay: MIN_DELAY, content: attackNarrative },
             {
               delay: MIN_DELAY,
@@ -505,7 +499,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
-              { delay: 1000, content: `You roll: ${combat2.playerRoll} | Monster rolls: <strong>${combat2.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
@@ -515,7 +508,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
         } else {
           return {
             messages: intervalsToCumulative([
-              { delay: 1000, content: `You roll: ${combat2.playerRoll} | Monster rolls: <strong>${combat2.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: damageNarrative },
               {
                 delay: MIN_DELAY,

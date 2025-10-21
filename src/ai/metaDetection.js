@@ -51,9 +51,10 @@ Is this meta-breaking? (true/false)`,
     const response = await callClaude(
       messages,
       systemPrompt,
-      null,
-      GAME_CONFIG.ai.MODEL_HAIKU,
-      20 // Very short response needed
+      {
+        model: GAME_CONFIG.ai.MODEL_HAIKU,
+        maxTokens: 20 // Very short response needed
+      }
     );
 
     const cleaned = response.trim().toLowerCase();
@@ -214,12 +215,28 @@ Is this anachronistic for the setting? Respond with JSON only.`,
     const response = await callClaude(
       messages,
       systemPrompt,
-      null,
-      GAME_CONFIG.ai.MODEL_HAIKU,
-      100
+      {
+        model: GAME_CONFIG.ai.MODEL_HAIKU,
+        maxTokens: 100
+      }
     );
 
-    const parsed = JSON.parse(response.trim());
+    // Extract JSON from response (handle markdown code blocks or extra text)
+    let jsonStr = response.trim();
+    
+    // Remove markdown code blocks if present
+    const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonStr = codeBlockMatch[1].trim();
+    }
+    
+    // Try to find JSON object in the response
+    const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      jsonStr = jsonMatch[0];
+    }
+
+    const parsed = JSON.parse(jsonStr);
     return {
       isAnachronism: parsed.isAnachronism === true,
       detectedItem: parsed.detectedItem || '',
