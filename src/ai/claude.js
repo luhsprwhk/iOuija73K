@@ -5,6 +5,8 @@
 
 import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
 import { GAME_CONFIG } from '../config/gameConfig.js';
+import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from './metaDetection.js';
+import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
 
 /**
  * Determines the appropriate Claude API proxy URL
@@ -218,13 +220,65 @@ Respond with ONLY one word from the list above.`;
  * @param {string} userInput - The player's input/action
  * @param {string} playerName - The player's name
  * @param {Array} conversationHistory - Previous messages in this phase
- * @returns {Promise<Object>} - Response object with content and shouldStartGame flag
+ * @param {number} metaOffenseCount - Number of meta-breaking offenses (default 0)
+ * @param {Function} onAchievement - Callback to unlock achievement (optional)
+ * @returns {Promise<Object>} - Response object with content, shouldStartGame flag, and isMetaBreaking flag
  */
 export async function handleHangmanExploration(
   userInput,
   playerName,
-  conversationHistory = []
+  conversationHistory = [],
+  metaOffenseCount = 0,
+  onAchievement = null
 ) {
+  // Check for anachronisms first (doesn't count as offense, just redirects)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const anachronismCheck = await detectAnachronism(userInput, 'hangman');
+
+    if (anachronismCheck.isAnachronism) {
+      // Paimon mocks them and redirects - no penalty, just sarcasm
+      return {
+        content: getAnachronismResponse(anachronismCheck.detectedItem, 'hangman'),
+        isMetaBreaking: false, // Not tracked as an offense
+        shouldLockout: false,
+      };
+    }
+  }
+
+  // Check for meta-breaking behavior (this counts as offense)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const isMetaBreaking = await detectMetaBreaking(userInput, 'hangman');
+
+    if (isMetaBreaking) {
+      const newOffenseCount = metaOffenseCount + 1;
+      const response = getMetaBreakingResponse(newOffenseCount, 'hangman');
+
+      if (response.shouldLockout) {
+        // Increment total lockout count across all sessions
+        const totalLockouts = incrementMetaLockoutCount();
+
+        // Unlock Killjoy achievement on 3rd lockout
+        if (totalLockouts >= 3 && onAchievement) {
+          onAchievement('killjoy');
+        }
+
+        // Player has broken immersion too many times - send to lockout
+        return {
+          content: response.content + '\n\n' + getMetaLockoutMessage('hangman', totalLockouts),
+          isMetaBreaking: true,
+          shouldLockout: true,
+        };
+      } else {
+        // Warning - let them continue but track offense
+        return {
+          content: response.content,
+          isMetaBreaking: true,
+          shouldLockout: false,
+        };
+      }
+    }
+  }
+
   const systemPrompt = `You are Paimon, a demon possessing an AI, running a horror game disguised as a text adventure.
 
 CURRENT SCENE: The Hangman Trial - Frontier Town Square
@@ -435,5 +489,111 @@ export async function getWhiteRoomExplorationResponse(
       content: 'The other you just stares back, their face a mask of terror.',
       sawReference: false,
     };
+  }
+}
+
+/**
+ * Generates dynamic combat narrative for the Convent trial
+ * @param {Object} params - Combat parameters
+ * @param {number} params.encounterNum - Encounter number (1 or 2)
+ * @param {string} params.outcomeType - Type of outcome: 'attackSuccess' or 'attackPlayer'
+ * @param {number} params.playerRoll - Player's dice roll
+ * @param {number} params.enemyRoll - Enemy's dice roll
+ * @param {number} params.playerHP - Player's current HP
+ * @returns {Promise<string>} - Generated narrative description
+ */
+export async function generateConventCombatNarrative({
+  encounterNum,
+  outcomeType,
+  playerRoll,
+  enemyRoll,
+  playerHP,
+}) {
+  // Define creature types for each encounter
+  const creatures = {
+    1: {
+      name: 'spider-nun hybrid',
+      features: 'eight legs, eight eyes, chitinous mandibles, tattered habit',
+      glitchLevel: 'minimal',
+    },
+    2: {
+      name: 'scorpion-sister',
+      features: 'massive pincers for arms, segmented tail with stinger, black habit',
+      glitchLevel: 'heavy',
+    },
+  };
+
+  const creature = creatures[encounterNum];
+
+  const systemPrompt = `You are generating combat narrative for a horror game where the player is a knight fighting what appear to be monsters in a dark convent.
+
+CRITICAL CONTEXT - THE TWIST:
+The "monsters" are actually innocent nuns. The player is under a demonic illusion that makes them see the nuns as horrific spider/scorpion hybrids. The player doesn't know this yet. Your narrative should subtly hint at the truth through "glitches" in the illusion.
+
+CREATURE: ${creature.name}
+FEATURES: ${creature.features}
+ENCOUNTER: ${encounterNum} of 2
+GLITCH LEVEL: ${creature.glitchLevel}
+
+${outcomeType === 'attackSuccess' ? `
+OUTCOME: Player successfully attacks and kills the creature
+DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
+
+Write a visceral, horrifying description of the player's successful attack. Include:
+- The blade striking true
+- The creature's death throes (make it sound ALMOST human)
+- Black ichor/blood pooling
+- Graphic details of the wounds
+- ${creature.glitchLevel === 'heavy' ? 'HEAVY glitching: alternate between "creature" and "woman", "chitinous armor" and "black habit", "mandibles" and "mouth", "it" and "she"' : 'SUBTLE glitching: one brief moment where something seems off, almost human'}
+
+Keep it 1-2 sentences. Use HTML tags: <strong> for emphasis, <em> for glitches/uncertainty, <i> for internal thoughts.
+` : `
+OUTCOME: Enemy attacks player, dealing damage
+DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
+PLAYER HP AFTER: ${playerHP}
+
+Write a visceral, horrifying description of the creature attacking the player. Include:
+- The creature's attack (mandibles, stinger, claws)
+- Graphic injury to the player (tearing armor, piercing flesh, breaking bones)
+- Blood and pain
+- ${creature.glitchLevel === 'heavy' ? 'HEAVY glitching: alternate between creature features and human features, make the player question what they\'re seeing' : 'SUBTLE glitching: brief moment of uncertainty'}
+- The sensation of chitin/mandibles that might be fingernails/teeth
+
+Keep it 1-2 sentences. Use HTML tags: <strong> and <i>for emphasis, but don't overdo it.
+`}
+
+STYLE GUIDELINES:
+- Visceral, graphic, horror-focused
+- Use sensory details (sound, smell, texture)
+- Make death/injury feel REAL and disturbing
+- The glitches should be unsettling but not obvious
+- Never break the fourth wall
+- Keep it concise but impactful
+- IMPORTANT: 1-2 sentences only. Short, action-packed, visceral, and gory.
+
+Respond with ONLY the narrative text, no preamble or explanation.`;
+
+  try {
+    // Use Haiku 4.5 for fast, creative narrative generation
+    const response = await callClaude(
+      [{ role: 'user', content: 'Generate the combat narrative.' }],
+      systemPrompt,
+      { model: MODEL_HAIKU, maxTokens: 256 }
+    );
+
+    return response.trim();
+  } catch (error) {
+    console.error('Combat narrative generation failed:', error);
+    
+    // Fallback to static descriptions
+    if (outcomeType === 'attackSuccess') {
+      return encounterNum === 1
+        ? 'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it.'
+        : "You strike hard. The creature—the <em>woman</em>—no, the <strong>CREATURE</strong>—falls. You hear it whisper something. Sounds like... '<i>please</i>'? No. Monsters don't beg.";
+    } else {
+      return encounterNum === 1
+        ? 'The spider-nun <strong>lunges</strong>. Its mandibles <em>tear through your armor</em>, ripping into your shoulder. You feel chitin—or fingernails?—scraping against bone.'
+        : 'The scorpion-tail <strong>strikes like lightning</strong>. The stinger <em>punches through your chest plate</em>, piercing deep into your ribcage. You taste copper. The creature—the <i>woman</i>—no, the <strong>THING</strong>—wrenches the stinger free.';
+    }
   }
 }

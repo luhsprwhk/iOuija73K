@@ -40,6 +40,13 @@ export const ACHIEVEMENTS = {
     icon: '⚖️', // Scales of justice for attempting mercy
     hidden: false,
   },
+  KILLJOY: {
+    id: 'killjoy',
+    title: 'Killjoy',
+    description: 'Ruined the illusion so many times that Paimon banned you. Three times.',
+    icon: '💀', // Skull for killing the fun
+    hidden: false,
+  },
 };
 
 /**

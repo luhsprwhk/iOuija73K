@@ -13,6 +13,8 @@ import { GAME_CONFIG } from '../config/gameConfig.js';
 import {
   getWhiteRoomExplorationResponse,
 } from '../ai/claude.js';
+import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from '../ai/metaDetection.js';
+import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
 
 export const WHITE_ROOM_STATES = {
   INTRO: 'intro',
@@ -245,9 +247,63 @@ export function initializeWhiteRoomExploration() {
  * @param {string} playerName - The player's name
  * @param {Array} conversationHistory - Chat conversation history
  * @param {Function} onAchievement - Callback to unlock achievement (optional)
- * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean }
+ * @param {number} metaOffenseCount - Number of meta-breaking offenses (default 0)
+ * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean, isMetaBreaking: boolean }
  */
-export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null) {
+export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null, metaOffenseCount = 0) {
+  // Check for anachronisms first (doesn't count as offense, just redirects)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const anachronismCheck = await detectAnachronism(userInput, 'white_room');
+
+    if (anachronismCheck.isAnachronism) {
+      // Paimon mocks them and redirects - no penalty, just sarcasm
+      return {
+        messages: intervalsToCumulative([
+          { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: getAnachronismResponse(anachronismCheck.detectedItem, 'white_room') },
+        ]),
+        nextState: WHITE_ROOM_STATES.EXPLORATION, // Stay in exploration
+        isMetaBreaking: false, // Not tracked as an offense
+      };
+    }
+  }
+
+  // Check for meta-breaking behavior (this counts as offense)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const isMetaBreaking = await detectMetaBreaking(userInput, 'white_room');
+
+    if (isMetaBreaking) {
+      const newOffenseCount = metaOffenseCount + 1;
+      const response = getMetaBreakingResponse(newOffenseCount, 'white_room');
+
+      if (response.shouldLockout) {
+        // Increment total lockout count across all sessions
+        const totalLockouts = incrementMetaLockoutCount();
+
+        // Unlock Killjoy achievement on 3rd lockout
+        if (totalLockouts >= 3 && onAchievement) {
+          onAchievement('killjoy');
+        }
+
+        // Player has broken immersion too many times - send to lockout
+        return {
+          messages: intervalsToCumulative([
+            { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content },
+            { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: getMetaLockoutMessage('white_room', totalLockouts) },
+          ]),
+          nextState: WHITE_ROOM_STATES.COMPLETE, // End the trial
+          isMetaBreaking: true,
+        };
+      } else {
+        // Warning - let them continue but track offense
+        return {
+          messages: intervalsToCumulative([{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }]),
+          nextState: WHITE_ROOM_STATES.EXPLORATION, // Stay in exploration
+          isMetaBreaking: true,
+        };
+      }
+    }
+  }
+
   // Calculate turn count (count user messages only to track actual player turns)
   const turnCount = conversationHistory.filter(msg => msg.role === 'user').length;
 

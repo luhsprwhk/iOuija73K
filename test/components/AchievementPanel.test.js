@@ -54,12 +54,12 @@ describe('AchievementPanel', () => {
   });
 
   describe('Achievement Stats', () => {
-    it('should display 0 of 5 when no achievements are unlocked', () => {
+    it('should display 0 of 6 when no achievements are unlocked', () => {
       render(AchievementPanel, {
         props: { isOpen: true },
       });
 
-      expect(screen.getByText(/0 of 5 \(0%\)/)).toBeInTheDocument();
+      expect(screen.getByText(/0 of 6 \(0%\)/)).toBeInTheDocument();
     });
 
     it('should display correct stats when some achievements are unlocked', () => {
@@ -74,7 +74,7 @@ describe('AchievementPanel', () => {
         props: { isOpen: true },
       });
 
-      expect(screen.getByText('2 of 5 (40%)')).toBeInTheDocument();
+      expect(screen.getByText('2 of 6 (33%)')).toBeInTheDocument();
     });
 
     it('should display 100% when all achievements are unlocked', () => {
@@ -85,6 +85,7 @@ describe('AchievementPanel', () => {
         { id: 'true_name', unlockedAt: Date.now() },
         { id: 'truth_beneath', unlockedAt: Date.now() },
         { id: 'merciful_executioner', unlockedAt: Date.now() },
+        { id: 'killjoy', unlockedAt: Date.now() },
       ];
       localStorage.setItem('io73k_achievements', JSON.stringify(mockData));
 
@@ -92,7 +93,7 @@ describe('AchievementPanel', () => {
         props: { isOpen: true },
       });
 
-      expect(screen.getByText('5 of 5 (100%)')).toBeInTheDocument();
+      expect(screen.getByText('6 of 6 (100%)')).toBeInTheDocument();
     });
   });
 
@@ -130,7 +131,7 @@ describe('AchievementPanel', () => {
       });
 
       const lockedDescriptions = screen.getAllByText('???');
-      expect(lockedDescriptions).toHaveLength(5); // All locked by default
+      expect(lockedDescriptions).toHaveLength(6); // All locked by default
     });
 
     it('should show actual description for unlocked achievements', () => {
@@ -148,7 +149,7 @@ describe('AchievementPanel', () => {
       
       // Other achievements should still show ???
       const lockedDescriptions = screen.getAllByText('???');
-      expect(lockedDescriptions).toHaveLength(4);
+      expect(lockedDescriptions).toHaveLength(5); // 6 total - 1 unlocked = 5 locked
     });
 
     it('should display checkmark for unlocked achievements', () => {
@@ -268,7 +269,7 @@ describe('AchievementPanel', () => {
         props: { isOpen: true },
       });
 
-      expect(screen.getByText(/0 of 5 \(0%\)/)).toBeInTheDocument();
+      expect(screen.getByText(/0 of 6 \(0%\)/)).toBeInTheDocument();
     });
 
     it('should handle missing onClose callback', async () => {
@@ -289,6 +290,7 @@ describe('AchievementPanel', () => {
         { id: 'true_name', unlockedAt: Date.now() },
         { id: 'truth_beneath', unlockedAt: Date.now() },
         { id: 'merciful_executioner', unlockedAt: Date.now() },
+        { id: 'killjoy', unlockedAt: Date.now() },
       ]);
 
       render(AchievementPanel, {
@@ -345,7 +347,7 @@ describe('AchievementPanel', () => {
       expect(mainHeading.tagName).toBe('H2');
 
       const achievementTitles = screen.getAllByRole('heading', { level: 3 });
-      expect(achievementTitles.length).toBe(5);
+      expect(achievementTitles.length).toBe(6); // Updated for Killjoy achievement
     });
   });
 });

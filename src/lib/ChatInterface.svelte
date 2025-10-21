@@ -90,6 +90,7 @@
   let lockoutTimeRemaining = $state(0);
   let currentAchievement = $state(null); // Currently displayed achievement toast
   let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
+  let metaOffenseCount = $state(0); // Track meta-breaking offense count
 
   // Compute demon name based on achievement
   let demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael');
@@ -409,7 +410,12 @@
       isProcessing = true;
 
       const previousState = conventState;
-      const result = await handleConventInput(userInput, conventState, conventStateData);
+      const result = await handleConventInput(userInput, conventState, conventStateData, metaOffenseCount, triggerAchievement);
+
+      // Handle meta-breaking detection
+      if (result.isMetaBreaking) {
+        metaOffenseCount++;
+      }
 
       // Update convent state
       conventState = result.nextState;
@@ -481,8 +487,28 @@
           const response = await handleHangmanExploration(
             userInput,
             playerName,
-            hangmanExplorationHistory
+            hangmanExplorationHistory,
+            metaOffenseCount,
+            triggerAchievement
           );
+
+          // Handle meta-breaking detection
+          if (response.isMetaBreaking) {
+            metaOffenseCount++;
+
+            // If lockout, end the trial immediately
+            if (response.shouldLockout) {
+              messages = [
+                ...messages,
+                { role: 'user', content: userInput, showButton: false },
+              ];
+              addAssistantMessage(response.content);
+              stopHangmanTimer();
+              hangmanTrialState = HANGMAN_STATES.COMPLETE;
+              isProcessing = false;
+              return;
+            }
+          }
 
           // Add user message and assistant response
           messages = [
@@ -554,7 +580,13 @@
         });
 
         // Player makes their choice or explores (using AI classification)
-        const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement);
+        const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement, metaOffenseCount);
+
+        // Handle meta-breaking detection
+        if (result.isMetaBreaking) {
+          metaOffenseCount++;
+        }
+
         whiteRoomState = result.nextState;
 
         // Add response messages with proper cumulative delay handling

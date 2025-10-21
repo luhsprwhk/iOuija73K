@@ -69,6 +69,25 @@ export const GAME_CONFIG = {
   },
 
   /**
+   * Meta-breaking detection settings
+   */
+  metaBreaking: {
+    /**
+     * Maximum number of meta-breaking offenses before lockout
+     * 1st offense: Warning with insult
+     * 2nd offense: Harsh warning
+     * 3rd offense: Lockout
+     */
+    MAX_OFFENSES: 2,
+
+    /**
+     * Whether to enable meta-breaking detection
+     * Set to false to disable the system entirely
+     */
+    ENABLED: true,
+  },
+
+  /**
    * Message timing settings (in milliseconds)
    */
   timing: {

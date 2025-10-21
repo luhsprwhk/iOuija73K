@@ -4,7 +4,7 @@
  * Theme: Moral complexity / The Philosopher's Stone corruption
  */
 
-import { classifyConventIntent } from '../ai/claude.js';
+import { classifyConventIntent, generateConventCombatNarrative } from '../ai/claude.js';
 import {
   intervalsToCumulative,
   MIN_DELAY,
@@ -12,6 +12,8 @@ import {
   DRAMATIC_DELAY,
 } from '../lib/helpers/chat.js';
 import { GAME_CONFIG } from '../config/gameConfig.js';
+import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from '../ai/metaDetection.js';
+import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
 
 export const CONVENT_STATES = {
   INTRO: 'intro',
@@ -210,9 +212,70 @@ export function getConventLockout() {
  * @param {string} userInput - The user's input
  * @param {string} currentState - Current encounter state
  * @param {Object} conventState - State object with playerHP, currentEncounter, playerPosition, etc.
- * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, conventState: Object }
+ * @param {number} metaOffenseCount - Number of meta-breaking offenses (default 0)
+ * @param {Function} onAchievement - Callback to unlock achievement (optional)
+ * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, conventState: Object, isMetaBreaking: boolean }
  */
-export async function handleConventInput(userInput, currentState, conventState) {
+export async function handleConventInput(userInput, currentState, conventState, metaOffenseCount = 0, onAchievement = null) {
+  // Check for anachronisms first (doesn't count as offense, just redirects)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const anachronismCheck = await detectAnachronism(userInput, 'convent');
+
+    if (anachronismCheck.isAnachronism) {
+      // Paimon mocks them and redirects - no penalty, just sarcasm
+      return {
+        messages: intervalsToCumulative([
+          { delay: 1000, content: getAnachronismResponse(anachronismCheck.detectedItem, 'convent') },
+        ]),
+        nextState: currentState, // Stay in current state
+        useAPI: false,
+        conventState,
+        isMetaBreaking: false, // Not tracked as an offense
+      };
+    }
+  }
+
+  // Check for meta-breaking behavior (this counts as offense)
+  if (GAME_CONFIG.metaBreaking.ENABLED) {
+    const isMetaBreaking = await detectMetaBreaking(userInput, 'convent');
+
+    if (isMetaBreaking) {
+      const newOffenseCount = metaOffenseCount + 1;
+      const response = getMetaBreakingResponse(newOffenseCount, 'convent');
+
+      if (response.shouldLockout) {
+        // Increment total lockout count across all sessions
+        const totalLockouts = incrementMetaLockoutCount();
+
+        // Unlock Killjoy achievement on 3rd lockout
+        if (totalLockouts >= 3 && onAchievement) {
+          onAchievement('killjoy');
+        }
+
+        // Player has broken immersion too many times - send to lockout
+        return {
+          messages: intervalsToCumulative([
+            { delay: 1000, content: response.content },
+            { delay: DRAMATIC_DELAY, content: getMetaLockoutMessage('convent', totalLockouts) },
+          ]),
+          nextState: CONVENT_STATES.LOCKOUT,
+          useAPI: false,
+          conventState,
+          isMetaBreaking: true,
+        };
+      } else {
+        // Warning - let them continue but track offense
+        return {
+          messages: intervalsToCumulative([{ delay: 1000, content: response.content }]),
+          nextState: currentState, // Stay in current state
+          useAPI: false,
+          conventState,
+          isMetaBreaking: true,
+        };
+      }
+    }
+  }
+
   // Classify player intent using new granular system
   const intent = await classifyConventIntent(userInput);
 
@@ -240,7 +303,7 @@ export async function handleConventInput(userInput, currentState, conventState) 
         },
         {
           delay: MIN_DELAY,
-          content: 'You can <strong>explore</strong> this room, <strong>move</strong> to another location, or try to <strong>examine</strong> your surroundings.',
+          content: '<span class="blink">What do you do?</span>',
         },
       ]),
       nextState: CONVENT_STATES.EXPLORATION,
@@ -257,6 +320,15 @@ export async function handleConventInput(userInput, currentState, conventState) 
     const encounterNum = currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
     const newHP = conventState.playerHP - 1;
 
+    // Generate dynamic damage narrative
+    const damageNarrative = await generateConventCombatNarrative({
+      encounterNum,
+      outcomeType: 'attackPlayer',
+      playerRoll: 0, // No roll for hesitation
+      enemyRoll: 20, // Enemy gets free hit
+      playerHP: newHP,
+    });
+
     // Player loses HP from monster attack
     const attackMessages = [
       {
@@ -265,7 +337,7 @@ export async function handleConventInput(userInput, currentState, conventState) 
       },
       {
         delay: MIN_DELAY,
-        content: ENCOUNTERS[encounterNum].attackPlayer,
+        content: damageNarrative,
       },
     ];
 
@@ -286,11 +358,7 @@ export async function handleConventInput(userInput, currentState, conventState) 
           ...attackMessages,
           {
             delay: MIN_DELAY,
-            content: 'You stagger back, wounded. The creature circles, ready to strike again.',
-          },
-          {
-            delay: MIN_DELAY,
-            content: '<strong>Now what?</strong>',
+            content: '<span class="blink">Now what?</span>',
           },
         ]),
         nextState: currentState, // Stay in same encounter
@@ -318,12 +386,20 @@ export async function handleConventInput(userInput, currentState, conventState) 
       const combat1 = rollCombat();
       
       if (combat1.playerWins) {
-        // Player wins combat
+        // Player wins combat - generate dynamic narrative
+        const attackNarrative = await generateConventCombatNarrative({
+          encounterNum: 1,
+          outcomeType: 'attackSuccess',
+          playerRoll: combat1.playerRoll,
+          enemyRoll: combat1.enemyRoll,
+          playerHP: conventState.playerHP,
+        });
+
         return {
           messages: intervalsToCumulative([
             { delay: 1000, content: `You roll: <strong>${combat1.playerRoll}</strong> | Monster rolls: ${combat1.enemyRoll}` },
             { delay: MIN_DELAY, audio: '/src/assets/audio/woman_scream_01.mp3' },
-            { delay: 0, content: ENCOUNTERS[1].attackSuccess },
+            { delay: 0, content: attackNarrative },
             {
               delay: MAX_DELAY,
               image: '/src/assets/trials/convent_trial_attack_success.webp',
@@ -349,14 +425,21 @@ export async function handleConventInput(userInput, currentState, conventState) 
           conventState,
         };
       } else {
-        // Player loses combat - takes damage
+        // Player loses combat - takes damage - generate dynamic narrative
         const newHP = conventState.playerHP - 1;
+        const damageNarrative = await generateConventCombatNarrative({
+          encounterNum: 1,
+          outcomeType: 'attackPlayer',
+          playerRoll: combat1.playerRoll,
+          enemyRoll: combat1.enemyRoll,
+          playerHP: newHP,
+        });
         
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat1.playerRoll} | Monster rolls: <strong>${combat1.enemyRoll}</strong>` },
-              { delay: MIN_DELAY, content: ENCOUNTERS[1].attackPlayer },
+              { delay: MIN_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
@@ -366,7 +449,7 @@ export async function handleConventInput(userInput, currentState, conventState) 
           return {
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat1.playerRoll} | Monster rolls: <strong>${combat1.enemyRoll}</strong>` },
-              { delay: MIN_DELAY, content: ENCOUNTERS[1].attackPlayer },
+              { delay: MIN_DELAY, content: damageNarrative },
               {
                 delay: MIN_DELAY,
                 content: 'You stagger back, wounded but alive. The creature prepares another strike.',
@@ -386,11 +469,19 @@ export async function handleConventInput(userInput, currentState, conventState) 
       const combat2 = rollCombat();
       
       if (combat2.playerWins) {
-        // Player wins - proceed to reveal
+        // Player wins - proceed to reveal - generate dynamic narrative
+        const attackNarrative = await generateConventCombatNarrative({
+          encounterNum: 2,
+          outcomeType: 'attackSuccess',
+          playerRoll: combat2.playerRoll,
+          enemyRoll: combat2.enemyRoll,
+          playerHP: conventState.playerHP,
+        });
+
         return {
           messages: intervalsToCumulative([
             { delay: 1000, content: `You roll: <strong>${combat2.playerRoll}</strong> | Monster rolls: ${combat2.enemyRoll}` },
-            { delay: MIN_DELAY, content: ENCOUNTERS[2].attackSuccess },
+            { delay: MIN_DELAY, content: attackNarrative },
             {
               delay: MIN_DELAY,
               image: '/src/assets/trials/convent_encounter_2_success.webp',
@@ -401,14 +492,21 @@ export async function handleConventInput(userInput, currentState, conventState) 
           conventState,
         };
       } else {
-        // Player loses combat - takes damage
+        // Player loses combat - takes damage - generate dynamic narrative
         const newHP = conventState.playerHP - 1;
+        const damageNarrative = await generateConventCombatNarrative({
+          encounterNum: 2,
+          outcomeType: 'attackPlayer',
+          playerRoll: combat2.playerRoll,
+          enemyRoll: combat2.enemyRoll,
+          playerHP: newHP,
+        });
         
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat2.playerRoll} | Monster rolls: <strong>${combat2.enemyRoll}</strong>` },
-              { delay: MIN_DELAY, content: ENCOUNTERS[2].attackPlayer },
+              { delay: MIN_DELAY, content: damageNarrative },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
@@ -418,7 +516,7 @@ export async function handleConventInput(userInput, currentState, conventState) 
           return {
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat2.playerRoll} | Monster rolls: <strong>${combat2.enemyRoll}</strong>` },
-              { delay: MIN_DELAY, content: ENCOUNTERS[2].attackPlayer },
+              { delay: MIN_DELAY, content: damageNarrative },
               {
                 delay: MIN_DELAY,
                 content: 'Blood pools at your feet. Your vision blurs. But you\'re still standing.',
