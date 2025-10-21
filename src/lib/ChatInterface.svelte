@@ -7,6 +7,7 @@
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
   import AchievementToast from './components/AchievementToast.svelte';
   import AchievementPanel from './components/AchievementPanel.svelte';
+  import StatusBox from '../components/StatusBox.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -24,6 +25,7 @@
     handleConventInput,
     getConventIntro,
     getConventReveal,
+    createConventState,
     CONVENT_STATES,
   } from '../trials/convent.js';
   import {
@@ -70,6 +72,7 @@
   let playerName = $state('');
   let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
+  let conventStateData = $state(createConventState()); // Tracks HP and encounter data
   let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
   let hangmanState = $state(null); // Will be initialized when hangman trial starts
   let hangmanTimer = $state(null); // Interval for updating timer display
@@ -406,10 +409,13 @@
       isProcessing = true;
 
       const previousState = conventState;
-      const result = await handleConventInput(userInput, conventState);
+      const result = await handleConventInput(userInput, conventState, conventStateData);
 
       // Update convent state
       conventState = result.nextState;
+      if (result.conventState) {
+        conventStateData = result.conventState;
+      }
       isProcessing = false;
 
       // Add response messages
@@ -766,6 +772,20 @@
     })
   );
 
+  // Determine what to show in the status box
+  const statusBoxContent = $derived(() => {
+    // Convent trial: show HP
+    if (gameState === 'convent' && conventState !== CONVENT_STATES.COMPLETE && conventState !== CONVENT_STATES.LOCKOUT) {
+      const hearts = conventStateData.playerHP === 2 ? '❤️❤️' : conventStateData.playerHP === 1 ? '❤️💔' : '💔💔';
+      return `<p style="color: #ff0000; font-weight: bold;">HP: ${hearts}</p>`;
+    }
+    // Hangman trial: show timer
+    if (gameState === 'hangman' && hangmanState && !hangmanState.gameOver) {
+      return `<p style="color: #ff0000; font-weight: bold;">${timeRemaining}</p>`;
+    }
+    return null;
+  });
+
   const headerClass = css({
     padding: '1.5rem',
     backgroundColor: '#16161f',
@@ -998,6 +1018,7 @@
         gameState = 'convent';
         showInput = true;
         conventState = CONVENT_STATES.ENCOUNTER_1;
+        conventStateData = createConventState(); // Reset HP to 2
         const conventIntro = getConventIntro(playerName);
         messages = conventIntro.map(({ content, image }) => ({
           role: 'assistant',
@@ -1147,10 +1168,9 @@
       </div>
     {/if}
 
-    {#if gameState === 'hangman' && hangmanState && !hangmanState.gameOver}
-      <div class={hangmanArtContainerClass}>
-        <p style="color: #ff0000; font-weight: bold;">{timeRemaining}</p>
-      </div>
+    <!-- Status Box -->
+    {#if statusBoxContent()}
+      <StatusBox showInput={showInput} content={statusBoxContent()} />
     {/if}
   </div>
 {/if}
