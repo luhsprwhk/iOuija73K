@@ -776,7 +776,7 @@
   const statusBoxContent = $derived(() => {
     // Convent trial: show HP
     if (gameState === 'convent' && conventState !== CONVENT_STATES.COMPLETE && conventState !== CONVENT_STATES.LOCKOUT) {
-      const hearts = conventStateData.playerHP === 2 ? '❤️❤️' : conventStateData.playerHP === 1 ? '❤️💔' : '💔💔';
+      const hearts = conventStateData.playerHP === 2 ? '❤️❤️' : conventStateData.playerHP === 1 ? '❤️🖤' : '🖤🖤';
       return `<p style="color: #ff0000; font-weight: bold;">HP: ${hearts}</p>`;
     }
     // Hangman trial: show timer

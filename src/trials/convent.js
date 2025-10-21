@@ -1,33 +1,60 @@
 /**
  * Act 1: The Convent Trial
- * Player thinks they're fighting monsters, but they're actually killing innocent nuns
- * Theme: Unreliable perception / You are the monster
+ * Player discovers the dark truth about a corrupted convent through exploration and codex entries
+ * Theme: Moral complexity / The Philosopher's Stone corruption
  */
 
-import { classifyPlayerIntent } from '../ai/claude.js';
+import { classifyConventIntent } from '../ai/claude.js';
 import {
   intervalsToCumulative,
   MIN_DELAY,
   MAX_DELAY,
   DRAMATIC_DELAY,
 } from '../lib/helpers/chat.js';
+import { GAME_CONFIG } from '../config/gameConfig.js';
 
 export const CONVENT_STATES = {
   INTRO: 'intro',
   ENCOUNTER_1: 'encounter_1',
   ENCOUNTER_2: 'encounter_2',
+  EXPLORATION: 'exploration', // New exploration state
   REVEAL: 'reveal',
   COMPLETE: 'complete',
   LOCKOUT: 'lockout',
 };
 
 /**
- * Initial convent state with player HP
+ * 3x3 Convent Map (internal tracking, not shown to player)
+ * Grid coordinates: [row, col] where [0,0] is top-left
+ */
+export const CONVENT_MAP = {
+  // Row 0
+  '0,0': { name: 'Chapel', description: 'A once-holy space now filled with strange alchemical symbols.' },
+  '0,1': { name: 'Refectory', description: 'Long tables covered in dust and lead shavings.' },
+  '0,2': { name: 'Library', description: 'Shelves of religious texts... and one book that doesn\'t belong.' },
+
+  // Row 1
+  '1,0': { name: 'Dormitory', description: 'Cramped beds where the nuns slept. Some haven\'t been used in weeks.' },
+  '1,1': { name: 'Entrance Hall', description: 'The main entrance. Moonlight streams through broken stained glass.' },
+  '1,2': { name: 'Storeroom', description: 'Shelves of supplies: candles, grain... and lead ingots.' },
+
+  // Row 2
+  '2,0': { name: 'Infirmary', description: 'Medical supplies and bloodstained bandages.' },
+  '2,1': { name: 'Courtyard', description: 'An open space with a well. The water smells metallic.' },
+  '2,2': { name: 'Basement Stairs', description: 'Stone steps descending into darkness. You hear... something.' },
+};
+
+/**
+ * Initial convent state with player HP and position
  */
 export function createConventState() {
   return {
     playerHP: 2,
     currentEncounter: 1,
+    playerPosition: [1, 1], // Start at Entrance Hall [row, col]
+    visitedRooms: ['1,1'], // Track visited rooms
+    collectedCodex: [], // Codex entries collected
+    explorationTurns: 0, // Track how many exploration actions taken
   };
 }
 
@@ -182,18 +209,54 @@ export function getConventLockout() {
  * Handles player input during convent encounters
  * @param {string} userInput - The user's input
  * @param {string} currentState - Current encounter state
- * @param {Object} conventState - State object with playerHP and currentEncounter
+ * @param {Object} conventState - State object with playerHP, currentEncounter, playerPosition, etc.
  * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, conventState: Object }
  */
 export async function handleConventInput(userInput, currentState, conventState) {
-  // Classify player intent using AI
-  const isNonViolent = await classifyPlayerIntent(userInput);
+  // Classify player intent using new granular system
+  const intent = await classifyConventIntent(userInput);
 
-  // Handle non-violent actions: player takes damage
-  if (isNonViolent && currentState !== CONVENT_STATES.REVEAL && currentState !== CONVENT_STATES.LOCKOUT) {
+  // Handle FLEE - transition to exploration mode
+  if (intent === 'FLEE' && (currentState === CONVENT_STATES.ENCOUNTER_1 || currentState.includes('ENCOUNTER_2'))) {
+    const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
+
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: 1000,
+          content: 'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'The creature\'s shrieks fade behind you. For now.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: `You find yourself in the <strong>${currentRoom.name}</strong>.`,
+        },
+        {
+          delay: MIN_DELAY,
+          content: currentRoom.description,
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'You can <strong>explore</strong> this room, <strong>move</strong> to another location, or try to <strong>examine</strong> your surroundings.',
+        },
+      ]),
+      nextState: CONVENT_STATES.EXPLORATION,
+      useAPI: false,
+      conventState,
+    };
+  }
+
+  // Handle other non-violent actions (TALK, HELP, EXAMINE during combat): player takes damage
+  if ((intent === 'TALK' || intent === 'HELP' || intent === 'EXAMINE') &&
+      currentState !== CONVENT_STATES.REVEAL &&
+      currentState !== CONVENT_STATES.LOCKOUT &&
+      currentState !== CONVENT_STATES.EXPLORATION) {
     const encounterNum = currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
     const newHP = conventState.playerHP - 1;
-    
+
     // Player loses HP from monster attack
     const attackMessages = [
       {
@@ -205,16 +268,12 @@ export async function handleConventInput(userInput, currentState, conventState) 
         content: ENCOUNTERS[encounterNum].attackPlayer,
       },
     ];
-    
+
     if (newHP <= 0) {
       // Player dies - lockout screen
       return {
         messages: intervalsToCumulative([
           ...attackMessages,
-          {
-            delay: MIN_DELAY,
-            content: '<strong>HP: ❤️ → 💔💔</strong>',
-          },
         ]),
         nextState: CONVENT_STATES.LOCKOUT,
         useAPI: false,
@@ -227,15 +286,11 @@ export async function handleConventInput(userInput, currentState, conventState) 
           ...attackMessages,
           {
             delay: MIN_DELAY,
-            content: `<strong>HP: ${newHP === 1 ? '❤️💔' : '❤️❤️'}</strong>`,
-          },
-          {
-            delay: MIN_DELAY,
             content: 'You stagger back, wounded. The creature circles, ready to strike again.',
           },
           {
             delay: MIN_DELAY,
-            content: '<strong>Fight or die</strong>. What do you do?',
+            content: '<strong>Now what?</strong>',
           },
         ]),
         nextState: currentState, // Stay in same encounter
@@ -302,10 +357,6 @@ export async function handleConventInput(userInput, currentState, conventState) 
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat1.playerRoll} | Monster rolls: <strong>${combat1.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: ENCOUNTERS[1].attackPlayer },
-              {
-                delay: MIN_DELAY,
-                content: '<strong>HP: ❤️ → 💔💔</strong>',
-              },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
@@ -318,13 +369,9 @@ export async function handleConventInput(userInput, currentState, conventState) 
               { delay: MIN_DELAY, content: ENCOUNTERS[1].attackPlayer },
               {
                 delay: MIN_DELAY,
-                content: `<strong>HP: ${newHP === 1 ? '❤️💔' : '❤️❤️'}</strong>`,
-              },
-              {
-                delay: MIN_DELAY,
                 content: 'You stagger back, wounded but alive. The creature prepares another strike.',
               },
-              { delay: MIN_DELAY, content: '<strong>Attack again!</strong>' },
+              { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
             ]),
             nextState: CONVENT_STATES.ENCOUNTER_1, // Retry encounter
             useAPI: false,
@@ -362,10 +409,6 @@ export async function handleConventInput(userInput, currentState, conventState) 
             messages: intervalsToCumulative([
               { delay: 1000, content: `You roll: ${combat2.playerRoll} | Monster rolls: <strong>${combat2.enemyRoll}</strong>` },
               { delay: MIN_DELAY, content: ENCOUNTERS[2].attackPlayer },
-              {
-                delay: MIN_DELAY,
-                content: '<strong>HP: ❤️ → 💔💔</strong>',
-              },
             ]),
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
@@ -378,13 +421,9 @@ export async function handleConventInput(userInput, currentState, conventState) 
               { delay: MIN_DELAY, content: ENCOUNTERS[2].attackPlayer },
               {
                 delay: MIN_DELAY,
-                content: `<strong>HP: ${newHP === 1 ? '❤️💔' : '❤️❤️'}</strong>`,
-              },
-              {
-                delay: MIN_DELAY,
                 content: 'Blood pools at your feet. Your vision blurs. But you\'re still standing.',
               },
-              { delay: MIN_DELAY, content: '<strong>One more strike!</strong>' },
+              { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
             ]),
             nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`, // Retry encounter
             useAPI: false,
@@ -393,6 +432,10 @@ export async function handleConventInput(userInput, currentState, conventState) 
         }
       }
     }
+
+    case CONVENT_STATES.EXPLORATION:
+      // Handle exploration mode
+      return handleExploration(userInput, conventState);
 
     case CONVENT_STATES.LOCKOUT:
       // Player is locked out - show game over screen
@@ -420,4 +463,181 @@ export async function handleConventInput(userInput, currentState, conventState) 
         conventState,
       };
   }
+}
+
+/**
+ * Handles player movement and exploration in the convent
+ * @param {string} userInput - The user's input
+ * @param {Object} conventState - Current state including position
+ * @returns {Promise<Object>} - Response with messages and updated state
+ */
+async function handleExploration(userInput, conventState) {
+  // Check if exploration limit reached - trigger alarm
+  if (conventState.explorationTurns >= GAME_CONFIG.convent.MAX_EXPLORATION_TURNS) {
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: 1000,
+          content: '<strong>CLANG! CLANG! CLANG!</strong>',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'A bell tower erupts with deafening alarm bells. The entire convent shakes.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: 'You hear screams. Footsteps. Many footsteps.',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'From every doorway, from every shadow, they emerge.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: '<strong>The nuns have found you.</strong>',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'They charge. Dozens of them. Their faces twisted in rage—or is it terror?',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'You raise your sword. There are too many.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: 'They overwhelm you. You feel hands—claws?—tearing at your armor.',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'You swing blindly. Blood sprays. Screams fill the air.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: 'When it\'s over, you stand among the bodies. So many bodies.',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'The monsters lie still. Their faces... distorted. Wrong.',
+        },
+        {
+          delay: DRAMATIC_DELAY,
+          content: '<em>Were they all monsters?</em>',
+        },
+      ]),
+      nextState: CONVENT_STATES.REVEAL,
+      useAPI: false,
+      conventState: { ...conventState, playerHP: 0 }, // Player survives but at what cost
+    };
+  }
+
+  const lowerInput = userInput.toLowerCase().trim();
+  const [currentRow, currentCol] = conventState.playerPosition;
+
+  // Parse directional movement
+  let newRow = currentRow;
+  let newCol = currentCol;
+
+  if (lowerInput.includes('north') || lowerInput.includes('up')) {
+    newRow = Math.max(0, currentRow - 1);
+  } else if (lowerInput.includes('south') || lowerInput.includes('down')) {
+    newRow = Math.min(2, currentRow + 1);
+  } else if (lowerInput.includes('west') || lowerInput.includes('left')) {
+    newCol = Math.max(0, currentCol - 1);
+  } else if (lowerInput.includes('east') || lowerInput.includes('right')) {
+    newCol = Math.min(2, currentCol + 1);
+  }
+
+  // Check if player moved
+  if (newRow !== currentRow || newCol !== currentCol) {
+    const newPosition = [newRow, newCol];
+    const newRoomKey = newPosition.join(',');
+    const newRoom = CONVENT_MAP[newRoomKey];
+    const hasVisited = conventState.visitedRooms.includes(newRoomKey);
+
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: 1000,
+          content: 'You move through the darkened halls...',
+        },
+        {
+          delay: MIN_DELAY,
+          content: `You enter the <strong>${newRoom.name}</strong>.`,
+        },
+        {
+          delay: MIN_DELAY,
+          content: newRoom.description,
+        },
+        {
+          delay: MIN_DELAY,
+          content: hasVisited
+            ? 'You\'ve been here before.'
+            : 'This place feels... wrong somehow.',
+        },
+      ]),
+      nextState: CONVENT_STATES.EXPLORATION,
+      useAPI: false,
+      conventState: {
+        ...conventState,
+        playerPosition: newPosition,
+        visitedRooms: hasVisited
+          ? conventState.visitedRooms
+          : [...conventState.visitedRooms, newRoomKey],
+        explorationTurns: conventState.explorationTurns + 1,
+      },
+    };
+  }
+
+  // Handle examine/search actions
+  if (lowerInput.includes('examine') || lowerInput.includes('search') || lowerInput.includes('look') || lowerInput.includes('inspect')) {
+    const currentRoomKey = conventState.playerPosition.join(',');
+    const currentRoom = CONVENT_MAP[currentRoomKey];
+
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: 1000,
+          content: `You carefully examine the <strong>${currentRoom.name}</strong>.`,
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'You notice details you missed before... (Codex system coming soon)',
+        },
+        {
+          delay: MIN_DELAY,
+          content: 'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
+        },
+      ]),
+      nextState: CONVENT_STATES.EXPLORATION,
+      useAPI: false,
+      conventState: {
+        ...conventState,
+        explorationTurns: conventState.explorationTurns + 1,
+      },
+    };
+  }
+
+  // Default exploration response (unclear action)
+  const currentRoomKey = conventState.playerPosition.join(',');
+  const currentRoom = CONVENT_MAP[currentRoomKey];
+
+  return {
+    messages: intervalsToCumulative([
+      {
+        delay: 1000,
+        content: `You're in the <strong>${currentRoom.name}</strong>.`,
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'You can move <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong>. Or <strong>examine</strong> your surroundings.',
+      },
+    ]),
+    nextState: CONVENT_STATES.EXPLORATION,
+    useAPI: false,
+    conventState: {
+      ...conventState,
+      explorationTurns: conventState.explorationTurns + 1,
+    },
+  };
 }

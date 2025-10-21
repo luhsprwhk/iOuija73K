@@ -34,6 +34,18 @@ export const GAME_CONFIG = {
   },
 
   /**
+   * Convent trial settings
+   */
+  convent: {
+    /**
+     * Maximum number of exploration turns before alarm triggers
+     * Prevents unbounded exploration and forces combat
+     * After this limit, nuns discover the player and attack
+     */
+    MAX_EXPLORATION_TURNS: 12,
+  },
+
+  /**
    * Name validation settings
    */
   nameValidation: {

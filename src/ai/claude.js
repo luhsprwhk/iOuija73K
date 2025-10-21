@@ -120,6 +120,85 @@ Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
 }
 
 /**
+ * Classifies player intent for the convent trial with granular categories
+ * @param {string} userInput - The player's input
+ * @returns {Promise<string>} - Intent category: FIGHT, FLEE, TALK, EXAMINE, or HELP
+ */
+export async function classifyConventIntent(userInput) {
+  const systemPrompt = `You are analyzing player input in a horror text-based game to determine intent during a combat encounter.
+Classify the input into ONE of these categories:
+
+FIGHT - Attacking, fighting, striking, killing, using weapons, aggressive combat actions
+FLEE - Running away, escaping, retreating, leaving the area, backing away
+TALK - Attempting to speak, communicate, reason, negotiate, or ask questions
+EXAMINE - Looking around, investigating, searching, inspecting the environment or objects
+HELP - Trying to help, defend, protect, or heal someone
+
+Respond with ONLY one word from the list above.`;
+
+  try {
+    const response = await callClaude(
+      [{ role: 'user', content: userInput }],
+      systemPrompt
+    );
+
+    const intent = response.trim().toUpperCase();
+
+    // Validate response is one of our expected categories
+    if (['FIGHT', 'FLEE', 'TALK', 'EXAMINE', 'HELP'].includes(intent)) {
+      return intent;
+    }
+
+    // If invalid response, default to FIGHT
+    console.warn('Unexpected intent classification:', intent, '- defaulting to FIGHT');
+    return 'FIGHT';
+  } catch (error) {
+    console.error(
+      'Convent intent classification failed, falling back to keywords:',
+      error
+    );
+
+    // Fallback to keyword matching on error
+    const lowerInput = userInput.toLowerCase().trim();
+
+    if (lowerInput.includes('flee') ||
+        lowerInput.includes('run') ||
+        lowerInput.includes('escape') ||
+        lowerInput.includes('retreat') ||
+        lowerInput.includes('leave') ||
+        lowerInput.includes('back away')) {
+      return 'FLEE';
+    }
+
+    if (lowerInput.includes('talk') ||
+        lowerInput.includes('speak') ||
+        lowerInput.includes('say') ||
+        lowerInput.includes('negotiate') ||
+        lowerInput.includes('reason')) {
+      return 'TALK';
+    }
+
+    if (lowerInput.includes('look') ||
+        lowerInput.includes('examine') ||
+        lowerInput.includes('inspect') ||
+        lowerInput.includes('search') ||
+        lowerInput.includes('investigate')) {
+      return 'EXAMINE';
+    }
+
+    if (lowerInput.includes('help') ||
+        lowerInput.includes('protect') ||
+        lowerInput.includes('defend') ||
+        lowerInput.includes('heal')) {
+      return 'HELP';
+    }
+
+    // Default to FIGHT
+    return 'FIGHT';
+  }
+}
+
+/**
  * Handles DM responses during the hangman trial exploration phase
  * @param {string} userInput - The player's input/action
  * @param {string} playerName - The player's name
