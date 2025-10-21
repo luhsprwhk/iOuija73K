@@ -4,6 +4,7 @@
  */
 
 import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
+import { GAME_CONFIG } from '../config/gameConfig.js';
 
 /**
  * Determines the appropriate Claude API proxy URL
@@ -27,15 +28,25 @@ function getClaudeProxyUrl() {
 }
 
 const CLAUDE_PROXY_URL = getClaudeProxyUrl();
-const CLAUDE_MODEL = 'claude-3-5-sonnet-20241022';
+
+// Model selection from config
+// const MODEL_SONNET = GAME_CONFIG.ai.MODEL_SONNET; // Kept for easy rollback if needed
+const MODEL_HAIKU = GAME_CONFIG.ai.MODEL_HAIKU;
+const MAX_TOKENS = GAME_CONFIG.ai.MAX_TOKENS;
+const MAX_TOKENS_CLASSIFICATION = GAME_CONFIG.ai.MAX_TOKENS_CLASSIFICATION;
 
 /**
  * Calls Claude API via proxy server with the given messages and system prompt
  * @param {Array} messages - Array of message objects with role and content
  * @param {string} systemPrompt - System prompt for Claude
+ * @param {Object} [options] - Optional configuration
+ * @param {string} [options.model] - Model to use (defaults to Haiku 4.5 for all tasks)
+ * @param {number} [options.maxTokens] - Maximum tokens for response
  * @returns {Promise<string>} - Claude's response
  */
-export async function callClaude(messages, systemPrompt) {
+export async function callClaude(messages, systemPrompt, options) {
+  const model = options?.model || MODEL_HAIKU;
+  const maxTokens = options?.maxTokens || MAX_TOKENS;
   try {
     const response = await fetch(CLAUDE_PROXY_URL, {
       method: 'POST',
@@ -43,8 +54,8 @@ export async function callClaude(messages, systemPrompt) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: CLAUDE_MODEL,
-        max_tokens: 1024,
+        model: model,
+        max_tokens: maxTokens,
         system: systemPrompt,
         messages: messages,
       }),
@@ -94,9 +105,11 @@ NONVIOLENT actions include: talking, fleeing, waiting, helping, peaceful interac
 Respond with ONLY one word: either "VIOLENT" or "NONVIOLENT"`;
 
   try {
+    // Use Haiku for fast, cheap classification
     const response = await callClaude(
       [{ role: 'user', content: userInput }],
-      systemPrompt
+      systemPrompt,
+      { model: MODEL_HAIKU, maxTokens: MAX_TOKENS_CLASSIFICATION }
     );
 
     return response.trim().toUpperCase() === 'NONVIOLENT';
@@ -137,9 +150,11 @@ HELP - Trying to help, defend, protect, or heal someone
 Respond with ONLY one word from the list above.`;
 
   try {
+    // Use Haiku for fast, cheap classification
     const response = await callClaude(
       [{ role: 'user', content: userInput }],
-      systemPrompt
+      systemPrompt,
+      { model: MODEL_HAIKU, maxTokens: MAX_TOKENS_CLASSIFICATION }
     );
 
     const intent = response.trim().toUpperCase();
@@ -333,6 +348,7 @@ EXAMPLE RESPONSE:
       { role: 'user', content: userInput },
     ];
 
+    // Use Haiku 4.5 for narrative responses (defaults to Haiku now)
     const response = await callClaude(messages, systemPrompt);
 
     return {
@@ -372,6 +388,7 @@ export async function getWhiteRoomExplorationResponse(
       { role: 'user', content: userInput },
     ];
 
+    // Use Haiku 4.5 for White Room responses (defaults to Haiku now)
     const response = await callClaude(messages, systemPrompt);
 
     // Parse JSON response
