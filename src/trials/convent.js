@@ -377,7 +377,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
       return {
         messages: intervalsToCumulative([
           { delay: 1000, content: ENCOUNTERS[1].intro },
-          { delay: MIN_DELAY, content: '<span class="bold">What do you do?</span>' },
+          { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
         ]),
         nextState: CONVENT_STATES.ENCOUNTER_1,
         useAPI: false,
@@ -406,11 +406,6 @@ export async function handleConventInput(userInput, currentState, conventState, 
               image: '/src/assets/trials/convent_trial_attack_success.webp',
             },
             { delay: 0, content: ENCOUNTERS[1].glitchHint },
-            {
-              delay: MIN_DELAY,
-              content:
-                'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
-            },
             { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
             // Automatically show encounter 2 intro
             {
@@ -419,7 +414,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
             },
             { delay: 0, content: ENCOUNTERS[2].intro },
             { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
-            { delay: MIN_DELAY, content: '<span class="bold">What do you do?</span>' },
+            { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
           ]),
           nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
           useAPI: false,
@@ -449,7 +444,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
           return {
             messages: intervalsToCumulative([
               { delay: MIN_DELAY, content: damageNarrative },
-              { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
+              { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
             ]),
             nextState: CONVENT_STATES.ENCOUNTER_1, // Retry encounter
             useAPI: false,

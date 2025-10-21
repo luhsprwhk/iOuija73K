@@ -1196,7 +1196,7 @@
 
     {#if gameState !== 'initial'}
       <div class={sigilContainerClass}>
-        <PaimonSigil width="64px" height="64px" />
+        <PaimonSigil width="64px" height="64px" loading={isProcessing} />
       </div>
     {/if}
 

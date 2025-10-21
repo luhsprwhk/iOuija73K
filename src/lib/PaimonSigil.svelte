@@ -7,6 +7,7 @@
   export let height = '40px';
   export let opacity = 0.8;
   export let animate = true;
+  export let loading = false;
 
   $: sigilClass = css({
     width,
@@ -14,7 +15,9 @@
     objectFit: 'contain',
     opacity,
     filter: 'drop-shadow(0 0 10px #8b0000)',
-    animation: animate
+    animation: loading
+      ? 'spin 1.5s linear infinite, pulse 3s ease-in-out infinite'
+      : animate
       ? 'pulse 3s ease-in-out infinite, entrance 1.5s ease-out'
       : 'entrance 1.5s ease-out',
   });
@@ -51,6 +54,15 @@
     100% {
       transform: scale(1) rotate(0deg);
       filter: drop-shadow(0 0 10px #8b0000);
+    }
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
     }
   }
 </style>
