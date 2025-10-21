@@ -5,6 +5,12 @@
  */
 
 import { classifyPlayerIntent, callClaude } from '../ai/claude.js';
+import {
+  intervalsToCumulative,
+  MIN_DELAY,
+  MAX_DELAY,
+  DRAMATIC_DELAY,
+} from '../lib/helpers/chat.js';
 
 export const CONVENT_STATES = {
   INTRO: 'intro',
@@ -20,32 +26,32 @@ export const CONVENT_STATES = {
  * @returns {Array} - Array of message objects with delays
  */
 export function getConventIntro(playerName) {
-  return [
+  return intervalsToCumulative([
     { delay: 1000, content: "Now... let's begin the real game." },
-    { delay: 2500, content: 'Close your eyes for a moment. Imagine...' },
+    { delay: MIN_DELAY, content: 'Close your eyes for a moment. Imagine...' },
     {
-      delay: 4000,
+      delay: MIN_DELAY,
       content: `<i>You're a knight, ${playerName}</i>. Moonlight filters through broken stained glass. The air smells of incense and... something else. Something wrong.`,
     },
     {
-      delay: 6500,
+      delay: MIN_DELAY,
       image: '/src/assets/convent_intro.webp',
     },
     {
-      delay: 6500,
+      delay: 0,
       content:
         'Before you stands a dark convent. The doors hang open. <span style="font-weight: bold;">You hear sounds from within—scraping, chittering, inhuman.</span>',
     },
     {
-      delay: 9000,
+      delay: MIN_DELAY,
       content:
         'You draw your sword and step inside. The darkness swallows you whole.',
     },
     {
-      delay: 11000,
+      delay: MIN_DELAY,
       content: '<strong>And then you see it. Your first enemy.</strong>',
     },
-  ];
+  ]);
 }
 
 /**
@@ -75,15 +81,15 @@ const ENCOUNTERS = {
  * The reveal messages when Paimon drops the act
  */
 export function getConventReveal() {
-  return [
+  return intervalsToCumulative([
     {
       delay: 1000,
       content:
         "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
-    { delay: 6500, content: 'lmao 😂' },
-    { delay: 8500, content: "Let's <strong>continue</strong>." },
-  ];
+    { delay: DRAMATIC_DELAY, content: 'lmao 😂' },
+    { delay: MIN_DELAY, content: "Let's <strong>continue</strong>." },
+  ]);
 }
 
 /**
@@ -118,13 +124,13 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       );
 
       return {
-        messages: [
+        messages: intervalsToCumulative([
           {
             delay: 1000,
             content: dynamicResponse.trim(),
           },
-          { delay: 2500, content: 'Your sword is already swinging. Now what?' },
-        ],
+          { delay: MIN_DELAY, content: 'Your sword is already swinging. Now what?' },
+        ]),
         nextState: currentState, // Stay in same state, force combat
         useAPI: false,
       };
@@ -132,13 +138,13 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
       console.error('Failed to generate dynamic response:', error);
       // Fallback to static response
       return {
-        messages: [
+        messages: intervalsToCumulative([
           {
             delay: 1000,
             content: 'You try to hesitate, but your body moves on its own.',
           },
-          { delay: 2500, content: 'Your sword is already swinging. Now what?' },
-        ],
+          { delay: MIN_DELAY, content: 'Your sword is already swinging. Now what?' },
+        ]),
         nextState: currentState,
         useAPI: false,
       };
@@ -150,10 +156,10 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
     case CONVENT_STATES.INTRO:
       // First encounter intro
       return {
-        messages: [
+        messages: intervalsToCumulative([
           { delay: 1000, content: ENCOUNTERS[1].intro },
-          { delay: 3500, content: '<span class="bold">What do you do?</span>' },
-        ],
+          { delay: MIN_DELAY, content: '<span class="bold">What do you do?</span>' },
+        ]),
         nextState: CONVENT_STATES.ENCOUNTER_1,
         useAPI: false,
       };
@@ -161,29 +167,29 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
     case CONVENT_STATES.ENCOUNTER_1:
       // First encounter - clean fantasy combat
       return {
-        messages: [
+        messages: intervalsToCumulative([
           { delay: 1500, audio: '/src/assets/audio/woman_scream_01.mp3' },
-          { delay: 1500, content: ENCOUNTERS[1].attackSuccess },
+          { delay: 0, content: ENCOUNTERS[1].attackSuccess },
           {
-            delay: 6500,
+            delay: MAX_DELAY,
             image: '/src/assets/trials/convent_trial_attack_success.webp',
           },
-          { delay: 3500, content: ENCOUNTERS[1].glitchHint },
+          { delay: 0, content: ENCOUNTERS[1].glitchHint },
           {
-            delay: 6500,
+            delay: MIN_DELAY,
             content:
               'The body lies twisted at your feet. Limbs bent at wrong angles. The black ichor—thick, viscous—spreads across the stone floor in a widening pool. You can see where your blade carved through flesh and bone. Clean cuts. Efficient.',
           },
-          { delay: 9500, content: 'You press forward into the darkness.' },
+          { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
           // Automatically show encounter 2 intro
           {
-            delay: 11500,
+            delay: MIN_DELAY,
             image: '/src/assets/trials/convent_encounter_2.webp',
           },
-          { delay: 11500, content: ENCOUNTERS[2].intro },
-          { delay: 14000, content: ENCOUNTERS[2].glitchIntro },
-          { delay: 16000, content: '<span class="bold">What do you do?</span>' },
-        ],
+          { delay: 0, content: ENCOUNTERS[2].intro },
+          { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
+          { delay: MIN_DELAY, content: '<span class="bold">What do you do?</span>' },
+        ]),
         nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
         useAPI: false,
       };
@@ -191,13 +197,13 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
     case `${CONVENT_STATES.ENCOUNTER_2}_combat`:
       // Second encounter resolution with heavy glitching
       return {
-        messages: [
+        messages: intervalsToCumulative([
           { delay: 1500, content: ENCOUNTERS[2].attackSuccess },
           {
-            delay: 3500,
+            delay: MIN_DELAY,
             image: '/src/assets/trials/convent_encounter_2_success.webp',
           },
-        ],
+        ]),
         nextState: CONVENT_STATES.REVEAL,
         useAPI: false,
       };
@@ -205,14 +211,14 @@ Be creative and specific to their action. Keep it under 20 words. Do NOT include
     case CONVENT_STATES.REVEAL:
       // After reveal, transition to next phase
       return {
-        messages: [{ delay: 1000, content: 'Ready for what comes next?' }],
+        messages: intervalsToCumulative([{ delay: 1000, content: 'Ready for what comes next?' }]),
         nextState: CONVENT_STATES.COMPLETE,
         useAPI: false,
       };
 
     default:
       return {
-        messages: [{ delay: 1000, content: '...' }],
+        messages: intervalsToCumulative([{ delay: 1000, content: '...' }]),
         nextState: currentState,
         useAPI: false,
       };
