@@ -25,6 +25,8 @@ export const CONVENT_STATES = {
   LOCKOUT: 'lockout',
 };
 
+const MAX_HP = 2;
+
 /**
  * 3x3 Convent Map (internal tracking, not shown to player)
  * Grid coordinates: [row, col] where [0,0] is top-left
@@ -57,6 +59,7 @@ export function createConventState() {
     visitedRooms: ['1,1'], // Track visited rooms
     collectedCodex: [], // Codex entries collected
     explorationTurns: 0, // Track how many exploration actions taken
+    roomPotionCounts: {},
   };
 }
 
@@ -679,26 +682,60 @@ async function handleExploration(userInput, conventState) {
     const currentRoomKey = conventState.playerPosition.join(',');
     const currentRoom = CONVENT_MAP[currentRoomKey];
 
+    const isHurt = conventState.playerHP < MAX_HP;
+    const roomCount = (conventState.roomPotionCounts && conventState.roomPotionCounts[currentRoomKey]) ? conventState.roomPotionCounts[currentRoomKey] : 0;
+    const capReached = roomCount >= GAME_CONFIG.convent.MAX_POTIONS_PER_ROOM;
+    const chance = GAME_CONFIG.convent.HEAL_POTION_CHANCE ?? 0.3;
+    const foundPotion = isHurt && !capReached && Math.random() < chance;
+    const healedHP = foundPotion ? Math.min(conventState.playerHP + 1, MAX_HP) : conventState.playerHP;
+
+    const examineMessages = [
+      {
+        delay: 1000,
+        content: `You carefully examine the <strong>${currentRoom.name}</strong>.`,
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'You notice details you missed before... (Codex system coming soon)',
+      },
+    ];
+
+    if (foundPotion) {
+      examineMessages.push(
+        {
+          delay: MIN_DELAY,
+          content: 'Tucked behind a loose stone you find a small vial—<em>a healing draught</em>.',
+        },
+        {
+          delay: MIN_DELAY,
+          content: `You uncork it and drink. Warmth spreads through your chest. <strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+        },
+      );
+    } else if (isHurt) {
+      examineMessages.push({
+        delay: MIN_DELAY,
+        content: 'You scour the room for something to staunch the bleeding... nothing useful—keep looking.',
+      });
+    }
+
+    examineMessages.push({
+      delay: MIN_DELAY,
+      content: 'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
+    });
+
+    const updatedPotionCounts = foundPotion
+      ? { ...(conventState.roomPotionCounts || {}), [currentRoomKey]: roomCount + 1 }
+      : (conventState.roomPotionCounts || {});
+
     return {
-      messages: intervalsToCumulative([
-        {
-          delay: 1000,
-          content: `You carefully examine the <strong>${currentRoom.name}</strong>.`,
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'You notice details you missed before... (Codex system coming soon)',
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
-        },
-      ]),
+      messages: intervalsToCumulative(examineMessages),
       nextState: CONVENT_STATES.EXPLORATION,
       useAPI: false,
       conventState: {
         ...conventState,
+        playerHP: healedHP,
         explorationTurns: conventState.explorationTurns + 1,
+        roomPotionCounts: updatedPotionCounts,
       },
     };
   }

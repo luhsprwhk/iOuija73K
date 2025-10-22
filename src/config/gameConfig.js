@@ -43,6 +43,8 @@ export const GAME_CONFIG = {
      * After this limit, nuns discover the player and attack
      */
     MAX_EXPLORATION_TURNS: 12,
+    HEAL_POTION_CHANCE: 0.3,
+    MAX_POTIONS_PER_ROOM: 2,
   },
 
   /**
