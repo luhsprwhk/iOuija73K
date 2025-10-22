@@ -125,17 +125,9 @@ export const GAME_CONFIG = {
    */
   ai: {
     /**
-     * Claude 3.5 Sonnet - Most capable model
-     * Use for: Creative narrative responses, complex reasoning, nuanced dialogue
-     * Cost: Higher (~$3 per million input tokens, ~$15 per million output tokens)
-     * Speed: Slower
-     */
-    MODEL_SONNET: 'claude-3-5-sonnet-20241022',
-
-    /**
      * Claude Haiku 4.5 - Latest small model (Oct 2025)
      * Near-frontier performance at exceptional speed and cost
-     * Use for: Simple classification, intent detection, yes/no decisions
+     * Use for: all AI responses
      * Performance: Similar to Claude Sonnet 4 (frontier model from 5 months ago)
      * Cost: $1 per million input tokens, $5 per million output tokens
      * Speed: 2x+ faster than Sonnet 4, even faster than 3.5 Haiku
