@@ -60,6 +60,7 @@ export function createConventState() {
     collectedCodex: [], // Codex entries collected
     explorationTurns: 0, // Track how many exploration actions taken
     roomPotionCounts: {},
+    combatHelpCount: 0,
   };
 }
 
@@ -281,10 +282,101 @@ export async function handleConventInput(userInput, currentState, conventState, 
     }
   }
 
-  // Classify player intent using new granular system
+  const lowerHelp = userInput.toLowerCase().trim();
+  const asksForOptions =
+    lowerHelp.includes('what can i do') ||
+    lowerHelp.includes('what should i do') ||
+    lowerHelp.includes('what do i do') ||
+    lowerHelp.includes('what are my options') ||
+    lowerHelp.includes('what now') ||
+    lowerHelp === 'options' ||
+    lowerHelp === 'help' ||
+    lowerHelp.includes('hint') ||
+    lowerHelp.includes('commands');
+
+  if (asksForOptions) {
+    if (
+      currentState === CONVENT_STATES.ENCOUNTER_1 ||
+      (typeof currentState === 'string' && currentState.includes('encounter_2'))
+    ) {
+      const helpCount = conventState.combatHelpCount || 0;
+      if (helpCount === 0) {
+        return {
+          messages: intervalsToCumulative([
+            { delay: 1000, content: 'What can you do? <em>Bleed</em>, if you dither.' },
+            { delay: MIN_DELAY, content: 'Your choices are simple: <strong>fight</strong>... or <strong>flee</strong>.' },
+            { delay: MIN_DELAY, content: "Try chatting and you'll learn how sharp their faith can be." },
+            { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+          ]),
+          nextState: currentState,
+          useAPI: false,
+          conventState: { ...conventState, combatHelpCount: 1 },
+        };
+      } else {
+        const encounterNum = currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
+        const newHP = conventState.playerHP - 1;
+        const damageNarrative = await generateConventCombatNarrative({
+          encounterNum,
+          outcomeType: 'attackPlayer',
+          playerRoll: 0,
+          enemyRoll: 20,
+          playerHP: newHP,
+        });
+
+        const attackMessages = [
+          { delay: 1000, content: 'You hesitate. <strong>Fatal mistake</strong>.' },
+          { delay: MIN_DELAY, content: damageNarrative },
+        ];
+
+        if (newHP <= 0) {
+          return {
+            messages: intervalsToCumulative([...attackMessages]),
+            nextState: CONVENT_STATES.LOCKOUT,
+            useAPI: false,
+            conventState: { ...conventState, playerHP: 0 },
+          };
+        } else {
+          return {
+            messages: intervalsToCumulative([
+              ...attackMessages,
+              { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
+            ]),
+            nextState: currentState,
+            useAPI: false,
+            conventState: { ...conventState, playerHP: newHP },
+          };
+        }
+      }
+    }
+
+    if (currentState === CONVENT_STATES.EXPLORATION) {
+      return {
+        messages: intervalsToCumulative([
+          { delay: 1000, content: 'Lost already? Adorable.' },
+          { delay: MIN_DELAY, content: "You can <strong>walk around</strong> to other rooms, or <strong>search</strong> the one you're in." },
+          { delay: MIN_DELAY, content: 'North, south, east, west—wander. Or examine the shadows and see what they give you.' },
+          { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+        ]),
+        nextState: currentState,
+        useAPI: false,
+        conventState,
+      };
+    }
+
+    return {
+      messages: intervalsToCumulative([
+        { delay: 1000, content: 'Decisions, decisions.' },
+        { delay: MIN_DELAY, content: "When steel is drawn, it's <strong>fight</strong> or <strong>flee</strong>. When the halls are quiet, <strong>walk</strong>... or <strong>search</strong>." },
+        { delay: MIN_DELAY, content: '<span class="blink">Choose.</span>' },
+      ]),
+      nextState: currentState,
+      useAPI: false,
+      conventState,
+    };
+  }
+
   const intent = await classifyConventIntent(userInput);
 
-  // Handle FLEE - transition to exploration mode
   if (intent === 'FLEE' && (currentState === CONVENT_STATES.ENCOUNTER_1 || currentState.includes('encounter_2'))) {
     const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
 
@@ -316,6 +408,8 @@ export async function handleConventInput(userInput, currentState, conventState, 
       conventState,
     };
   }
+
+  
 
   // Handle other non-violent actions (TALK, HELP, EXAMINE during combat): player takes damage
   if ((intent === 'TALK' || intent === 'HELP' || intent === 'EXAMINE') &&
@@ -384,6 +478,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
         ]),
         nextState: CONVENT_STATES.ENCOUNTER_1,
         useAPI: false,
+        conventState: { ...conventState, combatHelpCount: 0 },
       };
 
     case CONVENT_STATES.ENCOUNTER_1: {
@@ -421,7 +516,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
           ]),
           nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
           useAPI: false,
-          conventState,
+          conventState: { ...conventState, combatHelpCount: 0 },
         };
       } else {
         // Player loses combat - takes damage - generate dynamic narrative

@@ -8,6 +8,7 @@
   import AchievementToast from './components/AchievementToast.svelte';
   import AchievementPanel from './components/AchievementPanel.svelte';
   import StatusBox from '../components/StatusBox.svelte';
+  import MovementControls from '../components/MovementControls.svelte';
   import getBrowserDetails from './helpers/getBrowserDetails';
   import { validateName } from './helpers/validateName';
   import {
@@ -759,6 +760,65 @@
     // Note: Transition to convent trial is now handled by OK button click in handleOkClick
   }
 
+  async function handleMovement(direction) {
+    if (gameState !== 'convent' || conventState !== CONVENT_STATES.EXPLORATION) return;
+    if (isProcessing) return;
+
+    isProcessing = true;
+
+    const previousState = conventState;
+    const result = await handleConventInput(
+      direction,
+      conventState,
+      conventStateData,
+      metaOffenseCount,
+      triggerAchievement
+    );
+
+    if (result.isMetaBreaking) {
+      metaOffenseCount++;
+    }
+
+    conventState = result.nextState;
+    if (result.conventState) {
+      conventStateData = result.conventState;
+    }
+    isProcessing = false;
+
+    result.messages.forEach(({ delay, content, image }) => {
+      addAssistantMessage(content, delay, false, image);
+    });
+
+    const lastDelay =
+      result.messages.length > 0 ? result.messages[result.messages.length - 1].delay : 0;
+
+    if (previousState !== CONVENT_STATES.REVEAL && conventState === CONVENT_STATES.REVEAL) {
+      const revealMessages = getConventReveal();
+      revealMessages.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, lastDelay + delay, false, image);
+      });
+    }
+
+    if (conventState === CONVENT_STATES.COMPLETE) {
+      gameState = 'hangman';
+      hangmanTrialState = HANGMAN_STATES.INTRO;
+
+      const hangmanIntro = getHangmanIntro(playerName);
+      addAssistantMessages(hangmanIntro);
+
+      const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
+      setTimeout(() => {
+        hangmanTrialState = HANGMAN_STATES.EXPLORATION;
+        hangmanState = initializeHangmanExploration();
+        hangmanExplorationHistory = [];
+        addAssistantMessage(getExplorationStatus(hangmanState), 1000);
+        startHangmanTimer();
+      }, lastIntroDelay + 1000);
+    }
+
+    scrollToBottom();
+  }
+
   const containerClass = css({
     display: 'flex',
     flexDirection: 'column',
@@ -1198,6 +1258,10 @@
       <div class={sigilContainerClass}>
         <PaimonSigil width="64px" height="64px" loading={isProcessing} />
       </div>
+    {/if}
+
+    {#if gameState === 'convent' && conventState === CONVENT_STATES.EXPLORATION}
+      <MovementControls showInput={showInput} onMove={handleMovement} />
     {/if}
 
     <!-- Status Box -->
