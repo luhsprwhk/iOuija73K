@@ -19,7 +19,7 @@
     audio = new Audio('/audio/muzak/dark-elevator-muzak.mp3');
     audio.loop = true;
     audio.volume = 0.5;
-    audio.play().catch((err) => console.error('Audio playback failed:', err));
+    audio.play().catch(err => console.error('Audio playback failed:', err));
 
     return () => {
       if (audio) {
