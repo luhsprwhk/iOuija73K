@@ -4,8 +4,6 @@
   let {
     onAchievementClick,
     showAchievementButton = false,
-    onCodexClick,
-    showCodexButton = false,
   } = $props();
 
   const footerClass = css({
@@ -37,11 +35,6 @@
 
 <footer class={footerClass}>
   <span>A game by <a href="https://luhsprwhk.xyz">Luh Sprwhk</a></span>
-  {#if showCodexButton}
-    <button class={buttonClass} onclick={onCodexClick} title="View Codex">
-      📖
-    </button>
-  {/if}
   {#if showAchievementButton}
     <button
       class={buttonClass}

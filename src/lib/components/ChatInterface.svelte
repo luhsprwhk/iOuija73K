@@ -1044,11 +1044,31 @@
     },
   });
 
+  const codexButtonClass = css({
+    padding: '0.75rem 1rem',
+    backgroundColor: 'transparent',
+    border: '2px solid #8b0000',
+    borderRadius: '0.375rem',
+    color: '#8b0000',
+    fontFamily: 'monospace',
+    fontSize: '1.25rem',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s, transform 0.2s',
+    '&:hover': {
+      backgroundColor: 'rgba(139, 0, 0, 0.1)',
+    },
+    '&:active': {
+      transform: 'scale(0.98)',
+    },
+  });
+
   let {
     title = 'iOuija73k',
     onGameStateChange = undefined,
     onAchievementUnlock = undefined,
     onCodexUnlock = undefined,
+    onCodexClick = undefined,
+    showCodexButton = false,
     showAchievementPanel = $bindable(false),
   } = $props();
 
@@ -1261,6 +1281,16 @@
             placeholder={`Reply to ${demonName}`}
             autocomplete="off"
           />
+          {#if showCodexButton}
+            <button
+              type="button"
+              class={codexButtonClass}
+              onclick={onCodexClick}
+              title="View Codex"
+            >
+              📖
+            </button>
+          {/if}
           <button type="submit" class={buttonClass}>↑</button>
         </form>
       </div>

@@ -134,14 +134,14 @@
       bind:showAchievementPanel
       onAchievementUnlock={handleAchievementUnlock}
       onCodexUnlock={handleCodexUnlock}
+      onCodexClick={handleCodexClick}
+      showCodexButton={hasCodexEntries}
     />
     <Footer
       onAchievementClick={handleAchievementClick}
       showAchievementButton={hasAchievements}
-      onCodexClick={handleCodexClick}
-      showCodexButton={hasCodexEntries}
     />
   </div>
 </div>
 
-<CodexPanel bind:isOpen={showCodexPanel} />
+<CodexPanel bind:isOpen={showCodexPanel} onClose={() => (showCodexPanel = false)} />
