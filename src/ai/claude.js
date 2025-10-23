@@ -5,7 +5,13 @@
 
 import { getWhiteRoomExplorationPrompt } from './prompts/whiteRoomExploration_prompt.js';
 import { GAME_CONFIG } from '../config/gameConfig.js';
-import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from './metaDetection.js';
+import {
+  detectMetaBreaking,
+  getMetaBreakingResponse,
+  getMetaLockoutMessage,
+  detectAnachronism,
+  getAnachronismResponse,
+} from './metaDetection.js';
 import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
 
 /**
@@ -167,7 +173,11 @@ Respond with ONLY one word from the list above.`;
     }
 
     // If invalid response, default to FIGHT
-    console.warn('Unexpected intent classification:', intent, '- defaulting to FIGHT');
+    console.warn(
+      'Unexpected intent classification:',
+      intent,
+      '- defaulting to FIGHT'
+    );
     return 'FIGHT';
   } catch (error) {
     console.error(
@@ -178,35 +188,43 @@ Respond with ONLY one word from the list above.`;
     // Fallback to keyword matching on error
     const lowerInput = userInput.toLowerCase().trim();
 
-    if (lowerInput.includes('flee') ||
-        lowerInput.includes('run') ||
-        lowerInput.includes('escape') ||
-        lowerInput.includes('retreat') ||
-        lowerInput.includes('leave') ||
-        lowerInput.includes('back away')) {
+    if (
+      lowerInput.includes('flee') ||
+      lowerInput.includes('run') ||
+      lowerInput.includes('escape') ||
+      lowerInput.includes('retreat') ||
+      lowerInput.includes('leave') ||
+      lowerInput.includes('back away')
+    ) {
       return 'FLEE';
     }
 
-    if (lowerInput.includes('talk') ||
-        lowerInput.includes('speak') ||
-        lowerInput.includes('say') ||
-        lowerInput.includes('negotiate') ||
-        lowerInput.includes('reason')) {
+    if (
+      lowerInput.includes('talk') ||
+      lowerInput.includes('speak') ||
+      lowerInput.includes('say') ||
+      lowerInput.includes('negotiate') ||
+      lowerInput.includes('reason')
+    ) {
       return 'TALK';
     }
 
-    if (lowerInput.includes('look') ||
-        lowerInput.includes('examine') ||
-        lowerInput.includes('inspect') ||
-        lowerInput.includes('search') ||
-        lowerInput.includes('investigate')) {
+    if (
+      lowerInput.includes('look') ||
+      lowerInput.includes('examine') ||
+      lowerInput.includes('inspect') ||
+      lowerInput.includes('search') ||
+      lowerInput.includes('investigate')
+    ) {
       return 'EXAMINE';
     }
 
-    if (lowerInput.includes('help') ||
-        lowerInput.includes('protect') ||
-        lowerInput.includes('defend') ||
-        lowerInput.includes('heal')) {
+    if (
+      lowerInput.includes('help') ||
+      lowerInput.includes('protect') ||
+      lowerInput.includes('defend') ||
+      lowerInput.includes('heal')
+    ) {
       return 'HELP';
     }
 
@@ -238,7 +256,10 @@ export async function handleHangmanExploration(
     if (anachronismCheck.isAnachronism) {
       // Paimon mocks them and redirects - no penalty, just sarcasm
       return {
-        content: getAnachronismResponse(anachronismCheck.detectedItem, 'hangman'),
+        content: getAnachronismResponse(
+          anachronismCheck.detectedItem,
+          'hangman'
+        ),
         isMetaBreaking: false, // Not tracked as an offense
         shouldLockout: false,
       };
@@ -264,7 +285,10 @@ export async function handleHangmanExploration(
 
         // Player has broken immersion too many times - send to lockout
         return {
-          content: response.content + '\n\n' + getMetaLockoutMessage('hangman', totalLockouts),
+          content:
+            response.content +
+            '\n\n' +
+            getMetaLockoutMessage('hangman', totalLockouts),
           isMetaBreaking: true,
           shouldLockout: true,
         };
@@ -449,32 +473,48 @@ export async function getWhiteRoomExplorationResponse(
     try {
       const parsed = JSON.parse(response.trim());
       const intent = parsed.intent?.toLowerCase() || 'explore';
-      
+
       return {
-        intent: intent === 'fight' ? 'fight' : intent === 'surrender' ? 'surrender' : 'explore',
-        content: parsed.response || 'The other you just stares back, their face a mask of terror.',
+        intent:
+          intent === 'fight'
+            ? 'fight'
+            : intent === 'surrender'
+              ? 'surrender'
+              : 'explore',
+        content:
+          parsed.response ||
+          'The other you just stares back, their face a mask of terror.',
         sawReference: parsed.sawReference === true,
       };
     } catch (parseError) {
       console.error('Failed to parse White Room JSON response:', parseError);
       console.error('Raw response:', response);
-      
+
       // Fallback: try to extract intent from response text
       const lowerResponse = response.toLowerCase();
       let intent = 'explore';
       let sawReference = false;
-      
-      if (lowerResponse.includes('"intent"') && lowerResponse.includes('"fight"')) {
+
+      if (
+        lowerResponse.includes('"intent"') &&
+        lowerResponse.includes('"fight"')
+      ) {
         intent = 'fight';
-      } else if (lowerResponse.includes('"intent"') && lowerResponse.includes('"surrender"')) {
+      } else if (
+        lowerResponse.includes('"intent"') &&
+        lowerResponse.includes('"surrender"')
+      ) {
         intent = 'surrender';
       }
-      
+
       // Try to detect sawReference in malformed JSON
-      if (lowerResponse.includes('"sawreference"') && lowerResponse.includes('true')) {
+      if (
+        lowerResponse.includes('"sawreference"') &&
+        lowerResponse.includes('true')
+      ) {
         sawReference = true;
       }
-      
+
       return {
         intent,
         content: response.trim(),
@@ -518,7 +558,8 @@ export async function generateConventCombatNarrative({
     },
     2: {
       name: 'scorpion-sister',
-      features: 'massive pincers for arms, segmented tail with stinger, black habit',
+      features:
+        'massive pincers for arms, segmented tail with stinger, black habit',
       glitchLevel: 'heavy',
     },
   };
@@ -535,7 +576,9 @@ FEATURES: ${creature.features}
 ENCOUNTER: ${encounterNum} of 2
 GLITCH LEVEL: ${creature.glitchLevel}
 
-${outcomeType === 'attackSuccess' ? `
+${
+  outcomeType === 'attackSuccess'
+    ? `
 OUTCOME: Player successfully attacks and kills the creature
 DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
 
@@ -546,7 +589,8 @@ MUST INCLUDE:
 - ${creature.glitchLevel === 'heavy' ? 'ONE glitch moment (creature→woman OR chitinous→cloth)' : 'ONE subtle human detail'}
 
 FORMAT: 2-3 SHORT sentences. Use <strong>, <em>, <i> sparingly. Be punchy and fast-paced.
-` : `
+`
+    : `
 OUTCOME: Enemy attacks player, dealing damage
 DICE ROLLS: Player ${playerRoll} vs Enemy ${enemyRoll}
 PLAYER HP AFTER: ${playerHP}
@@ -558,7 +602,8 @@ MUST INCLUDE:
 - ${creature.glitchLevel === 'heavy' ? 'ONE glitch (claws→fingers OR chitin→cloth)' : 'ONE subtle human detail'}
 
 FORMAT: 2-3 SHORT sentences. Use <strong>, <em>, <i> sparingly. Be punchy and fast-paced.
-`}
+`
+}
 
 CRITICAL CONSTRAINTS:
 - MAX 40 WORDS TOTAL
@@ -580,7 +625,7 @@ Respond with ONLY the narrative text, no preamble or explanation.`;
     return response.trim();
   } catch (error) {
     console.error('Combat narrative generation failed:', error);
-    
+
     // Fallback to static descriptions
     if (outcomeType === 'attackSuccess') {
       return encounterNum === 1

@@ -24,7 +24,9 @@ describe('AchievementToast', () => {
         props: { achievement: null },
       });
 
-      expect(screen.queryByText('Achievement Unlocked')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Achievement Unlocked')
+      ).not.toBeInTheDocument();
     });
 
     it('should not render when achievement is undefined', () => {
@@ -32,7 +34,9 @@ describe('AchievementToast', () => {
         props: { achievement: undefined },
       });
 
-      expect(screen.queryByText('Achievement Unlocked')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Achievement Unlocked')
+      ).not.toBeInTheDocument();
     });
 
     it('should render when achievement is provided', () => {
@@ -98,7 +102,9 @@ describe('AchievementToast', () => {
       });
 
       expect(screen.getByText('True Name')).toBeInTheDocument();
-      expect(screen.getByText("Discovered Paimon's real identity")).toBeInTheDocument();
+      expect(
+        screen.getByText("Discovered Paimon's real identity")
+      ).toBeInTheDocument();
       expect(screen.getByText('👑')).toBeInTheDocument();
     });
 
@@ -109,7 +115,9 @@ describe('AchievementToast', () => {
 
       expect(screen.getByText('The Truth Beneath')).toBeInTheDocument();
       expect(
-        screen.getByText('Examined the convent basement and uncovered the crime')
+        screen.getByText(
+          'Examined the convent basement and uncovered the crime'
+        )
       ).toBeInTheDocument();
       expect(screen.getByText('🕯️')).toBeInTheDocument();
     });
@@ -121,7 +129,9 @@ describe('AchievementToast', () => {
 
       expect(screen.getByText('Merciful Executioner')).toBeInTheDocument();
       expect(
-        screen.getByText('Tried to save the condemned client in the hangman trial')
+        screen.getByText(
+          'Tried to save the condemned client in the hangman trial'
+        )
       ).toBeInTheDocument();
       expect(screen.getByText('⚖️')).toBeInTheDocument();
     });
@@ -245,7 +255,9 @@ describe('AchievementToast', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Summoning Circle')).toBeInTheDocument();
-        expect(screen.queryByText("Jigsaw's Apprentice")).not.toBeInTheDocument();
+        expect(
+          screen.queryByText("Jigsaw's Apprentice")
+        ).not.toBeInTheDocument();
       });
     });
 
@@ -259,7 +271,9 @@ describe('AchievementToast', () => {
       await rerender({ achievement: null });
 
       await waitFor(() => {
-        expect(screen.queryByText('Achievement Unlocked')).not.toBeInTheDocument();
+        expect(
+          screen.queryByText('Achievement Unlocked')
+        ).not.toBeInTheDocument();
       });
     });
 
@@ -268,7 +282,9 @@ describe('AchievementToast', () => {
         props: { achievement: null },
       });
 
-      expect(screen.queryByText('Achievement Unlocked')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Achievement Unlocked')
+      ).not.toBeInTheDocument();
 
       await rerender({ achievement: ACHIEVEMENTS.JIGSAW_APPRENTICE });
 
@@ -313,7 +329,8 @@ describe('AchievementToast', () => {
     it('should handle achievement with long title', () => {
       const customAchievement = {
         id: 'test',
-        title: 'This is a very long achievement title that might wrap to multiple lines',
+        title:
+          'This is a very long achievement title that might wrap to multiple lines',
         description: 'Description',
         icon: '🎯',
       };
@@ -323,7 +340,9 @@ describe('AchievementToast', () => {
       });
 
       expect(
-        screen.getByText('This is a very long achievement title that might wrap to multiple lines')
+        screen.getByText(
+          'This is a very long achievement title that might wrap to multiple lines'
+        )
       ).toBeInTheDocument();
     });
 
@@ -350,7 +369,7 @@ describe('AchievementToast', () => {
     it('should handle achievement with special characters in text', () => {
       const customAchievement = {
         id: 'test',
-        title: "Test's \"Special\" <Characters>",
+        title: 'Test\'s "Special" <Characters>',
         description: 'Description & more',
         icon: '🎯',
       };
@@ -359,7 +378,9 @@ describe('AchievementToast', () => {
         props: { achievement: customAchievement },
       });
 
-      expect(screen.getByText("Test's \"Special\" <Characters>")).toBeInTheDocument();
+      expect(
+        screen.getByText('Test\'s "Special" <Characters>')
+      ).toBeInTheDocument();
       expect(screen.getByText('Description & more')).toBeInTheDocument();
     });
   });
@@ -382,15 +403,15 @@ describe('AchievementToast', () => {
 
       // Label should be present
       expect(screen.getByText('Achievement Unlocked')).toBeInTheDocument();
-      
+
       // Title should be present
       expect(screen.getByText("Jigsaw's Apprentice")).toBeInTheDocument();
-      
+
       // Description should be present
       expect(
         screen.getByText('Recognized the Saw scenario in the White Room')
       ).toBeInTheDocument();
-      
+
       // Icon should be present
       expect(screen.getByText('🎭')).toBeInTheDocument();
     });
@@ -427,7 +448,9 @@ describe('AchievementToast', () => {
 
       await waitFor(() => {
         expect(screen.getByText('True Name')).toBeInTheDocument();
-        expect(screen.queryByText("Jigsaw's Apprentice")).not.toBeInTheDocument();
+        expect(
+          screen.queryByText("Jigsaw's Apprentice")
+        ).not.toBeInTheDocument();
         expect(screen.queryByText('Summoning Circle')).not.toBeInTheDocument();
       });
     });

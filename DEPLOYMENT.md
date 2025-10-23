@@ -96,6 +96,7 @@ Browser → Netlify CDN (your-site.netlify.app)
 ### Additional Security Measures
 
 The `netlify.toml` file includes:
+
 - Content Security Policy headers
 - X-Frame-Options to prevent clickjacking
 - X-Content-Type-Options to prevent MIME sniffing
@@ -106,42 +107,48 @@ The `netlify.toml` file includes:
 ### Build Fails
 
 **Error:** `npm ERR! missing script: build`
+
 - **Fix:** Ensure `netlify.toml` is committed to repository
 
 **Error:** Asset conversion scripts fail
+
 - **Fix:** Scripts expect `imagemagick` and `ffmpeg` installed
 - **Solution:** Run `npm run build` locally first to generate WebP/OGG files, then commit them
 
 ### API Calls Fail
 
 **Error:** `Claude API key not configured`
+
 - **Fix:** Check environment variable is named `CLAUDE_API_KEY` (not `VITE_CLAUDE_API_KEY`)
 - **Fix:** Verify the variable is set for the correct deploy context (production/branch)
 
 **Error:** `CORS error` or `Function not found`
+
 - **Fix:** Check `netlify.toml` specifies `functions = "netlify/functions"`
 - **Fix:** Verify `netlify/functions/claude.js` is committed to repository
 
 ### Function Times Out
 
 **Error:** `Function execution timed out`
+
 - **Cause:** Claude API taking too long (default Netlify function timeout is 10 seconds)
 - **Fix:** Upgrade to Netlify Pro for 26-second timeout, or optimize prompts for faster responses
 
 ### API Key Still Exposed
 
 **Problem:** API key visible in Network tab or source files
+
 - **Check:** Ensure you're using `CLAUDE_API_KEY` (NOT `VITE_CLAUDE_API_KEY`) in Netlify
 - **Check:** Search your codebase for `import.meta.env.VITE_CLAUDE_API_KEY` usage
 - **Fix:** All Claude API calls should go through `callClaude()` in `src/ai/claude.js`
 
 ## Environment Variable Reference
 
-| Variable | Used In | Purpose |
-|----------|---------|---------|
-| `VITE_CLAUDE_API_KEY` | Local dev (`.env`) | API key for Express proxy server |
-| `CLAUDE_API_KEY` | Production (Netlify) | API key for Netlify Functions (serverless) |
-| `VITE_CLAUDE_PROXY_URL` | Both (optional) | Override auto-detected proxy URL |
+| Variable                | Used In              | Purpose                                    |
+| ----------------------- | -------------------- | ------------------------------------------ |
+| `VITE_CLAUDE_API_KEY`   | Local dev (`.env`)   | API key for Express proxy server           |
+| `CLAUDE_API_KEY`        | Production (Netlify) | API key for Netlify Functions (serverless) |
+| `VITE_CLAUDE_PROXY_URL` | Both (optional)      | Override auto-detected proxy URL           |
 
 ## Custom Domain Setup (Optional)
 
@@ -184,6 +191,7 @@ The `netlify.toml` file includes:
 - Monitor usage: https://console.anthropic.com/settings/usage
 
 **Cost Control Tips:**
+
 - Set usage limits in Anthropic console
 - Implement rate limiting in Netlify Function
 - Add caching for repeated requests (if applicable)

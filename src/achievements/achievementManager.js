@@ -62,7 +62,10 @@ export function getAchievementStats(totalAchievements) {
   return {
     unlocked,
     total: totalAchievements,
-    percentage: totalAchievements > 0 ? Math.round((unlocked / totalAchievements) * 100) : 0,
+    percentage:
+      totalAchievements > 0
+        ? Math.round((unlocked / totalAchievements) * 100)
+        : 0,
   };
 }
 

@@ -3,7 +3,10 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { getMetaBreakingResponse, getMetaLockoutMessage } from './metaDetection.js';
+import {
+  getMetaBreakingResponse,
+  getMetaLockoutMessage,
+} from './metaDetection.js';
 
 describe('Meta-Breaking Detection System', () => {
   describe('getMetaBreakingResponse', () => {

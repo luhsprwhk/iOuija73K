@@ -49,22 +49,44 @@
 <div class={containerClass} role="group" aria-label="Movement controls">
   <div class={gridClass}>
     <div></div>
-    <button class={btnClass} aria-label="Move up" onclick={() => clickDir('north')}>↑</button>
+    <button
+      class={btnClass}
+      aria-label="Move up"
+      onclick={() => clickDir('north')}>↑</button
+    >
     <div></div>
 
-    <button class={btnClass} aria-label="Move left" onclick={() => clickDir('west')}>←</button>
+    <button
+      class={btnClass}
+      aria-label="Move left"
+      onclick={() => clickDir('west')}>←</button
+    >
     <div></div>
-    <button class={btnClass} aria-label="Move right" onclick={() => clickDir('east')}>→</button>
+    <button
+      class={btnClass}
+      aria-label="Move right"
+      onclick={() => clickDir('east')}>→</button
+    >
 
     <div></div>
-    <button class={btnClass} aria-label="Move down" onclick={() => clickDir('south')}>↓</button>
+    <button
+      class={btnClass}
+      aria-label="Move down"
+      onclick={() => clickDir('south')}>↓</button
+    >
     <div></div>
   </div>
 </div>
 
 <style>
   @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 </style>

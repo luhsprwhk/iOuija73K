@@ -9,51 +9,65 @@ The game progresses through a series of psychological trials designed to manipul
 ## Building and Running
 
 ### 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 ### 2. Configure your environment:
+
 ```bash
 cp .env.example .env
 ```
+
 Add your Anthropic Claude API key to the `.env` file:
+
 ```
 VITE_CLAUDE_API_KEY=your_api_key_here
 ```
 
 ### 3. Run the development server:
+
 ```bash
 npm run dev:all
 ```
+
 This starts both the backend proxy server (port 3001) and the frontend dev server (port 5173).
 
 ### 4. Running Tests:
+
 To run the test suite:
+
 ```bash
 npm run test
 ```
 
 ### 5. Linting and Formatting:
+
 To check for linting errors:
+
 ```bash
 npm run lint
 ```
+
 To automatically fix linting errors:
+
 ```bash
 npm run lint:fix
 ```
+
 To format the code:
+
 ```bash
 npm run format
 ```
 
 ## Development Conventions
 
-*   **UI Framework:** Svelte 5 with the new runes API.
-*   **Styling:** Panda CSS is used for styling.
-*   **AI:** The Anthropic Claude API is used for the AI dungeon master. The `claude-3-5-sonnet-20241022` model is used.
-*   **State Management:** Game state is managed within the `ChatInterface.svelte` component.
-*   **Trials:** The game is structured into a series of "trials", each with its own logic contained in the `src/trials/` directory.
-*   **API Communication:** All communication with the Claude API is handled by the `src/ai/claude.js` module. A proxy server is used to avoid CORS issues.
-*   **Code Style:** The project uses ESLint for linting and Prettier for formatting. Configuration files are `eslint.config.js` and `.prettierrc`.
+- **UI Framework:** Svelte 5 with the new runes API.
+- **Styling:** Panda CSS is used for styling.
+- **AI:** The Anthropic Claude API is used for the AI dungeon master. The `claude-3-5-sonnet-20241022` model is used.
+- **State Management:** Game state is managed within the `ChatInterface.svelte` component.
+- **Trials:** The game is structured into a series of "trials", each with its own logic contained in the `src/trials/` directory.
+- **API Communication:** All communication with the Claude API is handled by the `src/ai/claude.js` module. A proxy server is used to avoid CORS issues.
+- **Code Style:** The project uses ESLint for linting and Prettier for formatting. Configuration files are `eslint.config.js` and `.prettierrc`.

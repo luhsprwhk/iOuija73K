@@ -14,7 +14,9 @@
 
   // Get achievement data
   const allAchievements = getAllAchievements();
-  const unlockedIds = $derived(new Set(getUnlockedAchievements().map((a) => a.id)));
+  const unlockedIds = $derived(
+    new Set(getUnlockedAchievements().map((a) => a.id))
+  );
   const stats = $derived(getAchievementStats(allAchievements.length));
 
   function handleClose() {
@@ -132,7 +134,9 @@
               marginBottom: '12px',
               bg: isUnlocked ? 'rgba(139, 0, 0, 0.1)' : 'rgba(40, 40, 40, 0.5)',
               border: '1px solid',
-              borderColor: isUnlocked ? 'rgba(139, 0, 0, 0.3)' : 'rgba(80, 80, 80, 0.3)',
+              borderColor: isUnlocked
+                ? 'rgba(139, 0, 0, 0.3)'
+                : 'rgba(80, 80, 80, 0.3)',
               borderRadius: '8px',
               opacity: isUnlocked ? 1 : 0.5,
               transition: 'all 0.2s',
@@ -166,7 +170,9 @@
               <p
                 class={css({
                   fontSize: '14px',
-                  color: isUnlocked ? 'rgba(255, 255, 255, 0.7)' : 'rgba(255, 255, 255, 0.3)',
+                  color: isUnlocked
+                    ? 'rgba(255, 255, 255, 0.7)'
+                    : 'rgba(255, 255, 255, 0.3)',
                   lineHeight: 1.5,
                 })}
               >

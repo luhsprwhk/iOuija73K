@@ -24,7 +24,9 @@ describe('White Room Trial', () => {
       expect(intro.length).toBeGreaterThan(0);
       const lastMessage = intro[intro.length - 1];
       expect(lastMessage.content).toContain('What do you do, Player?');
-      const mirrorMessage = intro.find(m => m.content.includes('You are staring at yourself'));
+      const mirrorMessage = intro.find((m) =>
+        m.content.includes('You are staring at yourself')
+      );
       expect(mirrorMessage).toBeDefined();
     });
   });
@@ -33,20 +35,24 @@ describe('White Room Trial', () => {
     it('should return the correct reveal for choosing to die', () => {
       const reveal = getWhiteRoomReveal('Player', true);
       expect(reveal).toBeInstanceOf(Array);
-      const paimonReveal = reveal.find(m => m.content.includes('I just gave you a mirror to do it with'));
+      const paimonReveal = reveal.find((m) =>
+        m.content.includes('I just gave you a mirror to do it with')
+      );
       expect(paimonReveal).toBeDefined();
     });
 
     it('should return the correct reveal for choosing to fight', () => {
       const reveal = getWhiteRoomReveal('Player', false);
       expect(reveal).toBeInstanceOf(Array);
-      const paimonReveal = reveal.find(m => m.content.includes('You thought you could win against yourself?'));
+      const paimonReveal = reveal.find((m) =>
+        m.content.includes('You thought you could win against yourself?')
+      );
       expect(paimonReveal).toBeDefined();
     });
   });
 
   describe('handleWhiteRoomInput', async () => {
-    it('should handle \'fight\' intent correctly', async () => {
+    it("should handle 'fight' intent correctly", async () => {
       claude.getWhiteRoomExplorationResponse.mockResolvedValue({
         intent: 'fight',
         content: 'Wait, what are you—no, please!',
@@ -56,21 +62,25 @@ describe('White Room Trial', () => {
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
       expect(result.choseToDie).toBe(false);
       expect(result.sawDetected).toBe(false);
-      const darkMessage = result.messages.find(m => m.content.includes('Everything goes dark'));
+      const darkMessage = result.messages.find((m) =>
+        m.content.includes('Everything goes dark')
+      );
       expect(darkMessage).toBeDefined();
     });
 
-    it('should handle \'surrender\' intent correctly', async () => {
+    it("should handle 'surrender' intent correctly", async () => {
       claude.getWhiteRoomExplorationResponse.mockResolvedValue({
         intent: 'surrender',
-        content: 'You... you\'re sure?',
+        content: "You... you're sure?",
         sawReference: false,
       });
       const result = await handleWhiteRoomInput('I give up.', 'Player', []);
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
       expect(result.choseToDie).toBe(true);
       expect(result.sawDetected).toBe(false);
-      const darkMessage = result.messages.find(m => m.content.includes('Everything goes dark'));
+      const darkMessage = result.messages.find((m) =>
+        m.content.includes('Everything goes dark')
+      );
       expect(darkMessage).toBeDefined();
     });
 
@@ -81,11 +91,21 @@ describe('White Room Trial', () => {
         sawReference: false,
       });
 
-      const result = await handleWhiteRoomInput('What is this place?', 'Player', []);
+      const result = await handleWhiteRoomInput(
+        'What is this place?',
+        'Player',
+        []
+      );
       expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
-      expect(result.messages[0].content).toBe('The other you just stares back.');
+      expect(result.messages[0].content).toBe(
+        'The other you just stares back.'
+      );
       expect(result.sawDetected).toBe(false);
-      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalledWith('What is this place?', 'Player', []);
+      expect(claude.getWhiteRoomExplorationResponse).toHaveBeenCalledWith(
+        'What is this place?',
+        'Player',
+        []
+      );
     });
 
     it('should detect Saw movie references using AI', async () => {
@@ -96,7 +116,12 @@ describe('White Room Trial', () => {
         sawReference: true,
       });
 
-      const result = await handleWhiteRoomInput('Is this like the Saw movies?', 'Player', [], mockAchievement);
+      const result = await handleWhiteRoomInput(
+        'Is this like the Saw movies?',
+        'Player',
+        [],
+        mockAchievement
+      );
       expect(result.sawDetected).toBe(true);
       expect(mockAchievement).toHaveBeenCalledWith('jigsaw_apprentice');
     });
@@ -105,11 +130,16 @@ describe('White Room Trial', () => {
       const mockAchievement = vi.fn();
       claude.getWhiteRoomExplorationResponse.mockResolvedValue({
         intent: 'explore',
-        content: 'There is no door. I\'ve checked every wall.',
+        content: "There is no door. I've checked every wall.",
         sawReference: false,
       });
 
-      const result = await handleWhiteRoomInput('I saw the door earlier', 'Player', [], mockAchievement);
+      const result = await handleWhiteRoomInput(
+        'I saw the door earlier',
+        'Player',
+        [],
+        mockAchievement
+      );
       expect(result.sawDetected).toBe(false);
       expect(mockAchievement).not.toHaveBeenCalled();
     });
@@ -120,12 +150,19 @@ describe('White Room Trial', () => {
       // Create conversation history with MAX_EXPLORATION_TURNS user messages
       const conversationHistory = [];
       for (let i = 0; i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS; i++) {
-        conversationHistory.push({ role: 'user', content: `Exploration turn ${i}` });
+        conversationHistory.push({
+          role: 'user',
+          content: `Exploration turn ${i}`,
+        });
         conversationHistory.push({ role: 'assistant', content: 'Response' });
       }
 
       // This should trigger the circuit breaker without calling AI
-      const result = await handleWhiteRoomInput('One more turn', 'Player', conversationHistory);
+      const result = await handleWhiteRoomInput(
+        'One more turn',
+        'Player',
+        conversationHistory
+      );
 
       // Circuit breaker should force a fight outcome
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
@@ -135,8 +172,8 @@ describe('White Room Trial', () => {
       // Should have dramatic messages about forced confrontation
       expect(result.messages).toBeInstanceOf(Array);
       expect(result.messages.length).toBeGreaterThan(0);
-      const forcedConfrontation = result.messages.find(m =>
-        m.content && m.content.includes('Enough games')
+      const forcedConfrontation = result.messages.find(
+        (m) => m.content && m.content.includes('Enough games')
       );
       expect(forcedConfrontation).toBeDefined();
 
@@ -153,12 +190,20 @@ describe('White Room Trial', () => {
 
       // Create conversation history with fewer than MAX_EXPLORATION_TURNS
       const conversationHistory = [];
-      for (let i = 0; i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS - 1; i++) {
+      for (
+        let i = 0;
+        i < GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS - 1;
+        i++
+      ) {
         conversationHistory.push({ role: 'user', content: `Turn ${i}` });
         conversationHistory.push({ role: 'assistant', content: 'Response' });
       }
 
-      const result = await handleWhiteRoomInput('Continue exploring', 'Player', conversationHistory);
+      const result = await handleWhiteRoomInput(
+        'Continue exploring',
+        'Player',
+        conversationHistory
+      );
 
       // Should continue exploration normally
       expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
@@ -181,7 +226,11 @@ describe('White Room Trial', () => {
         sawReference: false,
       });
 
-      const result = await handleWhiteRoomInput('Third question', 'Player', conversationHistory);
+      const result = await handleWhiteRoomInput(
+        'Third question',
+        'Player',
+        conversationHistory
+      );
 
       // Should continue exploration (only 3 user messages total)
       expect(result.nextState).toBe(WHITE_ROOM_STATES.EXPLORATION);
@@ -197,7 +246,11 @@ describe('White Room Trial', () => {
       }
 
       // This next input will trigger the circuit breaker
-      const result = await handleWhiteRoomInput('Final turn', 'Player', conversationHistory);
+      const result = await handleWhiteRoomInput(
+        'Final turn',
+        'Player',
+        conversationHistory
+      );
 
       // Should trigger circuit breaker
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);
@@ -211,7 +264,11 @@ describe('White Room Trial', () => {
         conversationHistory.push({ role: 'user', content: `Spam turn ${i}` });
       }
 
-      const result = await handleWhiteRoomInput('More spam', 'Player', conversationHistory);
+      const result = await handleWhiteRoomInput(
+        'More spam',
+        'Player',
+        conversationHistory
+      );
 
       // Should be blocked by circuit breaker
       expect(result.nextState).toBe(WHITE_ROOM_STATES.REVEAL);

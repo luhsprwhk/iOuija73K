@@ -43,7 +43,8 @@ export const ACHIEVEMENTS = {
   KILLJOY: {
     id: 'killjoy',
     title: 'Killjoy',
-    description: 'Ruined the illusion so many times that Paimon banned you. Three times.',
+    description:
+      'Ruined the illusion so many times that Paimon banned you. Three times.',
     icon: '💀', // Skull for killing the fun
     hidden: false,
   },
@@ -60,5 +61,7 @@ export function getAllAchievements() {
  * Get achievement by ID
  */
 export function getAchievementById(id) {
-  return Object.values(ACHIEVEMENTS).find((achievement) => achievement.id === id);
+  return Object.values(ACHIEVEMENTS).find(
+    (achievement) => achievement.id === id
+  );
 }

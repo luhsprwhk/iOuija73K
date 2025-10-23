@@ -22,9 +22,11 @@
   $: animationClass = loading
     ? 'spin-animation'
     : hasEntered
-    ? (animate ? 'pulse-only-animation' : '')
-    : 'entrance-animation';
-  
+      ? animate
+        ? 'pulse-only-animation'
+        : ''
+      : 'entrance-animation';
+
   // Mark entrance as complete after the entrance animation duration
   $: if (!hasEntered && !loading) {
     setTimeout(() => {
@@ -44,11 +46,15 @@
 
 <style>
   .spin-animation {
-    animation: spin 3s linear infinite, pulse 3s ease-in-out infinite;
+    animation:
+      spin 3s linear infinite,
+      pulse 3s ease-in-out infinite;
   }
 
   .pulse-animation {
-    animation: pulse 3s ease-in-out infinite, entrance 3s ease-out;
+    animation:
+      pulse 3s ease-in-out infinite,
+      entrance 3s ease-out;
   }
 
   .pulse-only-animation {

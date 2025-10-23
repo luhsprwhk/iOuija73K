@@ -57,7 +57,9 @@ Haiku 4.5's near-frontier performance handles all these tasks excellently while 
 ## Cost Impact
 
 ### Before Optimization
+
 All API calls used Sonnet:
+
 - Classification: $3-15 per million tokens
 - Narrative: $3-15 per million tokens
 
@@ -80,18 +82,16 @@ The `callClaude()` function now accepts an optional `options` parameter:
 
 ```javascript
 // Use Haiku for classification (fast & cheap)
-await callClaude(
-  [{ role: 'user', content: userInput }],
-  systemPrompt,
-  { model: MODEL_HAIKU, maxTokens: MAX_TOKENS_CLASSIFICATION }
-);
+await callClaude([{ role: 'user', content: userInput }], systemPrompt, {
+  model: MODEL_HAIKU,
+  maxTokens: MAX_TOKENS_CLASSIFICATION,
+});
 
 // Use Sonnet for narrative (creative & nuanced)
-await callClaude(
-  messages,
-  systemPrompt,
-  { model: MODEL_SONNET, maxTokens: MAX_TOKENS }
-);
+await callClaude(messages, systemPrompt, {
+  model: MODEL_SONNET,
+  maxTokens: MAX_TOKENS,
+});
 
 // Default (no options) uses Sonnet
 await callClaude(messages, systemPrompt);

@@ -21,7 +21,9 @@ describe('AchievementPanel', () => {
         props: { isOpen: false },
       });
 
-      expect(container.querySelector('[role="button"]')).not.toBeInTheDocument();
+      expect(
+        container.querySelector('[role="button"]')
+      ).not.toBeInTheDocument();
     });
 
     it('should render when isOpen is true', () => {
@@ -124,7 +126,9 @@ describe('AchievementPanel', () => {
 
     it('should show ??? for locked achievement descriptions', () => {
       // Ensure no achievements are unlocked
-      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue([]);
+      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue(
+        []
+      );
 
       render(AchievementPanel, {
         props: { isOpen: true },
@@ -146,7 +150,7 @@ describe('AchievementPanel', () => {
       expect(
         screen.getByText('Recognized the Saw scenario in the White Room')
       ).toBeInTheDocument();
-      
+
       // Other achievements should still show ???
       const lockedDescriptions = screen.getAllByText('???');
       expect(lockedDescriptions).toHaveLength(5); // 6 total - 1 unlocked = 5 locked
@@ -168,7 +172,9 @@ describe('AchievementPanel', () => {
 
     it('should not display checkmark for locked achievements', () => {
       // Ensure no achievements are unlocked
-      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue([]);
+      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue(
+        []
+      );
 
       render(AchievementPanel, {
         props: { isOpen: true },
@@ -225,7 +231,7 @@ describe('AchievementPanel', () => {
 
       const closeButton = screen.getByText('✕');
       expect(closeButton).toBeInTheDocument();
-      
+
       // Close button should be clickable
       await fireEvent.click(closeButton);
       // Note: In a real app, the parent would update isOpen
@@ -248,7 +254,9 @@ describe('AchievementPanel', () => {
     });
 
     it('should render all achievement icons', () => {
-      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue([]);
+      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue(
+        []
+      );
 
       render(AchievementPanel, {
         props: { isOpen: true },
@@ -263,7 +271,9 @@ describe('AchievementPanel', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty unlocked achievements array', () => {
-      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue([]);
+      vi.spyOn(achievementManager, 'getUnlockedAchievements').mockReturnValue(
+        []
+      );
 
       render(AchievementPanel, {
         props: { isOpen: true },
@@ -278,7 +288,7 @@ describe('AchievementPanel', () => {
       });
 
       const closeButton = screen.getByText('✕');
-      
+
       // Should not throw error when onClose is undefined
       await expect(fireEvent.click(closeButton)).resolves.not.toThrow();
     });
@@ -308,10 +318,14 @@ describe('AchievementPanel', () => {
         screen.getByText("Discovered Paimon's real identity")
       ).toBeInTheDocument();
       expect(
-        screen.getByText('Examined the convent basement and uncovered the crime')
+        screen.getByText(
+          'Examined the convent basement and uncovered the crime'
+        )
       ).toBeInTheDocument();
       expect(
-        screen.getByText('Tried to save the condemned client in the hangman trial')
+        screen.getByText(
+          'Tried to save the condemned client in the hangman trial'
+        )
       ).toBeInTheDocument();
 
       // No ??? should be present

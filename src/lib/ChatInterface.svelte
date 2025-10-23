@@ -17,7 +17,11 @@
     clearLockout,
   } from './helpers/lockoutManager';
   import { getAchievementById } from '../achievements/achievementData.js';
-  import { unlockAchievement, isAchievementUnlocked } from '../achievements/achievementManager.js';
+  import {
+    unlockAchievement,
+    isAchievementUnlocked,
+  } from '../achievements/achievementManager.js';
+  import { loadProfile } from './helpers/corruptionManager.js';
   import {
     handleConventInput,
     getConventIntro,
@@ -88,6 +92,7 @@
   let currentAchievement = $state(null); // Currently displayed achievement toast
   let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
   let metaOffenseCount = $state(0); // Track meta-breaking offense count
+  let corruptionProfile = $state(loadProfile()); // Load corruption profile from localStorage
 
   // Compute demon name based on achievement
   let demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael');
@@ -166,21 +171,29 @@
   function addAssistantMessages(messages, baseDelay = 0) {
     const intervalMessages = cumulativeToIntervals(messages);
     let accumulatedDelay = baseDelay;
-    intervalMessages.forEach(({ delay, content, showButton, image, buttons, audio }) => {
-      if (audio) {
-        // Play audio at the scheduled time
-        setTimeout(() => {
-          const audioEl = new Audio(audio);
-          audioEl.play().catch((err) => {
-            console.error('Failed to play audio:', err);
-          });
-        }, accumulatedDelay + delay);
+    intervalMessages.forEach(
+      ({ delay, content, showButton, image, buttons, audio }) => {
+        if (audio) {
+          // Play audio at the scheduled time
+          setTimeout(() => {
+            const audioEl = new Audio(audio);
+            audioEl.play().catch((err) => {
+              console.error('Failed to play audio:', err);
+            });
+          }, accumulatedDelay + delay);
+        }
+        if (content !== undefined) {
+          addAssistantMessage(
+            content,
+            accumulatedDelay + delay,
+            showButton || false,
+            image,
+            buttons
+          );
+        }
+        accumulatedDelay += delay;
       }
-      if (content !== undefined) {
-        addAssistantMessage(content, accumulatedDelay + delay, showButton || false, image, buttons);
-      }
-      accumulatedDelay += delay;
-    });
+    );
   }
 
   /**
@@ -348,12 +361,16 @@
           comment = 'Ah, the sigil gave me away, did it?';
         } else if (lower.includes('raphael')) {
           comment = 'Raphael is a mask. You saw through it.';
-        } else if (lower.includes('true name') || lower.includes('real name') || lower.includes('name')) {
+        } else if (
+          lower.includes('true name') ||
+          lower.includes('real name') ||
+          lower.includes('name')
+        ) {
           comment = 'Names have power. You just spoke mine.';
         }
 
         addAssistantMessage(`${comment} Call me <strong>Paimon</strong>.`, 600);
-        addAssistantMessage("Now—your name.", 1600);
+        addAssistantMessage('Now—your name.', 1600);
         return; // Do not penalize or proceed with validation on this turn
       }
       // Validate the name
@@ -398,7 +415,14 @@
       isProcessing = true;
 
       const previousState = conventState;
-      const result = await handleConventInput(userInput, conventState, conventStateData, metaOffenseCount, triggerAchievement);
+      const result = await handleConventInput(
+        userInput,
+        conventState,
+        conventStateData,
+        metaOffenseCount,
+        triggerAchievement,
+        corruptionProfile
+      );
 
       // Handle meta-breaking detection
       if (result.isMetaBreaking) {
@@ -410,6 +434,12 @@
       if (result.conventState) {
         conventStateData = result.conventState;
       }
+
+      // Update corruption profile if returned
+      if (result.corruptionProfile) {
+        corruptionProfile = result.corruptionProfile;
+      }
+
       isProcessing = false;
 
       // Add response messages
@@ -560,7 +590,10 @@
       if (isProcessing) return;
       isProcessing = true;
 
-      if (whiteRoomState === WHITE_ROOM_STATES.INTRO || whiteRoomState === WHITE_ROOM_STATES.EXPLORATION) {
+      if (
+        whiteRoomState === WHITE_ROOM_STATES.INTRO ||
+        whiteRoomState === WHITE_ROOM_STATES.EXPLORATION
+      ) {
         // Track conversation history for exploration
         whiteRoomExplorationHistory.push({
           role: 'user',
@@ -568,7 +601,13 @@
         });
 
         // Player makes their choice or explores (using AI classification)
-        const result = await handleWhiteRoomInput(userInput, playerName, whiteRoomExplorationHistory, triggerAchievement, metaOffenseCount);
+        const result = await handleWhiteRoomInput(
+          userInput,
+          playerName,
+          whiteRoomExplorationHistory,
+          triggerAchievement,
+          metaOffenseCount
+        );
 
         // Handle meta-breaking detection
         if (result.isMetaBreaking) {
@@ -693,9 +732,9 @@
     }
   }
 
-
   async function handleMovement(direction) {
-    if (gameState !== 'convent' || conventState !== CONVENT_STATES.EXPLORATION) return;
+    if (gameState !== 'convent' || conventState !== CONVENT_STATES.EXPLORATION)
+      return;
     if (isProcessing) return;
 
     isProcessing = true;
@@ -706,7 +745,8 @@
       conventState,
       conventStateData,
       metaOffenseCount,
-      triggerAchievement
+      triggerAchievement,
+      corruptionProfile
     );
 
     if (result.isMetaBreaking) {
@@ -717,6 +757,12 @@
     if (result.conventState) {
       conventStateData = result.conventState;
     }
+
+    // Update corruption profile if returned
+    if (result.corruptionProfile) {
+      corruptionProfile = result.corruptionProfile;
+    }
+
     isProcessing = false;
 
     result.messages.forEach(({ delay, content, image }) => {
@@ -724,9 +770,14 @@
     });
 
     const lastDelay =
-      result.messages.length > 0 ? result.messages[result.messages.length - 1].delay : 0;
+      result.messages.length > 0
+        ? result.messages[result.messages.length - 1].delay
+        : 0;
 
-    if (previousState !== CONVENT_STATES.REVEAL && conventState === CONVENT_STATES.REVEAL) {
+    if (
+      previousState !== CONVENT_STATES.REVEAL &&
+      conventState === CONVENT_STATES.REVEAL
+    ) {
       const revealMessages = getConventReveal();
       revealMessages.forEach(({ delay, content, image }) => {
         addAssistantMessage(content, lastDelay + delay, false, image);
@@ -801,8 +852,17 @@
   // Determine what to show in the status box
   const statusBoxContent = $derived(() => {
     // Convent trial: show HP
-    if (gameState === 'convent' && conventState !== CONVENT_STATES.COMPLETE && conventState !== CONVENT_STATES.LOCKOUT) {
-      const hearts = conventStateData.playerHP === 2 ? '❤️❤️' : conventStateData.playerHP === 1 ? '❤️🖤' : '🖤🖤';
+    if (
+      gameState === 'convent' &&
+      conventState !== CONVENT_STATES.COMPLETE &&
+      conventState !== CONVENT_STATES.LOCKOUT
+    ) {
+      const hearts =
+        conventStateData.playerHP === 2
+          ? '❤️❤️'
+          : conventStateData.playerHP === 1
+            ? '❤️🖤'
+            : '🖤🖤';
       return `<p style="color: #ff0000; font-weight: bold;">HP: ${hearts}</p>`;
     }
     // Hangman trial: show timer
@@ -823,7 +883,6 @@
     flexWrap: 'wrap',
     position: 'relative',
   });
-
 
   const titleClass = css({
     fontSize: '2.5rem',
@@ -910,11 +969,11 @@
     },
   });
 
-  let { 
-    title = 'iOuija73k', 
+  let {
+    title = 'iOuija73k',
     onGameStateChange = undefined,
     onAchievementUnlock = undefined,
-    showAchievementPanel = $bindable(false)
+    showAchievementPanel = $bindable(false),
   } = $props();
 
   /**
@@ -1137,12 +1196,12 @@
     {/if}
 
     {#if gameState === 'convent' && conventState === CONVENT_STATES.EXPLORATION}
-      <MovementControls showInput={showInput} onMove={handleMovement} />
+      <MovementControls {showInput} onMove={handleMovement} />
     {/if}
 
     <!-- Status Box -->
     {#if statusBoxContent()}
-      <StatusBox showInput={showInput} content={statusBoxContent()} />
+      <StatusBox {showInput} content={statusBoxContent()} />
     {/if}
   </div>
 {/if}
@@ -1156,7 +1215,10 @@
 </audio>
 
 <!-- Achievement components -->
-<AchievementToast achievement={currentAchievement} onDismiss={dismissAchievementToast} />
+<AchievementToast
+  achievement={currentAchievement}
+  onDismiss={dismissAchievementToast}
+/>
 <AchievementPanel bind:isOpen={showAchievementPanel} />
 
 <style>

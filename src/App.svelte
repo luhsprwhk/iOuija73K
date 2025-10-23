@@ -1,14 +1,14 @@
 <script>
   import { css } from '../styled-system/css';
   import ChatInterface from './lib/ChatInterface.svelte';
-  import DevControls from './lib/DevControls.svelte';
-  import Footer from './lib/Footer.svelte';
+  import DevControls from './lib/components/DevControls.svelte';
+  import Footer from './lib/components/Footer.svelte';
   import { getUnlockedAchievements } from './achievements/achievementManager.js';
 
   let chatInterfaceRef;
   let showAchievementPanel = $state(false);
   let hasAchievements = $state(getUnlockedAchievements().length > 0);
-  
+
   // Update achievement button visibility when achievements are unlocked
   function handleAchievementUnlock() {
     hasAchievements = true;
@@ -94,15 +94,21 @@
 <div class={containerClass}>
   {#if import.meta.env.DEV}
     <div class={devControlsClass}>
-      <DevControls onStateJump={handleStateJump} onTriggerLockout={handleTriggerLockout} />
+      <DevControls
+        onStateJump={handleStateJump}
+        onTriggerLockout={handleTriggerLockout}
+      />
     </div>
   {/if}
   <div class={contentClass}>
-    <ChatInterface 
-      bind:this={chatInterfaceRef} 
+    <ChatInterface
+      bind:this={chatInterfaceRef}
       bind:showAchievementPanel
       onAchievementUnlock={handleAchievementUnlock}
     />
-    <Footer onAchievementClick={handleAchievementClick} showAchievementButton={hasAchievements} />
+    <Footer
+      onAchievementClick={handleAchievementClick}
+      showAchievementButton={hasAchievements}
+    />
   </div>
 </div>

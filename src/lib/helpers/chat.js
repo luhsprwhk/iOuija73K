@@ -26,7 +26,7 @@ export function limitConversationHistory(history, maxMessages = 10) {
   if (!Array.isArray(history) || history.length <= maxMessages) {
     return history;
   }
-  
+
   // Keep only the last N messages
   return history.slice(-maxMessages);
 }

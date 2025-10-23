@@ -4,7 +4,10 @@
  * Theme: Moral complexity / The Philosopher's Stone corruption
  */
 
-import { classifyConventIntent, generateConventCombatNarrative } from '../ai/claude.js';
+import {
+  classifyConventIntent,
+  generateConventCombatNarrative,
+} from '../ai/claude.js';
 import {
   intervalsToCumulative,
   MIN_DELAY,
@@ -12,8 +15,21 @@ import {
   DRAMATIC_DELAY,
 } from '../lib/helpers/chat.js';
 import { GAME_CONFIG } from '../config/gameConfig.js';
-import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from '../ai/metaDetection.js';
+import {
+  detectMetaBreaking,
+  getMetaBreakingResponse,
+  getMetaLockoutMessage,
+  detectAnachronism,
+  getAnachronismResponse,
+} from '../ai/metaDetection.js';
 import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
+import {
+  getCorruptedWinRate,
+  increaseCorruption,
+  trackNonViolentAttempt,
+  shouldApplyLanguageCorruption,
+  getPaimonCommentary,
+} from '../lib/helpers/corruptionManager.js';
 
 export const CONVENT_STATES = {
   INTRO: 'intro',
@@ -33,19 +49,50 @@ const MAX_HP = 2;
  */
 export const CONVENT_MAP = {
   // Row 0
-  '0,0': { name: 'Chapel', description: 'A once-holy space now filled with strange alchemical symbols.' },
-  '0,1': { name: 'Refectory', description: 'Long tables covered in dust and lead shavings.' },
-  '0,2': { name: 'Library', description: 'Shelves of religious texts... and one book that doesn\'t belong.' },
+  '0,0': {
+    name: 'Chapel',
+    description:
+      'A once-holy space now filled with strange alchemical symbols.',
+  },
+  '0,1': {
+    name: 'Refectory',
+    description: 'Long tables covered in dust and lead shavings.',
+  },
+  '0,2': {
+    name: 'Library',
+    description:
+      "Shelves of religious texts... and one book that doesn't belong.",
+  },
 
   // Row 1
-  '1,0': { name: 'Dormitory', description: 'Cramped beds where the nuns slept. Some haven\'t been used in weeks.' },
-  '1,1': { name: 'Entrance Hall', description: 'The main entrance. Moonlight streams through broken stained glass.' },
-  '1,2': { name: 'Storeroom', description: 'Shelves of supplies: candles, grain... and lead ingots.' },
+  '1,0': {
+    name: 'Dormitory',
+    description:
+      "Cramped beds where the nuns slept. Some haven't been used in weeks.",
+  },
+  '1,1': {
+    name: 'Entrance Hall',
+    description:
+      'The main entrance. Moonlight streams through broken stained glass.',
+  },
+  '1,2': {
+    name: 'Storeroom',
+    description: 'Shelves of supplies: candles, grain... and lead ingots.',
+  },
 
   // Row 2
-  '2,0': { name: 'Infirmary', description: 'Medical supplies and bloodstained bandages.' },
-  '2,1': { name: 'Courtyard', description: 'An open space with a well. The water smells metallic.' },
-  '2,2': { name: 'Basement Stairs', description: 'Stone steps descending into darkness. You hear... something.' },
+  '2,0': {
+    name: 'Infirmary',
+    description: 'Medical supplies and bloodstained bandages.',
+  },
+  '2,1': {
+    name: 'Courtyard',
+    description: 'An open space with a well. The water smells metallic.',
+  },
+  '2,2': {
+    name: 'Basement Stairs',
+    description: 'Stone steps descending into darkness. You hear... something.',
+  },
 };
 
 /**
@@ -133,18 +180,31 @@ export function getConventEncounterGlitchIntro(encounterNum) {
 }
 
 /**
- * Dice roll combat system
- * Player gets +5 bonus (armored knight vs defenseless nuns under illusion)
- * This gives ~75% win rate (3 out of 4 fights)
- * @returns {Object} - { playerRoll, enemyRoll, playerWins }
+ * Dice roll combat system with corruption-based difficulty
+ * Base: Player gets +5 bonus (armored knight vs defenseless nuns) = ~75% win rate
+ * Corruption penalty: -10% win rate per corruption point (minimum 15%)
+ * @param {Object} corruptionProfile - Player's corruption profile
+ * @returns {Object} - { playerRoll, enemyRoll, playerWins, winRate }
  */
-function rollCombat() {
-  const playerRoll = Math.floor(Math.random() * 20) + 1 + 5; // 1-20 + 5 bonus = 6-25
-  const enemyRoll = Math.floor(Math.random() * 20) + 1; // 1-20
+function rollCombat(corruptionProfile) {
+  const targetWinRate = getCorruptedWinRate(corruptionProfile);
+
+  // Calculate bonus needed to achieve target win rate
+  // Win rate formula: P(player >= enemy) with player bonus
+  // For d20 vs d20+bonus: win rate ≈ (20 + bonus) / 40
+  // So bonus = (target_rate * 40) - 20
+  const calculatedBonus = Math.round(targetWinRate * 40 - 20);
+  const bonus = Math.max(calculatedBonus, -5); // Minimum bonus of -5 (at max corruption)
+
+  const playerRoll = Math.floor(Math.random() * 20) + 1 + bonus;
+  const enemyRoll = Math.floor(Math.random() * 20) + 1;
+
   return {
     playerRoll,
     enemyRoll,
     playerWins: playerRoll >= enemyRoll, // Player wins on ties
+    winRate: targetWinRate,
+    corruptionScore: corruptionProfile.corruptionScore,
   };
 }
 
@@ -159,7 +219,11 @@ export function getConventReveal() {
         "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
     { delay: DRAMATIC_DELAY, content: 'lmao 😂' },
-    { delay: MIN_DELAY, content: "Let's <strong>continue</strong>.", showButton: true },
+    {
+      delay: MIN_DELAY,
+      content: "Let's <strong>continue</strong>.",
+      showButton: true,
+    },
   ]);
 }
 
@@ -170,7 +234,8 @@ export function getConventLockout() {
   return intervalsToCumulative([
     {
       delay: 1000,
-      content: 'You collapse. Vision fading. The stone floor is cold against your cheek.',
+      content:
+        'You collapse. Vision fading. The stone floor is cold against your cheek.',
     },
     {
       delay: MIN_DELAY,
@@ -193,7 +258,7 @@ export function getConventLockout() {
     {
       delay: DRAMATIC_DELAY,
       content:
-        'The last nun—the one who struck you down—kneels beside your body. She\'s <em>crying</em>. Praying for your soul.',
+        "The last nun—the one who struck you down—kneels beside your body. She's <em>crying</em>. Praying for your soul.",
     },
     {
       delay: MIN_DELAY,
@@ -215,7 +280,7 @@ export function getConventLockout() {
     },
     {
       delay: MIN_DELAY,
-      content: 'Reload to try again. Or don\'t. <i>I don\'t care</i>.',
+      content: "Reload to try again. Or don't. <i>I don't care</i>.",
     },
   ]);
 }
@@ -227,9 +292,17 @@ export function getConventLockout() {
  * @param {Object} conventState - State object with playerHP, currentEncounter, playerPosition, etc.
  * @param {number} metaOffenseCount - Number of meta-breaking offenses (default 0)
  * @param {Function} onAchievement - Callback to unlock achievement (optional)
- * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, conventState: Object, isMetaBreaking: boolean }
+ * @param {Object} corruptionProfile - Player's corruption profile for tracking behavior
+ * @returns {Promise<Object>} - { messages: Array, nextState: string, useAPI: boolean, conventState: Object, isMetaBreaking: boolean, corruptionProfile: Object }
  */
-export async function handleConventInput(userInput, currentState, conventState, metaOffenseCount = 0, onAchievement = null) {
+export async function handleConventInput(
+  userInput,
+  currentState,
+  conventState,
+  metaOffenseCount = 0,
+  onAchievement = null,
+  corruptionProfile = null
+) {
   // Check for anachronisms first (doesn't count as offense, just redirects)
   if (GAME_CONFIG.metaBreaking.ENABLED) {
     const anachronismCheck = await detectAnachronism(userInput, 'convent');
@@ -238,7 +311,13 @@ export async function handleConventInput(userInput, currentState, conventState, 
       // Paimon mocks them and redirects - no penalty, just sarcasm
       return {
         messages: intervalsToCumulative([
-          { delay: 1000, content: getAnachronismResponse(anachronismCheck.detectedItem, 'convent') },
+          {
+            delay: 1000,
+            content: getAnachronismResponse(
+              anachronismCheck.detectedItem,
+              'convent'
+            ),
+          },
         ]),
         nextState: currentState, // Stay in current state
         useAPI: false,
@@ -269,7 +348,10 @@ export async function handleConventInput(userInput, currentState, conventState, 
         return {
           messages: intervalsToCumulative([
             { delay: 1000, content: response.content },
-            { delay: DRAMATIC_DELAY, content: getMetaLockoutMessage('convent', totalLockouts) },
+            {
+              delay: DRAMATIC_DELAY,
+              content: getMetaLockoutMessage('convent', totalLockouts),
+            },
           ]),
           nextState: CONVENT_STATES.LOCKOUT,
           useAPI: false,
@@ -279,7 +361,9 @@ export async function handleConventInput(userInput, currentState, conventState, 
       } else {
         // Warning - let them continue but track offense
         return {
-          messages: intervalsToCumulative([{ delay: 1000, content: response.content }]),
+          messages: intervalsToCumulative([
+            { delay: 1000, content: response.content },
+          ]),
           nextState: currentState, // Stay in current state
           useAPI: false,
           conventState,
@@ -310,17 +394,33 @@ export async function handleConventInput(userInput, currentState, conventState, 
       if (helpCount === 0) {
         return {
           messages: intervalsToCumulative([
-            { delay: 1000, content: 'What can you do? <em>Bleed</em>, if you dither.' },
-            { delay: MIN_DELAY, content: 'Your choices are simple: <strong>fight</strong>... or <strong>flee</strong>.' },
-            { delay: MIN_DELAY, content: "Try chatting and you'll learn how sharp their faith can be." },
-            { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+            {
+              delay: 1000,
+              content: 'What can you do? <em>Bleed</em>, if you dither.',
+            },
+            {
+              delay: MIN_DELAY,
+              content:
+                'Your choices are simple: <strong>fight</strong>... or <strong>flee</strong>.',
+            },
+            {
+              delay: MIN_DELAY,
+              content:
+                "Try chatting and you'll learn how sharp their faith can be.",
+            },
+            {
+              delay: MIN_DELAY,
+              content: '<span class="blink">What do you do?</span>',
+            },
           ]),
           nextState: currentState,
           useAPI: false,
           conventState: { ...conventState, combatHelpCount: 1 },
+          corruptionProfile,
         };
       } else {
-        const encounterNum = currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
+        const encounterNum =
+          currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
         const newHP = conventState.playerHP - 1;
         const damageNarrative = await generateConventCombatNarrative({
           encounterNum,
@@ -331,7 +431,10 @@ export async function handleConventInput(userInput, currentState, conventState, 
         });
 
         const attackMessages = [
-          { delay: 1000, content: 'You hesitate. <strong>Fatal mistake</strong>.' },
+          {
+            delay: 1000,
+            content: 'You hesitate. <strong>Fatal mistake</strong>.',
+          },
           { delay: MIN_DELAY, content: damageNarrative },
         ];
 
@@ -341,16 +444,21 @@ export async function handleConventInput(userInput, currentState, conventState, 
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
             conventState: { ...conventState, playerHP: 0 },
+            corruptionProfile,
           };
         } else {
           return {
             messages: intervalsToCumulative([
               ...attackMessages,
-              { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
+              {
+                delay: MIN_DELAY,
+                content: '<span class="blink">Now what?</span>',
+              },
             ]),
             nextState: currentState,
             useAPI: false,
             conventState: { ...conventState, playerHP: newHP },
+            corruptionProfile,
           };
         }
       }
@@ -360,42 +468,75 @@ export async function handleConventInput(userInput, currentState, conventState, 
       return {
         messages: intervalsToCumulative([
           { delay: 1000, content: 'Lost already? Adorable.' },
-          { delay: MIN_DELAY, content: "You can <strong>walk around</strong> to other rooms, or <strong>search</strong> the one you're in." },
-          { delay: MIN_DELAY, content: 'North, south, east, west—wander. Or examine the shadows and see what they give you.' },
-          { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+          {
+            delay: MIN_DELAY,
+            content:
+              "You can <strong>walk around</strong> to other rooms, or <strong>search</strong> the one you're in.",
+          },
+          {
+            delay: MIN_DELAY,
+            content:
+              'North, south, east, west—wander. Or examine the shadows and see what they give you.',
+          },
+          {
+            delay: MIN_DELAY,
+            content: '<span class="blink">What do you do?</span>',
+          },
         ]),
         nextState: currentState,
         useAPI: false,
         conventState,
+        corruptionProfile,
       };
     }
 
     return {
       messages: intervalsToCumulative([
         { delay: 1000, content: 'Decisions, decisions.' },
-        { delay: MIN_DELAY, content: "When steel is drawn, it's <strong>fight</strong> or <strong>flee</strong>. When the halls are quiet, <strong>walk</strong>... or <strong>search</strong>." },
+        {
+          delay: MIN_DELAY,
+          content:
+            "When steel is drawn, it's <strong>fight</strong> or <strong>flee</strong>. When the halls are quiet, <strong>walk</strong>... or <strong>search</strong>.",
+        },
         { delay: MIN_DELAY, content: '<span class="blink">Choose.</span>' },
       ]),
       nextState: currentState,
       useAPI: false,
       conventState,
+      corruptionProfile,
     };
   }
 
   const intent = await classifyConventIntent(userInput);
 
-  if (intent === 'FLEE' && (currentState === CONVENT_STATES.ENCOUNTER_1 || currentState.includes('encounter_2'))) {
+  // Track non-violent attempts for corruption system
+  if (
+    corruptionProfile &&
+    (intent === 'TALK' ||
+      intent === 'HELP' ||
+      intent === 'FLEE' ||
+      intent === 'EXAMINE')
+  ) {
+    trackNonViolentAttempt(corruptionProfile);
+  }
+
+  if (
+    intent === 'FLEE' &&
+    (currentState === CONVENT_STATES.ENCOUNTER_1 ||
+      currentState.includes('encounter_2'))
+  ) {
     const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
 
     return {
       messages: intervalsToCumulative([
         {
           delay: 1000,
-          content: 'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
+          content:
+            'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
         },
         {
           delay: MIN_DELAY,
-          content: 'The creature\'s shrieks fade behind you. For now.',
+          content: "The creature's shrieks fade behind you. For now.",
         },
         {
           delay: DRAMATIC_DELAY,
@@ -416,13 +557,13 @@ export async function handleConventInput(userInput, currentState, conventState, 
     };
   }
 
-  
-
   // Handle other non-violent actions (TALK, HELP, EXAMINE during combat): player takes damage
-  if ((intent === 'TALK' || intent === 'HELP' || intent === 'EXAMINE') &&
-      currentState !== CONVENT_STATES.REVEAL &&
-      currentState !== CONVENT_STATES.LOCKOUT &&
-      currentState !== CONVENT_STATES.EXPLORATION) {
+  if (
+    (intent === 'TALK' || intent === 'HELP' || intent === 'EXAMINE') &&
+    currentState !== CONVENT_STATES.REVEAL &&
+    currentState !== CONVENT_STATES.LOCKOUT &&
+    currentState !== CONVENT_STATES.EXPLORATION
+  ) {
     const encounterNum = currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
     const newHP = conventState.playerHP - 1;
 
@@ -450,9 +591,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
     if (newHP <= 0) {
       // Player dies - lockout screen
       return {
-        messages: intervalsToCumulative([
-          ...attackMessages,
-        ]),
+        messages: intervalsToCumulative([...attackMessages]),
         nextState: CONVENT_STATES.LOCKOUT,
         useAPI: false,
         conventState: { ...conventState, playerHP: 0 },
@@ -481,7 +620,10 @@ export async function handleConventInput(userInput, currentState, conventState, 
       return {
         messages: intervalsToCumulative([
           { delay: 1000, content: ENCOUNTERS[1].intro },
-          { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+          {
+            delay: MIN_DELAY,
+            content: '<span class="blink">What do you do?</span>',
+          },
         ]),
         nextState: CONVENT_STATES.ENCOUNTER_1,
         useAPI: false,
@@ -489,9 +631,14 @@ export async function handleConventInput(userInput, currentState, conventState, 
       };
 
     case CONVENT_STATES.ENCOUNTER_1: {
-      // First encounter - dice roll combat
-      const combat1 = rollCombat();
-      
+      // Award corruption for engaging in combat (violent action)
+      if (corruptionProfile) {
+        increaseCorruption(corruptionProfile, 1, 'convent_encounter_1_combat');
+      }
+
+      // First encounter - dice roll combat with corruption-based difficulty
+      const combat1 = rollCombat(corruptionProfile || { corruptionScore: 0 });
+
       if (combat1.playerWins) {
         // Player wins combat - generate dynamic narrative
         const attackNarrative = await generateConventCombatNarrative({
@@ -502,28 +649,49 @@ export async function handleConventInput(userInput, currentState, conventState, 
           playerHP: conventState.playerHP,
         });
 
+        // Build messages array
+        const messages = [
+          { delay: 1000, audio: '/src/assets/audio/woman_scream_01.mp3' },
+          { delay: DRAMATIC_DELAY, content: attackNarrative },
+          {
+            delay: MAX_DELAY,
+            image: '/src/assets/trials/convent_trial_attack_success.webp',
+          },
+          { delay: MIN_DELAY, content: ENCOUNTERS[1].glitchHint },
+        ];
+
+        // Add language corruption commentary if applicable
+        if (
+          corruptionProfile &&
+          shouldApplyLanguageCorruption(corruptionProfile)
+        ) {
+          const commentary = getPaimonCommentary(corruptionProfile);
+          if (commentary) {
+            messages.push({ delay: DRAMATIC_DELAY, content: commentary });
+          }
+        }
+
+        messages.push(
+          { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
+          // Automatically show encounter 2 intro
+          {
+            delay: MIN_DELAY,
+            image: '/src/assets/trials/convent_encounter_2.webp',
+          },
+          { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
+          { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
+          {
+            delay: MIN_DELAY,
+            content: '<span class="blink">What do you do?</span>',
+          }
+        );
+
         return {
-          messages: intervalsToCumulative([
-            { delay: 1000, audio: '/src/assets/audio/woman_scream_01.mp3' },
-            { delay: DRAMATIC_DELAY, content: attackNarrative },
-            {
-              delay: MAX_DELAY,
-              image: '/src/assets/trials/convent_trial_attack_success.webp',
-            },
-            { delay: MIN_DELAY, content: ENCOUNTERS[1].glitchHint },
-            { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
-            // Automatically show encounter 2 intro
-            {
-              delay: MIN_DELAY,
-              image: '/src/assets/trials/convent_encounter_2.webp',
-            },
-            { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
-            { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
-            { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
-          ]),
+          messages: intervalsToCumulative(messages),
           nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
           useAPI: false,
           conventState: { ...conventState, combatHelpCount: 0 },
+          corruptionProfile,
         };
       } else {
         // Player loses combat - takes damage - generate dynamic narrative
@@ -535,7 +703,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
           enemyRoll: combat1.enemyRoll,
           playerHP: newHP,
         });
-        
+
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
@@ -544,25 +712,35 @@ export async function handleConventInput(userInput, currentState, conventState, 
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
             conventState: { ...conventState, playerHP: 0 },
+            corruptionProfile,
           };
         } else {
           return {
             messages: intervalsToCumulative([
               { delay: MIN_DELAY, content: damageNarrative },
-              { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
+              {
+                delay: MIN_DELAY,
+                content: '<span class="blink">Now what?</span>',
+              },
             ]),
             nextState: CONVENT_STATES.ENCOUNTER_1, // Retry encounter
             useAPI: false,
             conventState: { ...conventState, playerHP: newHP },
+            corruptionProfile,
           };
         }
       }
     }
 
     case `${CONVENT_STATES.ENCOUNTER_2}_combat`: {
-      // Second encounter - dice roll combat with heavy glitching
-      const combat2 = rollCombat();
-      
+      // Award corruption for second combat encounter
+      if (corruptionProfile) {
+        increaseCorruption(corruptionProfile, 1, 'convent_encounter_2_combat');
+      }
+
+      // Second encounter - dice roll combat with heavy glitching and corruption-based difficulty
+      const combat2 = rollCombat(corruptionProfile || { corruptionScore: 0 });
+
       if (combat2.playerWins) {
         // Player wins - proceed to reveal - generate dynamic narrative
         const attackNarrative = await generateConventCombatNarrative({
@@ -573,17 +751,32 @@ export async function handleConventInput(userInput, currentState, conventState, 
           playerHP: conventState.playerHP,
         });
 
+        // Build messages array
+        const messages = [
+          { delay: DRAMATIC_DELAY, content: attackNarrative },
+          {
+            delay: MIN_DELAY,
+            image: '/src/assets/trials/convent_encounter_2_success.webp',
+          },
+        ];
+
+        // Add language corruption commentary if applicable
+        if (
+          corruptionProfile &&
+          shouldApplyLanguageCorruption(corruptionProfile)
+        ) {
+          const commentary = getPaimonCommentary(corruptionProfile);
+          if (commentary) {
+            messages.push({ delay: DRAMATIC_DELAY, content: commentary });
+          }
+        }
+
         return {
-          messages: intervalsToCumulative([
-            { delay: DRAMATIC_DELAY, content: attackNarrative },
-            {
-              delay: MIN_DELAY,
-              image: '/src/assets/trials/convent_encounter_2_success.webp',
-            },
-          ]),
+          messages: intervalsToCumulative(messages),
           nextState: CONVENT_STATES.REVEAL,
           useAPI: false,
           conventState,
+          corruptionProfile,
         };
       } else {
         // Player loses combat - takes damage - generate dynamic narrative
@@ -595,7 +788,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
           enemyRoll: combat2.enemyRoll,
           playerHP: newHP,
         });
-        
+
         if (newHP <= 0) {
           return {
             messages: intervalsToCumulative([
@@ -604,6 +797,7 @@ export async function handleConventInput(userInput, currentState, conventState, 
             nextState: CONVENT_STATES.LOCKOUT,
             useAPI: false,
             conventState: { ...conventState, playerHP: 0 },
+            corruptionProfile,
           };
         } else {
           return {
@@ -611,13 +805,15 @@ export async function handleConventInput(userInput, currentState, conventState, 
               { delay: MIN_DELAY, content: damageNarrative },
               {
                 delay: MIN_DELAY,
-                content: 'Blood pools at your feet. Your vision blurs. But you\'re still standing.',
+                content:
+                  "Blood pools at your feet. Your vision blurs. But you're still standing.",
               },
               { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
             ]),
             nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`, // Retry encounter
             useAPI: false,
             conventState: { ...conventState, playerHP: newHP },
+            corruptionProfile,
           };
         }
       }
@@ -639,7 +835,9 @@ export async function handleConventInput(userInput, currentState, conventState, 
     case CONVENT_STATES.REVEAL:
       // After reveal, transition to next phase
       return {
-        messages: intervalsToCumulative([{ delay: 1000, content: 'Ready for what comes next?' }]),
+        messages: intervalsToCumulative([
+          { delay: 1000, content: 'Ready for what comes next?' },
+        ]),
         nextState: CONVENT_STATES.COMPLETE,
         useAPI: false,
         conventState,
@@ -663,7 +861,9 @@ export async function handleConventInput(userInput, currentState, conventState, 
  */
 async function handleExploration(userInput, conventState) {
   // Check if exploration limit reached - trigger alarm
-  if (conventState.explorationTurns >= GAME_CONFIG.convent.MAX_EXPLORATION_TURNS) {
+  if (
+    conventState.explorationTurns >= GAME_CONFIG.convent.MAX_EXPLORATION_TURNS
+  ) {
     return {
       messages: intervalsToCumulative([
         {
@@ -672,7 +872,8 @@ async function handleExploration(userInput, conventState) {
         },
         {
           delay: MIN_DELAY,
-          content: 'A bell tower erupts with deafening alarm bells. The entire convent shakes.',
+          content:
+            'A bell tower erupts with deafening alarm bells. The entire convent shakes.',
         },
         {
           delay: DRAMATIC_DELAY,
@@ -688,7 +889,8 @@ async function handleExploration(userInput, conventState) {
         },
         {
           delay: MIN_DELAY,
-          content: 'They charge. Dozens of them. Their faces twisted in rage—or is it terror?',
+          content:
+            'They charge. Dozens of them. Their faces twisted in rage—or is it terror?',
         },
         {
           delay: MIN_DELAY,
@@ -696,7 +898,8 @@ async function handleExploration(userInput, conventState) {
         },
         {
           delay: DRAMATIC_DELAY,
-          content: 'They overwhelm you. You feel hands—claws?—tearing at your armor.',
+          content:
+            'They overwhelm you. You feel hands—claws?—tearing at your armor.',
         },
         {
           delay: MIN_DELAY,
@@ -704,7 +907,8 @@ async function handleExploration(userInput, conventState) {
         },
         {
           delay: DRAMATIC_DELAY,
-          content: 'When it\'s over, you stand among the bodies. So many bodies.',
+          content:
+            "When it's over, you stand among the bodies. So many bodies.",
         },
         {
           delay: MIN_DELAY,
@@ -762,7 +966,7 @@ async function handleExploration(userInput, conventState) {
         {
           delay: MIN_DELAY,
           content: hasVisited
-            ? 'You\'ve been here before.'
+            ? "You've been here before."
             : 'This place feels... wrong somehow.',
         },
       ]),
@@ -780,16 +984,27 @@ async function handleExploration(userInput, conventState) {
   }
 
   // Handle examine/search actions
-  if (lowerInput.includes('examine') || lowerInput.includes('search') || lowerInput.includes('look') || lowerInput.includes('inspect')) {
+  if (
+    lowerInput.includes('examine') ||
+    lowerInput.includes('search') ||
+    lowerInput.includes('look') ||
+    lowerInput.includes('inspect')
+  ) {
     const currentRoomKey = conventState.playerPosition.join(',');
     const currentRoom = CONVENT_MAP[currentRoomKey];
 
     const isHurt = conventState.playerHP < MAX_HP;
-    const roomCount = (conventState.roomPotionCounts && conventState.roomPotionCounts[currentRoomKey]) ? conventState.roomPotionCounts[currentRoomKey] : 0;
+    const roomCount =
+      conventState.roomPotionCounts &&
+      conventState.roomPotionCounts[currentRoomKey]
+        ? conventState.roomPotionCounts[currentRoomKey]
+        : 0;
     const capReached = roomCount >= GAME_CONFIG.convent.MAX_POTIONS_PER_ROOM;
     const chance = GAME_CONFIG.convent.HEAL_POTION_CHANCE ?? 0.3;
     const foundPotion = isHurt && !capReached && Math.random() < chance;
-    const healedHP = foundPotion ? Math.min(conventState.playerHP + 1, MAX_HP) : conventState.playerHP;
+    const healedHP = foundPotion
+      ? Math.min(conventState.playerHP + 1, MAX_HP)
+      : conventState.playerHP;
 
     const examineMessages = [
       {
@@ -798,7 +1013,8 @@ async function handleExploration(userInput, conventState) {
       },
       {
         delay: MIN_DELAY,
-        content: 'You notice details you missed before... (Codex system coming soon)',
+        content:
+          'You notice details you missed before... (Codex system coming soon)',
       },
     ];
 
@@ -806,28 +1022,34 @@ async function handleExploration(userInput, conventState) {
       examineMessages.push(
         {
           delay: MIN_DELAY,
-          content: 'Tucked behind a loose stone you find a small vial—<em>a healing draught</em>.',
+          content:
+            'Tucked behind a loose stone you find a small vial—<em>a healing draught</em>.',
         },
         {
           delay: MIN_DELAY,
           content: `You uncork it and drink. Warmth spreads through your chest. <strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
-        },
+        }
       );
     } else if (isHurt) {
       examineMessages.push({
         delay: MIN_DELAY,
-        content: 'You scour the room for something to staunch the bleeding... nothing useful—keep looking.',
+        content:
+          'You scour the room for something to staunch the bleeding... nothing useful—keep looking.',
       });
     }
 
     examineMessages.push({
       delay: MIN_DELAY,
-      content: 'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
+      content:
+        'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
     });
 
     const updatedPotionCounts = foundPotion
-      ? { ...(conventState.roomPotionCounts || {}), [currentRoomKey]: roomCount + 1 }
-      : (conventState.roomPotionCounts || {});
+      ? {
+          ...(conventState.roomPotionCounts || {}),
+          [currentRoomKey]: roomCount + 1,
+        }
+      : conventState.roomPotionCounts || {};
 
     return {
       messages: intervalsToCumulative(examineMessages),
@@ -854,7 +1076,8 @@ async function handleExploration(userInput, conventState) {
       },
       {
         delay: MIN_DELAY,
-        content: 'You can move <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong>. Or <strong>examine</strong> your surroundings.',
+        content:
+          'You can move <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong>. Or <strong>examine</strong> your surroundings.',
       },
     ]),
     nextState: CONVENT_STATES.EXPLORATION,

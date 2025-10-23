@@ -136,6 +136,7 @@ Your client is a small-time rancher accused of murdering Clayton Hargrave—fore
 **Reality:** The "mirror image" is Paimon in disguise, using the player's own face to manipulate them into an act of self-destruction.
 
 **Gameplay:** A free-form roleplaying scenario. The player can:
+
 - **Talk to their reflection:** The reflection (Paimon) will feign confusion and fear, gaslighting the player and subtly guiding them towards the choice.
 - **Explore the room:** The room is a seamless, unbreakable box, reinforcing the feeling of being trapped.
 - **Question the voice:** Paimon (as the voice) will be silent, but the reflection will react with confusion, further isolating the player.

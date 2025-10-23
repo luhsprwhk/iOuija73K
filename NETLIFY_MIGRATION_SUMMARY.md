@@ -9,15 +9,18 @@ The original implementation had a security vulnerability where the Claude API ke
 ## Solution: Netlify Functions + Express Proxy Dual Setup
 
 We implemented a dual proxy architecture:
+
 - **Development:** Express server proxy (localhost:3001)
 - **Production:** Netlify Functions (serverless)
 
 ## Files Created
 
 ### 1. `netlify/functions/claude.js`
+
 **Purpose:** Serverless function that proxies Claude API requests in production
 
 **Key Features:**
+
 - Reads `CLAUDE_API_KEY` from Netlify environment variables
 - Validates request body structure
 - Forwards requests to Anthropic API with proper authentication
@@ -27,9 +30,11 @@ We implemented a dual proxy architecture:
 **Endpoint:** `/.netlify/functions/claude` (automatically deployed)
 
 ### 2. `netlify.toml`
+
 **Purpose:** Netlify build configuration
 
 **Contents:**
+
 - Build command: `npm run build`
 - Publish directory: `dist`
 - Functions directory: `netlify/functions`
@@ -38,9 +43,11 @@ We implemented a dual proxy architecture:
 - Security headers (CSP, X-Frame-Options, etc.)
 
 ### 3. `DEPLOYMENT.md`
+
 **Purpose:** Comprehensive deployment guide for Netlify
 
 **Sections:**
+
 - Step-by-step deployment instructions
 - Environment variable setup
 - Architecture diagrams (dev vs. prod)
@@ -52,7 +59,9 @@ We implemented a dual proxy architecture:
 ## Files Modified
 
 ### 1. `src/ai/claude.js`
+
 **Changes:**
+
 - Added `getClaudeProxyUrl()` function for automatic endpoint detection
 - Uses `import.meta.env.PROD` to detect production vs. development
 - Production: `/.netlify/functions/claude`
@@ -62,39 +71,50 @@ We implemented a dual proxy architecture:
 **Security Impact:** Client code NEVER directly accesses API key in production
 
 ### 2. `.env.example`
+
 **Changes:**
+
 - Added detailed comments explaining local vs. production setup
 - Clarified that `VITE_CLAUDE_API_KEY` is for local development only
 - Documented that production uses `CLAUDE_API_KEY` in Netlify dashboard (without `VITE_` prefix)
 - Added optional `VITE_CLAUDE_PROXY_URL` override variable
 
 ### 3. `CLAUDE.md` (Project Documentation)
+
 **Changes:**
+
 - Updated "Environment Setup" section with separate local/production instructions
 - Added security note emphasizing API key is never exposed to client
 - Replaced "Backend Proxy Server" section with comprehensive "API Proxy Architecture" section
 - Documented automatic environment detection
 
 ### 4. `README.md`
+
 **Changes:**
+
 - Added "Deployment" section with link to DEPLOYMENT.md
 - Included quick deploy instructions for Netlify
 - Emphasized zero-configuration serverless approach
 
 ### 5. `.gitignore`
+
 **Changes:**
+
 - Added `.env.production` to prevent accidental commits
 - Added `.netlify/` directory (local Netlify CLI cache)
 - Added clarifying comments about environment variables
 
 ### 6. `server.js` (Express Proxy)
+
 **Changes:**
+
 - Added comment clarifying it uses `VITE_CLAUDE_API_KEY` for local development
 - No functional changes (still used for local dev)
 
 ## Architecture Comparison
 
 ### Before (Vulnerable)
+
 ```
 Browser (client-side code)
   ↓
@@ -106,6 +126,7 @@ Browser (client-side code)
 ### After (Secure)
 
 **Development:**
+
 ```
 Browser → Vite Dev Server
             ↓
@@ -116,6 +137,7 @@ Browser → Vite Dev Server
 ```
 
 **Production:**
+
 ```
 Browser → Netlify CDN
             ↓
@@ -145,23 +167,25 @@ Browser → Netlify CDN
 
 ## Environment Variables Reference
 
-| Variable | Location | Purpose |
-|----------|----------|---------|
-| `VITE_CLAUDE_API_KEY` | `.env` (local) | For Express proxy in development |
-| `CLAUDE_API_KEY` | Netlify dashboard | For Netlify Functions in production |
-| `VITE_CLAUDE_PROXY_URL` | `.env` (optional) | Override auto-detected proxy URL |
+| Variable                | Location          | Purpose                             |
+| ----------------------- | ----------------- | ----------------------------------- |
+| `VITE_CLAUDE_API_KEY`   | `.env` (local)    | For Express proxy in development    |
+| `CLAUDE_API_KEY`        | Netlify dashboard | For Netlify Functions in production |
+| `VITE_CLAUDE_PROXY_URL` | `.env` (optional) | Override auto-detected proxy URL    |
 
 **Critical:** Never use `VITE_` prefix in production environment variables, as Vite embeds these in the client bundle.
 
 ## Testing Checklist
 
 ### Local Development (Before Deployment)
+
 - [ ] `npm run dev:all` starts both servers
 - [ ] API calls go to `http://localhost:3001/api/claude`
 - [ ] Game functionality works (name, number guessing, trials)
 - [ ] No console errors
 
 ### Production (After Deployment)
+
 - [ ] Netlify build succeeds
 - [ ] Site loads at Netlify URL
 - [ ] API calls go to `/.netlify/functions/claude`
@@ -174,6 +198,7 @@ Browser → Netlify CDN
 ## Deployment Steps (Quick Reference)
 
 1. **Push code to Git repository**
+
    ```bash
    git add .
    git commit -m "feat: add Netlify Functions for secure API key handling"
@@ -199,10 +224,12 @@ Browser → Netlify CDN
 ### "Claude API key not configured" Error
 
 **In Development:**
+
 - Check `.env` file has `VITE_CLAUDE_API_KEY`
 - Restart dev server after editing `.env`
 
 **In Production:**
+
 - Check Netlify environment variable is named `CLAUDE_API_KEY` (not `VITE_CLAUDE_API_KEY`)
 - Verify variable is set for "All scopes"
 - Trigger a new deploy after adding environment variable
@@ -231,11 +258,13 @@ Browser → Netlify CDN
 ## Cost Estimates
 
 **Netlify (Free Tier):**
+
 - 100GB bandwidth/month
 - 125k function invocations/month
 - Sufficient for ~10k-50k player sessions/month
 
 **Anthropic API:**
+
 - ~$0.01-0.10 per player session
 - Set usage limits in Anthropic console to prevent overspending
 
@@ -250,16 +279,19 @@ If anything goes wrong after deployment:
 ## Success Metrics
 
 ✅ **Security:**
+
 - No API key visible in client code
 - No security warnings in code reviews
 - Passed penetration testing (manual inspection)
 
 ✅ **Functionality:**
+
 - All game trials work in production
 - API calls complete successfully
 - No increase in error rates
 
 ✅ **Performance:**
+
 - Netlify Functions add minimal latency (<50ms)
 - Build times remain fast (<2 minutes)
 - Site loads quickly (Lighthouse score >90)

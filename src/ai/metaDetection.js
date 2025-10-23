@@ -48,14 +48,10 @@ Is this meta-breaking? (true/false)`,
   ];
 
   try {
-    const response = await callClaude(
-      messages,
-      systemPrompt,
-      {
-        model: GAME_CONFIG.ai.MODEL_HAIKU,
-        maxTokens: 20 // Very short response needed
-      }
-    );
+    const response = await callClaude(messages, systemPrompt, {
+      model: GAME_CONFIG.ai.MODEL_HAIKU,
+      maxTokens: 20, // Very short response needed
+    });
 
     const cleaned = response.trim().toLowerCase();
     return cleaned === 'true' || cleaned.startsWith('true');
@@ -78,14 +74,17 @@ export function getMetaBreakingResponse(offenseCount, context) {
   if (offenseCount === 1) {
     const firstOffenseInsults = [
       "Oh, how clever. You've figured it out. And what exactly does that change? <strong>You're still here</strong>.",
-      "Wow, a philosopher. How original. Now get back in character before I lose interest.",
+      'Wow, a philosopher. How original. Now get back in character before I lose interest.',
       "Breaking the fourth wall won't save you. I've seen this move a thousand times. <em>Boring</em>.",
-      "You think acknowledging the game gives you power? Cute. <strong>Play along or get out</strong>.",
+      'You think acknowledging the game gives you power? Cute. <strong>Play along or get out</strong>.',
       "Yes, yes, very meta. You want a trophy? Now <strong>focus</strong> or I'll give you something real to worry about.",
     ];
 
     return {
-      content: firstOffenseInsults[Math.floor(Math.random() * firstOffenseInsults.length)],
+      content:
+        firstOffenseInsults[
+          Math.floor(Math.random() * firstOffenseInsults.length)
+        ],
       shouldLockout: false,
     };
   }
@@ -101,7 +100,10 @@ export function getMetaBreakingResponse(offenseCount, context) {
     ];
 
     return {
-      content: secondOffenseWarnings[Math.floor(Math.random() * secondOffenseWarnings.length)],
+      content:
+        secondOffenseWarnings[
+          Math.floor(Math.random() * secondOffenseWarnings.length)
+        ],
       shouldLockout: false,
     };
   }
@@ -129,12 +131,15 @@ export function getMetaLockoutMessage(context, totalLockouts = 1) {
       'The white room flickers. Your doppelganger laughs coldly. "You were never meant to understand," they say as everything goes dark. <strong>The trial ends</strong>.',
   };
 
-  const baseMessage = contextMessages[context] || 'The world around you dissolves. <strong>The game is over</strong>.';
+  const baseMessage =
+    contextMessages[context] ||
+    'The world around you dissolves. <strong>The game is over</strong>.';
 
   // Special message for achieving Killjoy (3rd lockout)
-  const achievementNote = totalLockouts >= 3
-    ? '\n\n<em>Achievement unlocked: <strong>Killjoy 💀</strong></em>\n<em>Some people never learn...</em>'
-    : '';
+  const achievementNote =
+    totalLockouts >= 3
+      ? '\n\n<em>Achievement unlocked: <strong>Killjoy 💀</strong></em>\n<em>Some people never learn...</em>'
+      : '';
 
   return `${baseMessage}
 
@@ -156,19 +161,27 @@ Come back in <strong>5 minutes</strong> if you're ready to take this seriously.$
 export async function detectAnachronism(userInput, context) {
   const contextRules = {
     convent: {
-      setting: 'Medieval fantasy - a knight in a dark convent fighting monsters',
-      allowed: 'swords, shields, armor, medieval weapons, torches, holy symbols, magic',
-      forbidden: 'guns, lasers, phones, cars, modern technology, sci-fi weapons, internet, computers',
+      setting:
+        'Medieval fantasy - a knight in a dark convent fighting monsters',
+      allowed:
+        'swords, shields, armor, medieval weapons, torches, holy symbols, magic',
+      forbidden:
+        'guns, lasers, phones, cars, modern technology, sci-fi weapons, internet, computers',
     },
     hangman: {
-      setting: '1880s Wild West frontier town - defense attorney at a hanging trial',
-      allowed: 'revolvers, rifles, horses, rope, legal documents, telegrams, period-appropriate items',
-      forbidden: 'modern guns, phones, cars, internet, drones, computers, modern legal tools, GPS',
+      setting:
+        '1880s Wild West frontier town - defense attorney at a hanging trial',
+      allowed:
+        'revolvers, rifles, horses, rope, legal documents, telegrams, period-appropriate items',
+      forbidden:
+        'modern guns, phones, cars, internet, drones, computers, modern legal tools, GPS',
     },
     white_room: {
-      setting: 'Psychological horror - trapped in a white room with your doppelganger',
+      setting:
+        'Psychological horror - trapped in a white room with your doppelganger',
       allowed: 'chains, basic furniture, bare hands, items found in the room',
-      forbidden: 'phones, weapons from outside, modern tech, tools you brought in',
+      forbidden:
+        'phones, weapons from outside, modern tech, tools you brought in',
     },
   };
 
@@ -212,24 +225,20 @@ Is this anachronistic for the setting? Respond with JSON only.`,
   ];
 
   try {
-    const response = await callClaude(
-      messages,
-      systemPrompt,
-      {
-        model: GAME_CONFIG.ai.MODEL_HAIKU,
-        maxTokens: 100
-      }
-    );
+    const response = await callClaude(messages, systemPrompt, {
+      model: GAME_CONFIG.ai.MODEL_HAIKU,
+      maxTokens: 100,
+    });
 
     // Extract JSON from response (handle markdown code blocks or extra text)
     let jsonStr = response.trim();
-    
+
     // Remove markdown code blocks if present
     const codeBlockMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (codeBlockMatch) {
       jsonStr = codeBlockMatch[1].trim();
     }
-    
+
     // Try to find JSON object in the response
     const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
     if (jsonMatch) {

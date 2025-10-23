@@ -4,7 +4,7 @@
   /**
    * StatusBox - A reusable component for displaying trial status information
    * Positioned in the lower right corner above the input field
-   * 
+   *
    * @prop {boolean} showInput - Whether the input field is visible (affects bottom position)
    * @prop {string} content - HTML content to display in the status box
    */

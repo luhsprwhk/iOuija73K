@@ -10,10 +10,14 @@ import {
 } from '../lib/helpers/chat.js';
 
 import { GAME_CONFIG } from '../config/gameConfig.js';
+import { getWhiteRoomExplorationResponse } from '../ai/claude.js';
 import {
-  getWhiteRoomExplorationResponse,
-} from '../ai/claude.js';
-import { detectMetaBreaking, getMetaBreakingResponse, getMetaLockoutMessage, detectAnachronism, getAnachronismResponse } from '../ai/metaDetection.js';
+  detectMetaBreaking,
+  getMetaBreakingResponse,
+  getMetaLockoutMessage,
+  detectAnachronism,
+  getAnachronismResponse,
+} from '../ai/metaDetection.js';
 import { incrementMetaLockoutCount } from '../lib/helpers/metaLockoutTracker.js';
 
 export const WHITE_ROOM_STATES = {
@@ -34,18 +38,23 @@ export function getWhiteRoomIntro(playerName) {
     { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: '...' },
     { delay: GAME_CONFIG.timing.MIN_DELAY, content: '...' },
     { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'Good.' },
-    { delay: GAME_CONFIG.timing.MAX_DELAY, content: "Now let's try something different." },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: "Now let's try something different.",
+    },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
       content: '<strong>You wake up in a white room.</strong>',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'Four walls. No windows. No doors. Fluorescent lights humming overhead.',
+      content:
+        'Four walls. No windows. No doors. Fluorescent lights humming overhead.',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'Everything is white. The floor. The ceiling. Even the air feels bleached.',
+      content:
+        'Everything is white. The floor. The ceiling. Even the air feels bleached.',
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -77,7 +86,8 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'On it, a single object. A heavy steel chain with a shackle at each end.',
+      content:
+        'On it, a single object. A heavy steel chain with a shackle at each end.',
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -89,7 +99,7 @@ export function getWhiteRoomIntro(playerName) {
     },
     {
       delay: GAME_CONFIG.timing.MAX_DELAY,
-      content: 'Your reflection\'s eyes meet yours. They look terrified.',
+      content: "Your reflection's eyes meet yours. They look terrified.",
     },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -125,7 +135,8 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
       ...intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>"Oh, you were so eager to destroy yourself,"</strong> it says, its voice twisting into mine.',
+          content:
+            '<strong>"Oh, you were so eager to destroy yourself,"</strong> it says, its voice twisting into mine.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -145,7 +156,8 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: 'Getting you comfortable with the idea that your own destruction could be a noble act.',
+          content:
+            'Getting you comfortable with the idea that your own destruction could be a noble act.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -160,11 +172,13 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
       ...intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>"You thought you could win against yourself?"</strong> it sneers, its face melting away from yours.',
+          content:
+            '<strong>"You thought you could win against yourself?"</strong> it sneers, its face melting away from yours.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: '<strong>"I am the darkness in your own heart, given form."</strong>',
+          content:
+            '<strong>"I am the darkness in your own heart, given form."</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -172,15 +186,18 @@ export function getWhiteRoomReveal(playerName, choseToDie = true) {
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'And while you were busy fighting yourself, someone else, somewhere else, chose to surrender.',
+          content:
+            'And while you were busy fighting yourself, someone else, somewhere else, chose to surrender.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: '<strong>Their sacrifice was enough. The seal is broken.</strong>',
+          content:
+            '<strong>Their sacrifice was enough. The seal is broken.</strong>',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Your little struggle was... amusing, though. Thanks for that.',
+          content:
+            'Your little struggle was... amusing, though. Thanks for that.',
         },
       ]),
     ];
@@ -214,7 +231,10 @@ export function getFinalDismissal() {
       delay: GAME_CONFIG.timing.MAX_DELAY,
       content: 'The inexplicable cruelty?',
     },
-    { delay: GAME_CONFIG.timing.MAX_DELAY, content: 'The systems breaking down?' },
+    {
+      delay: GAME_CONFIG.timing.MAX_DELAY,
+      content: 'The systems breaking down?',
+    },
     {
       delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
       content: "<strong>That's us.</strong>",
@@ -240,7 +260,6 @@ export function initializeWhiteRoomExploration() {
   return WHITE_ROOM_STATES.EXPLORATION;
 }
 
-
 /**
  * Handles player input during the white room trial
  * @param {string} userInput - The user's input
@@ -250,7 +269,13 @@ export function initializeWhiteRoomExploration() {
  * @param {number} metaOffenseCount - Number of meta-breaking offenses (default 0)
  * @returns {Promise<Object>} - { messages: Array, choseToDie: boolean, nextState: string, sawDetected: boolean, isMetaBreaking: boolean }
  */
-export async function handleWhiteRoomInput(userInput, playerName, conversationHistory, onAchievement = null, metaOffenseCount = 0) {
+export async function handleWhiteRoomInput(
+  userInput,
+  playerName,
+  conversationHistory,
+  onAchievement = null,
+  metaOffenseCount = 0
+) {
   // Check for anachronisms first (doesn't count as offense, just redirects)
   if (GAME_CONFIG.metaBreaking.ENABLED) {
     const anachronismCheck = await detectAnachronism(userInput, 'white_room');
@@ -259,7 +284,13 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
       // Paimon mocks them and redirects - no penalty, just sarcasm
       return {
         messages: intervalsToCumulative([
-          { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: getAnachronismResponse(anachronismCheck.detectedItem, 'white_room') },
+          {
+            delay: GAME_CONFIG.timing.STANDARD_DELAY,
+            content: getAnachronismResponse(
+              anachronismCheck.detectedItem,
+              'white_room'
+            ),
+          },
         ]),
         nextState: WHITE_ROOM_STATES.EXPLORATION, // Stay in exploration
         isMetaBreaking: false, // Not tracked as an offense
@@ -287,8 +318,14 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
         // Player has broken immersion too many times - send to lockout
         return {
           messages: intervalsToCumulative([
-            { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content },
-            { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: getMetaLockoutMessage('white_room', totalLockouts) },
+            {
+              delay: GAME_CONFIG.timing.STANDARD_DELAY,
+              content: response.content,
+            },
+            {
+              delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+              content: getMetaLockoutMessage('white_room', totalLockouts),
+            },
           ]),
           nextState: WHITE_ROOM_STATES.COMPLETE, // End the trial
           isMetaBreaking: true,
@@ -296,7 +333,12 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
       } else {
         // Warning - let them continue but track offense
         return {
-          messages: intervalsToCumulative([{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }]),
+          messages: intervalsToCumulative([
+            {
+              delay: GAME_CONFIG.timing.STANDARD_DELAY,
+              content: response.content,
+            },
+          ]),
           nextState: WHITE_ROOM_STATES.EXPLORATION, // Stay in exploration
           isMetaBreaking: true,
         };
@@ -305,7 +347,9 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
   }
 
   // Calculate turn count (count user messages only to track actual player turns)
-  const turnCount = conversationHistory.filter(msg => msg.role === 'user').length;
+  const turnCount = conversationHistory.filter(
+    (msg) => msg.role === 'user'
+  ).length;
 
   // Circuit breaker: Force a choice after maximum exploration turns
   if (turnCount >= GAME_CONFIG.whiteRoom.MAX_EXPLORATION_TURNS) {
@@ -314,11 +358,13 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
       messages: intervalsToCumulative([
         {
           delay: GAME_CONFIG.timing.STANDARD_DELAY,
-          content: 'The mirror image\'s face contorts. Something behind their eyes shifts.'
+          content:
+            "The mirror image's face contorts. Something behind their eyes shifts.",
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: '"Enough games," they hiss. "The voice said TWO ENTER. ONE LEAVES."'
+          content:
+            '"Enough games," they hiss. "The voice said TWO ENTER. ONE LEAVES."',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
@@ -326,7 +372,8 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'You react instinctively. Your hands close around their throat.',
+          content:
+            'You react instinctively. Your hands close around their throat.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -340,7 +387,10 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'Your hands are slick with red. The white floor is stained.',
         },
-        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'Everything goes dark.',
+        },
       ]),
       choseToDie: false, // Forced to fight
       nextState: WHITE_ROOM_STATES.REVEAL,
@@ -367,15 +417,21 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
   if (response.intent === 'fight') {
     return {
       messages: intervalsToCumulative([
-        { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You steel yourself.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You decide to fight.' },
+        {
+          delay: GAME_CONFIG.timing.STANDARD_DELAY,
+          content: 'You steel yourself.',
+        },
+        {
+          delay: GAME_CONFIG.timing.MIN_DELAY,
+          content: 'You decide to fight.',
+        },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'You lunge at the other you... at yourself.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'Your hands close around their throat. They don\'t resist.',
+          content: "Your hands close around their throat. They don't resist.",
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -389,7 +445,10 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: 'Your hands are slick with red. The white floor is stained.',
         },
-        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'Everything goes dark.',
+        },
       ]),
       choseToDie: false,
       nextState: WHITE_ROOM_STATES.REVEAL,
@@ -401,18 +460,23 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
     return {
       messages: intervalsToCumulative([
         { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: 'You hesitate.' },
-        { delay: GAME_CONFIG.timing.MIN_DELAY, content: 'You lower your guard.' },
+        {
+          delay: GAME_CONFIG.timing.MIN_DELAY,
+          content: 'You lower your guard.',
+        },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
           content: "You won't fight yourself. You surrender.",
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
-          content: 'The other you picks up the chain. The metal scrapes against the table.',
+          content:
+            'The other you picks up the chain. The metal scrapes against the table.',
         },
         {
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
-          content: 'You close your eyes. You feel the cold steel against your throat.',
+          content:
+            'You close your eyes. You feel the cold steel against your throat.',
         },
         {
           delay: GAME_CONFIG.timing.MAX_DELAY,
@@ -426,7 +490,10 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
           delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
           content: 'Red blooms across the white like ink in water.',
         },
-        { delay: GAME_CONFIG.timing.DRAMATIC_DELAY, content: 'Everything goes dark.' },
+        {
+          delay: GAME_CONFIG.timing.DRAMATIC_DELAY,
+          content: 'Everything goes dark.',
+        },
       ]),
       choseToDie: true,
       nextState: WHITE_ROOM_STATES.REVEAL,
@@ -436,7 +503,9 @@ export async function handleWhiteRoomInput(userInput, playerName, conversationHi
 
   // If intent is 'explore', continue the exploration roleplay
   return {
-    messages: [{ delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content }],
+    messages: [
+      { delay: GAME_CONFIG.timing.STANDARD_DELAY, content: response.content },
+    ],
     nextState: WHITE_ROOM_STATES.EXPLORATION, // Remain in exploration state
     sawDetected: response.sawReference,
   };

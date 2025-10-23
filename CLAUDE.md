@@ -106,15 +106,19 @@ The game features a **meta-recognition achievement system** that rewards player 
    - **Effect**: Demon's name in chat dynamically changes from "Raphael" → "Paimon"
    - Uses derived state: `demonName = $derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael')`
 
-3. **Summoning Circle** 👁️ - Find the console easter egg *(Issue #28 - pending)*
-4. **Truth Beneath** 🕯️ - Examine convent basement *(Issue #29 - blocked by Issue #16)*
-5. **Merciful Executioner** ⚖️ - Try to save hangman client *(Issue #30 - pending)*
+3. **Summoning Circle** 👁️ - Find the console easter egg _(Issue #28 - pending)_
+4. **Truth Beneath** 🕯️ - Examine convent basement _(Issue #29 - blocked by Issue #16)_
+5. **Merciful Executioner** ⚖️ - Try to save hangman client _(Issue #30 - pending)_
 
 **Integration Pattern**:
 
 ```javascript
 // In trial handlers, pass achievement callback
-const result = await handleWhiteRoomInput(userInput, history, triggerAchievement);
+const result = await handleWhiteRoomInput(
+  userInput,
+  history,
+  triggerAchievement
+);
 
 // In trial code, detect condition and trigger
 if (sawDetected && onAchievement) {
@@ -305,6 +309,7 @@ Located in `ChatInterface.svelte:37-84`, cryptic hints appear on subtitle hover:
 The app uses different proxy configurations for development and production:
 
 **Development (Express Server):**
+
 - Located in `server.js`, Express proxy server for local development
 - Proxies Claude API requests to avoid CORS issues
 - Keeps API key server-side (reads `VITE_CLAUDE_API_KEY` from `.env`)
@@ -315,6 +320,7 @@ The app uses different proxy configurations for development and production:
 - Use `npm run dev:all` to start both dev server and proxy concurrently
 
 **Production (Netlify Functions):**
+
 - Located in `netlify/functions/claude.js`, serverless function
 - Automatically deployed with your site on Netlify
 - Uses `CLAUDE_API_KEY` environment variable (set in Netlify dashboard)
@@ -322,6 +328,7 @@ The app uses different proxy configurations for development and production:
 - Zero configuration required - works out of the box
 
 **Client Code (`src/ai/claude.js`):**
+
 - Automatically detects environment (dev vs. prod)
 - Uses Netlify Functions in production (`import.meta.env.PROD === true`)
 - Uses Express proxy in development (localhost:3001)

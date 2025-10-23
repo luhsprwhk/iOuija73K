@@ -1,6 +1,6 @@
 <script>
   import { css } from '../../styled-system/css';
-  import PaimonSigil from './PaimonSigil.svelte';
+  import PaimonSigil from './components/PaimonSigil.svelte';
 
   let { timeRemaining = 300, onUnlock = undefined } = $props();
 
@@ -19,7 +19,7 @@
     audio = new Audio('/audio/muzak/dark-elevator-muzak.mp3');
     audio.loop = true;
     audio.volume = 0.5;
-    audio.play().catch(err => console.error('Audio playback failed:', err));
+    audio.play().catch((err) => console.error('Audio playback failed:', err));
 
     return () => {
       if (audio) {
