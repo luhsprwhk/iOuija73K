@@ -30,12 +30,15 @@ import {
   shouldApplyLanguageCorruption,
   getPaimonCommentary,
 } from '../lib/helpers/corruptionManager.js';
+import { unlockCodexEntry } from '../codex/codexManager.js';
+import { getCodexEntryById } from '../codex/codexData.js';
 
 export const CONVENT_STATES = {
   INTRO: 'intro',
   ENCOUNTER_1: 'encounter_1',
   ENCOUNTER_2: 'encounter_2',
   EXPLORATION: 'exploration', // New exploration state
+  EXPLORATION_SEARCH: 'exploration_search',
   REVEAL: 'reveal',
   COMPLETE: 'complete',
   LOCKOUT: 'lockout',
@@ -93,6 +96,13 @@ export const CONVENT_MAP = {
     name: 'Basement Stairs',
     description: 'Stone steps descending into darkness. You hear... something.',
   },
+};
+
+const ROOM_CODEX_MAP = {
+  '1,1': 'the_convent',
+  '0,2': 'sister_margaret_diary',
+  '2,2': 'the_basement',
+  '0,0': 'philosophers_stone',
 };
 
 /**
@@ -471,12 +481,12 @@ export async function handleConventInput(
           {
             delay: MIN_DELAY,
             content:
-              "You can <strong>walk around</strong> to other rooms, or <strong>search</strong> the one you're in.",
+              "Look at the UI, doofus. You can <i>walk around</i> to other rooms, or <i>search</i> the one you're in.",
           },
           {
             delay: MIN_DELAY,
             content:
-              'North, south, east, west—wander. Or examine the shadows and see what they give you.',
+              'But what you should do is go <strong>fight more monsters</strong>.',
           },
           {
             delay: MIN_DELAY,
@@ -526,34 +536,122 @@ export async function handleConventInput(
       currentState.includes('encounter_2'))
   ) {
     const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
+    const encounterNum =
+      currentState === CONVENT_STATES.ENCOUNTER_1 ? 1 : 2;
+
+    const playerCorruption = corruptionProfile?.corruptionScore ?? 0;
+
+    if (playerCorruption <= 1) {
+      return {
+        messages: intervalsToCumulative([
+          {
+            delay: 1000,
+            content:
+              'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
+          },
+          {
+            delay: MIN_DELAY,
+            content: "The creature's shrieks fade behind you. For now.",
+          },
+          {
+            delay: DRAMATIC_DELAY,
+            content: `You find yourself in the <strong>${currentRoom.name}</strong>.`,
+          },
+          {
+            delay: MIN_DELAY,
+            content: currentRoom.description,
+          },
+          {
+            delay: MIN_DELAY,
+            content: '<span class="blink">What do you do?</span>',
+          },
+        ]),
+        nextState: CONVENT_STATES.EXPLORATION,
+        useAPI: false,
+        conventState,
+      };
+    }
+
+    const playerRoll = Math.floor(Math.random() * 20) + 1;
+    const enemyRoll = Math.floor(Math.random() * 20) + 1;
+    const escapesClean = playerRoll > enemyRoll;
+
+    if (escapesClean) {
+      return {
+        messages: intervalsToCumulative([
+          {
+            delay: 1000,
+            content:
+              'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
+          },
+          {
+            delay: MIN_DELAY,
+            content: "The creature's shrieks fade behind you. For now.",
+          },
+          {
+            delay: DRAMATIC_DELAY,
+            content: `You find yourself in the <strong>${currentRoom.name}</strong>.`,
+          },
+          {
+            delay: MIN_DELAY,
+            content: currentRoom.description,
+          },
+          {
+            delay: MIN_DELAY,
+            content: '<span class="blink">What do you do?</span>',
+          },
+        ]),
+        nextState: CONVENT_STATES.EXPLORATION,
+        useAPI: false,
+        conventState,
+      };
+    }
+
+    const newHP = conventState.playerHP - 1;
+    const damageNarrative = await generateConventCombatNarrative({
+      encounterNum,
+      outcomeType: 'attackPlayer',
+      playerRoll,
+      enemyRoll,
+      playerHP: newHP,
+    });
+
+    if (newHP <= 0) {
+      return {
+        messages: intervalsToCumulative([
+          {
+            delay: 1000,
+            content:
+              'You turn to flee—but the creature is on you before you can escape.',
+          },
+          { delay: MIN_DELAY, content: damageNarrative },
+        ]),
+        nextState: CONVENT_STATES.LOCKOUT,
+        useAPI: false,
+        conventState: { ...conventState, playerHP: 0 },
+        corruptionProfile,
+      };
+    }
 
     return {
       messages: intervalsToCumulative([
         {
           delay: 1000,
           content:
-            'You turn and <strong>run</strong>. Your footsteps echo through empty halls.',
+            'You turn to flee—but the creature rakes you as you retreat.',
         },
-        {
-          delay: MIN_DELAY,
-          content: "The creature's shrieks fade behind you. For now.",
-        },
+        { delay: MIN_DELAY, content: damageNarrative },
         {
           delay: DRAMATIC_DELAY,
-          content: `You find yourself in the <strong>${currentRoom.name}</strong>.`,
+          content: `You stumble into the <strong>${currentRoom.name}</strong>.`,
         },
-        {
-          delay: MIN_DELAY,
-          content: currentRoom.description,
-        },
-        {
-          delay: MIN_DELAY,
-          content: '<span class="blink">What do you do?</span>',
-        },
+        { delay: MIN_DELAY, content: currentRoom.description },
+        { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
       ]),
       nextState: CONVENT_STATES.EXPLORATION,
       useAPI: false,
-      conventState,
+      conventState: { ...conventState, playerHP: newHP },
+      corruptionProfile,
     };
   }
 
@@ -819,6 +917,161 @@ export async function handleConventInput(
       }
     }
 
+    case CONVENT_STATES.EXPLORATION_SEARCH: {
+      if (intent === 'FIGHT') {
+        if (corruptionProfile) {
+          increaseCorruption(
+            corruptionProfile,
+            1,
+            'convent_search_to_combat'
+          );
+        }
+
+        return {
+          messages: intervalsToCumulative([
+            {
+              delay: 1000,
+              content:
+                "Finally. Curiosity is for scholars. You're a sword.",
+            },
+            {
+              delay: MIN_DELAY,
+              image: '/src/assets/trials/convent_encounter_2.webp',
+            },
+            { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
+            { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
+            { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+          ]),
+          nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
+          useAPI: false,
+          conventState: { ...conventState, combatHelpCount: 0 },
+          corruptionProfile,
+        };
+      }
+
+      if (intent === 'EXAMINE' || intent === 'TALK' || intent === 'HELP') {
+        const currentRoomKey = conventState.playerPosition.join(',');
+        const currentRoom = CONVENT_MAP[currentRoomKey];
+
+        const isHurt = conventState.playerHP < MAX_HP;
+        const roomCount =
+          conventState.roomPotionCounts &&
+          conventState.roomPotionCounts[currentRoomKey]
+            ? conventState.roomPotionCounts[currentRoomKey]
+            : 0;
+        const capReached =
+          roomCount >= GAME_CONFIG.convent.MAX_POTIONS_PER_ROOM;
+        const chance = GAME_CONFIG.convent.HEAL_POTION_CHANCE ?? 0.3;
+        const foundPotion = isHurt && !capReached && Math.random() < chance;
+        const healedHP = foundPotion
+          ? Math.min(conventState.playerHP + 1, MAX_HP)
+          : conventState.playerHP;
+
+        const entryId = ROOM_CODEX_MAP[currentRoomKey];
+        const alreadyCollected = (conventState.collectedCodex || []).includes(
+          entryId
+        );
+        let codexUnlocked = false;
+        let codexTitle = null;
+        if (entryId && !alreadyCollected) {
+          codexUnlocked = unlockCodexEntry(entryId);
+          const entry = getCodexEntryById(entryId);
+          codexTitle = entry?.title || 'Unknown Entry';
+        }
+
+        const examineMessages = [
+          {
+            delay: 1000,
+            content: `You carefully examine the <strong>${currentRoom.name}</strong>.`,
+          },
+          {
+            delay: MIN_DELAY,
+            content: 'You notice details you missed before.',
+          },
+        ];
+
+        if (codexUnlocked && codexTitle) {
+          examineMessages.push({
+            delay: MIN_DELAY,
+            content: `You uncover a marked scrap of lore. <strong>Codex unlocked: ${codexTitle}</strong>.`,
+          });
+        }
+
+        if (foundPotion) {
+          examineMessages.push(
+            {
+              delay: MIN_DELAY,
+              content:
+                'Tucked behind a loose stone you find a small vial—<em>a healing draught</em>.',
+            },
+            {
+              delay: MIN_DELAY,
+              content: `You uncork it and drink. Warmth spreads through your chest. <strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+            }
+          );
+        } else if (isHurt) {
+          examineMessages.push({
+            delay: MIN_DELAY,
+            content:
+              'You scour the room for something to staunch the bleeding... nothing useful—keep looking.',
+          });
+        }
+
+        examineMessages.push({
+          delay: MIN_DELAY,
+          content:
+            'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
+        });
+
+        const updatedPotionCounts = foundPotion
+          ? {
+              ...(conventState.roomPotionCounts || {}),
+              [currentRoomKey]: roomCount + 1,
+            }
+          : conventState.roomPotionCounts || {};
+
+        const updatedCollected = codexUnlocked && entryId
+          ? [...(conventState.collectedCodex || []), entryId]
+          : conventState.collectedCodex || [];
+
+        return {
+          messages: intervalsToCumulative(examineMessages),
+          nextState: CONVENT_STATES.EXPLORATION,
+          useAPI: false,
+          conventState: {
+            ...conventState,
+            playerHP: healedHP,
+            explorationTurns: conventState.explorationTurns + 1,
+            roomPotionCounts: updatedPotionCounts,
+            collectedCodex: updatedCollected,
+          },
+          corruptionProfile,
+        };
+      }
+
+      {
+        const currentRoomKey = conventState.playerPosition.join(',');
+        const currentRoom = CONVENT_MAP[currentRoomKey];
+        return {
+          messages: intervalsToCumulative([
+            { delay: 1000, content: `You're in the <strong>${currentRoom.name}</strong>.` },
+            {
+              delay: MIN_DELAY,
+              content:
+                'You can move <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong>. Or <strong>examine</strong> your surroundings.',
+            },
+          ]),
+          nextState: CONVENT_STATES.EXPLORATION,
+          useAPI: false,
+          conventState: {
+            ...conventState,
+            explorationTurns: conventState.explorationTurns + 1,
+          },
+          corruptionProfile,
+        };
+      }
+    }
+
     case CONVENT_STATES.EXPLORATION:
       // Handle exploration mode
       return handleExploration(userInput, conventState);
@@ -993,20 +1246,7 @@ async function handleExploration(userInput, conventState) {
     const currentRoomKey = conventState.playerPosition.join(',');
     const currentRoom = CONVENT_MAP[currentRoomKey];
 
-    const isHurt = conventState.playerHP < MAX_HP;
-    const roomCount =
-      conventState.roomPotionCounts &&
-      conventState.roomPotionCounts[currentRoomKey]
-        ? conventState.roomPotionCounts[currentRoomKey]
-        : 0;
-    const capReached = roomCount >= GAME_CONFIG.convent.MAX_POTIONS_PER_ROOM;
-    const chance = GAME_CONFIG.convent.HEAL_POTION_CHANCE ?? 0.3;
-    const foundPotion = isHurt && !capReached && Math.random() < chance;
-    const healedHP = foundPotion
-      ? Math.min(conventState.playerHP + 1, MAX_HP)
-      : conventState.playerHP;
-
-    const examineMessages = [
+    const interjection = [
       {
         delay: 1000,
         content: `You carefully examine the <strong>${currentRoom.name}</strong>.`,
@@ -1014,53 +1254,24 @@ async function handleExploration(userInput, conventState) {
       {
         delay: MIN_DELAY,
         content:
-          'You notice details you missed before... (Codex system coming soon)',
+          "You notice details you didn't see before...",
+      },
+      {
+        delay: MIN_DELAY,
+        content:
+          "No. No time for rummaging. <strong>They're regrouping</strong>. Go hunt. <em>Finish what you started.</em>",
+      },
+      {
+        delay: MIN_DELAY,
+        content: '<span class="blink">What do you do?</span>',
       },
     ];
 
-    if (foundPotion) {
-      examineMessages.push(
-        {
-          delay: MIN_DELAY,
-          content:
-            'Tucked behind a loose stone you find a small vial—<em>a healing draught</em>.',
-        },
-        {
-          delay: MIN_DELAY,
-          content: `You uncork it and drink. Warmth spreads through your chest. <strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
-        }
-      );
-    } else if (isHurt) {
-      examineMessages.push({
-        delay: MIN_DELAY,
-        content:
-          'You scour the room for something to staunch the bleeding... nothing useful—keep looking.',
-      });
-    }
-
-    examineMessages.push({
-      delay: MIN_DELAY,
-      content:
-        'Try moving <strong>north</strong>, <strong>south</strong>, <strong>east</strong>, or <strong>west</strong> to explore.',
-    });
-
-    const updatedPotionCounts = foundPotion
-      ? {
-          ...(conventState.roomPotionCounts || {}),
-          [currentRoomKey]: roomCount + 1,
-        }
-      : conventState.roomPotionCounts || {};
-
     return {
-      messages: intervalsToCumulative(examineMessages),
-      nextState: CONVENT_STATES.EXPLORATION,
+      messages: intervalsToCumulative(interjection),
+      nextState: CONVENT_STATES.EXPLORATION_SEARCH,
       useAPI: false,
-      conventState: {
-        ...conventState,
-        playerHP: healedHP,
-        explorationTurns: conventState.explorationTurns + 1,
-        roomPotionCounts: updatedPotionCounts,
-      },
+      conventState,
     };
   }
 
