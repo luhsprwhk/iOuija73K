@@ -58,11 +58,13 @@
 
   let animatedSubtitleRef = $state(null);
 
+  const savedPlayerNameInit = getPlayerName();
   let messages = $state([
     {
       role: 'assistant',
-      content:
-        "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
+      content: savedPlayerNameInit
+        ? `Hey ${savedPlayerNameInit}! Welcome back. Want to play again?`
+        : "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
       showButton: true,
     },
   ]);
@@ -276,13 +278,6 @@
         // Returning player: skip name exchange and start the convent trial
         playerName = savedName;
         gameState = 'convent';
-
-        // Optional quick acknowledgment
-        addAssistantMessage(
-          hasTrueNameAchievement
-            ? `Welcome back, ${savedName}. <i>Paimon remembers.</i>`
-            : `Welcome back, ${savedName}. <i>Raphael remembers.</i>`
-        );
 
         // Start ambient music before convent trial
         isPlayingMusic = true;
