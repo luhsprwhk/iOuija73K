@@ -19,10 +19,6 @@
   import { getAchievementById } from '../achievements/achievementData.js';
   import { unlockAchievement, isAchievementUnlocked } from '../achievements/achievementManager.js';
   import {
-    handleNumberGuess,
-    getNumberTrialIntro,
-  } from '../trials/numberGuessing.js';
-  import {
     handleConventInput,
     getConventIntro,
     getConventReveal,
@@ -69,9 +65,8 @@
   let messagesEndRef;
   let inputRef;
   let showInput = $state(false);
-  let gameState = $state('initial'); // initial, name_exchange, number_game_intro, number_game, convent, hangman, white_room, playing
+  let gameState = $state('initial'); // initial, name_exchange, convent, hangman, white_room, playing
   let playerName = $state('');
-  let guessAttempt = $state(0);
   let conventState = $state(CONVENT_STATES.INTRO);
   let conventStateData = $state(createConventState()); // Tracks HP and encounter data
   let hangmanTrialState = $state(HANGMAN_STATES.INTRO); // Tracks which phase of hangman trial
@@ -270,10 +265,16 @@
         // Trigger footer reveal after demon's name appears
         onGameStateChange?.(gameState);
       }, 500);
-    } else if (gameState === 'number_game' && guessAttempt > 0) {
-      // Number game completed, transition to convent trial
+    } else if (gameState === 'name_exchange') {
+      // After name is entered, user clicks OK to start convent trial
       gameState = 'convent';
-      
+
+      // Show confetti and sigil reveal
+      showConfetti = true;
+      setTimeout(() => {
+        showConfetti = false;
+      }, 3500);
+
       // Start playing creepy ambient music before convent trial
       isPlayingMusic = true;
       if (audioElement) {
@@ -282,64 +283,35 @@
         });
       }
 
-      // Start convent trial after the meta-horror setup
+      // Start convent trial
       const conventIntro = getConventIntro(playerName);
       conventIntro.forEach(({ delay, content, image }) => {
-        addAssistantMessage(content, 10500 + delay, false, image);
+        addAssistantMessage(content, delay, false, image);
       });
 
       // Add first encounter description and prompt
       const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
       addAssistantMessage(
         undefined,
-        10500 + lastIntroDelay + 2000,
+        lastIntroDelay + 2000,
         false,
         '/src/assets/trials/convent_encounter_1.webp'
       );
       addAssistantMessage(
         'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
-        10500 + lastIntroDelay + 2500,
+        lastIntroDelay + 2500,
         false
       );
       addAssistantMessage(
         '<span class="blink">What do you do?</span>',
-        10500 + lastIntroDelay + 4500,
+        lastIntroDelay + 4500,
         false
       );
 
       // Show input after all messages
       setTimeout(() => {
         showInput = true;
-      }, 10500 + lastIntroDelay + 5000);
-    } else if (gameState === 'number_game_intro') {
-      // User clicked OK after thinking of number
-      showInput = false; // Hide input, we'll use buttons
-      gameState = 'number_game';
-
-      // Make first guess
-      const result = handleNumberGuess(null, 0, playerName, getBrowserDetails);
-
-      // Add messages with buttons
-      result.messages.forEach(({ delay, content, showButtons }) => {
-        const buttons = showButtons
-          ? [
-              {
-                label: 'Yes',
-                value: true,
-                onClick: (value) => handleNumberGuessResponse(value),
-              },
-              {
-                label: 'No',
-                value: false,
-                onClick: (value) => handleNumberGuessResponse(value),
-              },
-            ]
-          : undefined;
-        addAssistantMessage(content, delay, false, undefined, buttons);
-      });
-
-      // Update guess attempt
-      guessAttempt = result.nextAttempt;
+      }, lastIntroDelay + 5000);
     }
   }
 
@@ -390,20 +362,13 @@
         return; // Don't proceed, keep asking for name
       }
 
-      // Name is valid, proceed
+      // Name is valid, proceed directly to convent trial
       playerName = userInput;
-      gameState = 'number_game_intro';
-      showInput = false; // Hide input until button is clicked
+      showInput = false;
 
-      // Get intro messages from number trial module
-      const introMessages = getNumberTrialIntro(userInput);
-      introMessages.forEach(({ delay, content, showButton }) => {
-        addAssistantMessage(content, delay, showButton || false);
-      });
-    } else if (gameState === 'number_game') {
-      // This shouldn't be reached anymore since we use buttons
-      // But keep for backwards compatibility
-      console.warn('Unexpected text input in number_game state');
+      // Show transition messages
+      addAssistantMessage(`Nice to meet you, ${userInput}.`, 800);
+      addAssistantMessage("Let's begin.", 2000, true); // Show OK button to start convent
     } else if (gameState === 'convent') {
       // Handle convent trial
       if (isProcessing) return;
@@ -706,59 +671,6 @@
     }
   }
 
-  /**
-   * Handles yes/no button clicks for number guessing
-   * @param {boolean} userConfirmed - True if yes, false if no
-   */
-  function handleNumberGuessResponse(userConfirmed) {
-    // Remove buttons from the message that had them
-    const buttonMessageIndex = messages.findIndex((msg) => msg.buttons);
-    if (buttonMessageIndex !== -1) {
-      messages[buttonMessageIndex].buttons = undefined;
-      messages = [...messages];
-    }
-
-    // Handle the response
-    const result = handleNumberGuess(
-      userConfirmed,
-      guessAttempt,
-      playerName,
-      getBrowserDetails
-    );
-
-    // Update guess attempt
-    guessAttempt = result.nextAttempt;
-
-    // If game is complete and user confirmed (demon guessed correctly), celebrate!
-    if (result.gameComplete && userConfirmed === true) {
-      // Trigger confetti celebration
-      showConfetti = true;
-      setTimeout(() => {
-        showConfetti = false;
-      }, 3500);
-    }
-
-    // Add all response messages with their delays
-    result.messages.forEach(({ delay, content, showButtons, showButton }) => {
-      const buttons = showButtons
-        ? [
-            {
-              label: 'Yes',
-              value: true,
-              onClick: (value) => handleNumberGuessResponse(value),
-            },
-            {
-              label: 'No',
-              value: false,
-              onClick: (value) => handleNumberGuessResponse(value),
-            },
-          ]
-        : undefined;
-      addAssistantMessage(content, delay, showButton || false, undefined, buttons);
-    });
-
-    // Note: Transition to convent trial is now handled by OK button click in handleOkClick
-  }
 
   async function handleMovement(direction) {
     if (gameState !== 'convent' || conventState !== CONVENT_STATES.EXPLORATION) return;
@@ -1047,63 +959,6 @@
           },
         ];
         hasTrueNameAchievement = false; // Reset to false name for this state
-        break;
-
-      case 'number_game_intro':
-        gameState = 'number_game_intro';
-        showInput = false;
-        const introMessages = getNumberTrialIntro(playerName);
-        messages = introMessages.map(({ content, showButton }) => ({
-          role: 'assistant',
-          content,
-          showButton: showButton || false,
-        }));
-        break;
-
-      case 'number_game':
-        gameState = 'number_game';
-        showInput = false;
-        guessAttempt = 0;
-        messages = [
-          {
-            role: 'assistant',
-            content: `Alright, ${playerName}. I'm going to guess your number.`,
-            showButton: false,
-          },
-        ];
-        // Make first guess
-        const result = handleNumberGuess(
-          null,
-          0,
-          playerName,
-          getBrowserDetails
-        );
-        result.messages.forEach(({ content, showButtons }) => {
-          const buttons = showButtons
-            ? [
-                {
-                  label: 'Yes',
-                  value: true,
-                  onClick: (value) => handleNumberGuessResponse(value),
-                },
-                {
-                  label: 'No',
-                  value: false,
-                  onClick: (value) => handleNumberGuessResponse(value),
-                },
-              ]
-            : undefined;
-          messages = [
-            ...messages,
-            {
-              role: 'assistant',
-              content,
-              buttons,
-              showButton: false,
-            },
-          ];
-        });
-        guessAttempt = result.nextAttempt;
         break;
 
       case 'convent':

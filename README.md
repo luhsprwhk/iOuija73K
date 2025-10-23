@@ -108,8 +108,9 @@ src/
 │   └── helpers/
 │       └── getBrowserDetails.js  # Extract user metadata for "omniscience"
 ├── trials/
-│   ├── numberGuessing.js         # First trial: psychological number trick
-│   └── convent.js                # Second trial: perception manipulation horror
+│   ├── convent.js                # First trial: perception manipulation horror
+│   ├── hangman.js                # Second trial: false agency and frontier justice
+│   └── whiteRoom.js              # Final trial: sacrifice and choice
 └── ai/
     └── claude.js                 # Claude API integration
 ```
@@ -119,11 +120,10 @@ src/
 The game progresses through distinct phases:
 
 1. **Initial Contact** - Friendly AI introduction
-2. **Name Exchange** - Building false trust
-3. **Number Guessing Trial** - Paimon demonstrates "psychic" abilities
-4. **Convent Trial** - You think you're fighting monsters... you're not
-5. **Revelation** - The demon reveals its true nature
-6. **Free-form Horror** - Dynamic AI-driven narrative using Claude API
+2. **Name Exchange** - Building false trust, Paimon's sigil appears
+3. **Convent Trial** - You think you're fighting monsters... you're not
+4. **Hangman Trial** - Save an innocent man, except... you can't
+5. **White Room Trial** - A final choice between sacrifice and self-preservation
 
 Each trial is carefully scripted with timed message reveals to build tension and manipulate player perception.
 

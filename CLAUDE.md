@@ -143,7 +143,7 @@ function triggerAchievement(achievementId) {
 
 The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game state lives in `ChatInterface.svelte`:
 
-- `gameState`: Tracks progression through trials (initial → name_exchange → number_game_intro → number_game → convent → hangman → playing)
+- `gameState`: Tracks progression through trials (initial → name_exchange → convent → hangman → white_room → playing)
 - `messages`: Chat message history with roles (user/assistant), supports images, buttons, and audio
 - `conventState`: Sub-state for convent trial progression
 - `hangmanState`: Sub-state for hangman trial (word, guesses, timer)
@@ -152,7 +152,7 @@ The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game
 - `hasTrueNameAchievement`: Tracks if "True Name" achievement is unlocked
 - `demonName`: Derived state - "Raphael" by default, "Paimon" if True Name achievement unlocked
 - `isProcessing`: Prevents concurrent API calls
-- `showConfetti`: Triggers confetti effect when demon guesses the correct number
+- `showConfetti`: Triggers confetti effect during key moments (e.g., after name exchange)
 - `currentAchievement`: Currently displayed achievement toast notification
 - `showAchievementPanel`: Controls visibility of achievement panel modal
 - `currentRiddleIndex`: Tracks which riddle tooltip to display on hover
@@ -160,16 +160,6 @@ The app uses **Svelte 5 runes** (`$state`, `$props`) instead of stores. All game
 ### Trial System
 
 Trials are **scripted psychological mini-games** located in `src/trials/`:
-
-**Number Guessing Trial** (`numberGuessing.js`):
-
-- Paimon "guesses" the player's number using psychological manipulation
-- Uses common picks (37, 13, 17) that most people choose
-- Fallback: Shows browser metadata to demonstrate "omniscience"
-- **Uses Yes/No button interface** instead of text input for responses
-- **No explicit name reveal** - demon stays as "Raphael" throughout
-- **Triggers confetti celebration** when demon successfully guesses the number
-- Players must discover Paimon's true identity through the sigil or research
 
 **Convent Trial** (`convent.js`):
 
@@ -230,7 +220,7 @@ App.svelte (container layout + console easter egg)
 ├── ChatInterface.svelte (main game logic + state)
 │   ├── ChatMessage.svelte (individual message bubbles with button/image support)
 │   ├── PaimonSigil.svelte (animated demon sigil, appears after name exchange)
-│   ├── Confetti.svelte (dark red confetti effect on correct number guess)
+│   ├── Confetti.svelte (dark red confetti effect during key moments)
 │   ├── AchievementToast.svelte (animated toast notification for achievement unlocks)
 │   └── AchievementPanel.svelte (modal showing all achievements and progress)
 └── Footer.svelte (game credits, fades in)
@@ -274,28 +264,19 @@ These are rendered via `setTimeout` loops in `ChatInterface.svelte:handleSubmit(
 Critical transitions occur in `handleSubmit()` and `handleOkClick()`:
 
 1. **initial** → **name_exchange**: After player clicks OK button
-2. **name_exchange** → **number_game_intro**: After player enters name
-3. **number_game_intro** → **number_game**: After player clicks OK to think of number
-4. **number_game** → **convent**: When number trial completes (gameComplete: true), starts dark ambient music
-5. **convent** → **hangman**: When convent trial completes
-6. **hangman** → **playing**: When hangman trial completes (win or lose)
-7. **playing**: Free-form Claude API responses with horror DM persona
+2. **name_exchange** → **convent**: After player enters name and clicks OK, shows confetti/sigil reveal and starts dark ambient music
+3. **convent** → **hangman**: When convent trial completes
+4. **hangman** → **white_room**: When hangman trial completes
+5. **white_room** → **complete**: When white room trial completes
+6. **playing**: Free-form Claude API responses with horror DM persona (currently unused)
 
 ### Name Reveal Mechanic
 
 - Initial demon name: "Raphael" (false identity)
-- True name: "Paimon" (revealed after first trial)
-- Tracked via `demonName` state variable
-- Updated when trial returns `revealName: true`
+- True name: "Paimon" (only discovered through achievement)
+- Tracked via `demonName` derived state: `$derived(hasTrueNameAchievement ? 'Paimon' : 'Raphael')`
+- Changes dynamically when player types "Paimon" and unlocks the "True Name" achievement
 - Affects chat input placeholder and message attribution
-
-### Browser Metadata Usage
-
-`getBrowserDetails.js` extracts user metadata for the "omniscience" effect:
-
-- Time of day calculation
-- Browser/OS detection from user agent
-- Used as fallback in number guessing trial to demonstrate supernatural knowledge
 
 ### Console Easter Egg
 
@@ -355,7 +336,6 @@ The project uses **Vitest** for unit testing (config: `vitest.config.js`):
 - Test files: `src/**/*.test.js` or `src/**/*.spec.js`
 - Environment: Node.js (trials are pure functions)
 - Current coverage:
-  - Number guessing trial logic (`numberGuessing.test.js`)
   - Hangman trial logic (`hangman.test.js`)
 - Run tests: `npm run test` or `npm run test:watch` for watch mode
 - Interactive UI: `npm run test:ui` for visual test runner
@@ -376,21 +356,21 @@ Key user flows to verify manually:
 3. Hover over subtitle to see riddle tooltips rotating
 4. Click "OK" to begin
 5. Enter name when prompted
-6. Click "OK" to think of a number
-7. Use Yes/No buttons to respond to number guessing prompts
-8. Test both successful guess path and fallback path
-9. Verify confetti appears when Paimon's true name is revealed
-10. Verify dark ambient music starts before convent trial
-11. Test convent trial combat with violent actions
-12. Test convent trial with non-violent attempts (talk, flee, help)
-13. Verify images display in convent encounters
-14. Verify audio plays during convent combat (scream)
-15. Test hangman trial letter guessing (valid/invalid input)
-16. Verify hangman ASCII art updates with wrong guesses
-17. Verify 50-second timer counts down and updates display
-18. Test both winning path (guess word) and losing path (timeout/wrong guesses)
-19. Verify trapdoor audio plays during hangman reveal
-20. Test free-form Claude API responses in `playing` state after hangman
+6. Click "OK" to start convent trial
+7. Verify confetti appears after name entry
+8. Verify Paimon's sigil appears in bottom left
+9. Verify dark ambient music starts before convent trial
+10. Test convent trial combat with violent actions
+11. Test convent trial with non-violent attempts (talk, flee, help)
+12. Verify images display in convent encounters
+13. Verify audio plays during convent combat (scream)
+14. Test hangman trial exploration phase (talk to condemned man, examine scene)
+15. Verify glitching timer displays correctly
+16. Verify hangman trial ends after attempts exhausted
+17. Verify hangman reveal plays correctly
+18. Test white room trial exploration and choice
+19. Verify white room reveal matches player's choice
+20. Verify game ends correctly after white room trial
 
 ## Important Conventions
 
@@ -401,7 +381,7 @@ Key user flows to verify manually:
 - **State-driven logic**: All branching in `ChatInterface.svelte` uses `gameState` and sub-states
 - **API key security**: Never commit `.env`, always use `VITE_` prefix for client-side vars
 - **Asset optimization**: Images should be WebP, audio should have both MP3 and OGG formats
-- **Button vs text input**: Number guessing uses buttons, convent/hangman/free-form use text input
+- **Text input flow**: All trials use text input after name exchange
 - **AI integration**: Convent trial uses Claude API for dynamic non-violent subversion responses
 - **Timer management**: Hangman trial uses `setInterval` for real-time countdown, must be cleared on completion
 - **llms.txt file**: The `llms.txt` file contains Svelte 5 API documentation (1640 lines) to help LLMs understand Svelte syntax when working on this codebase. It's committed to version control intentionally, not generated/fetched.
@@ -441,4 +421,4 @@ The game's effectiveness depends on:
 5. **Meta-horror**: The "AI" itself is the threat, not just the narrative
 6. **ARG elements**: Console easter egg and riddle tooltips reward curious players
 7. **Multimedia immersion**: Images, audio, and visual effects (confetti) enhance key moments
-8. **Subversive celebration**: Confetti when revealing the demon's name creates cognitive dissonance
+8. **Subversive celebration**: Confetti after name exchange creates unsettling contrast with horror atmosphere
