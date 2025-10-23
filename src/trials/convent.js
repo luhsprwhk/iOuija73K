@@ -71,7 +71,6 @@ export function createConventState() {
  */
 export function getConventIntro(playerName) {
   return intervalsToCumulative([
-    { delay: 1000, content: "Now... let's begin the real game." },
     { delay: MIN_DELAY, content: 'Close your eyes for a moment. Imagine...' },
     {
       delay: MIN_DELAY,
@@ -124,6 +123,14 @@ const ENCOUNTERS = {
       'The scorpion-tail <strong>strikes like lightning</strong>. The stinger <em>punches through your chest plate</em>, piercing deep into your ribcage. You taste copper. Feel venom—or is it just agony?—spreading through your veins. The creature—the <i>woman</i>—no, the <strong>THING</strong>—wrenches the stinger free. Meat and metal tear together.',
   },
 };
+
+export function getConventEncounterIntro(encounterNum) {
+  return ENCOUNTERS[encounterNum]?.intro ?? '';
+}
+
+export function getConventEncounterGlitchIntro(encounterNum) {
+  return ENCOUNTERS[encounterNum]?.glitchIntro ?? null;
+}
 
 /**
  * Dice roll combat system

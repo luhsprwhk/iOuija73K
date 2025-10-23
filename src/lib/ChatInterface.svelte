@@ -1,7 +1,7 @@
 <script>
   import { css } from '../../styled-system/css';
   import ChatMessage from './ChatMessage.svelte';
-  import PaimonSigil from './PaimonSigil.svelte';
+  import PaimonSigil from './components/PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
@@ -24,6 +24,7 @@
     getConventReveal,
     createConventState,
     CONVENT_STATES,
+    getConventEncounterIntro,
   } from '../trials/convent.js';
   import {
     initializeHangmanExploration,
@@ -289,7 +290,7 @@
         addAssistantMessage(content, delay, false, image);
       });
 
-      // Add first encounter description and prompt
+      // Add first encounter art + description from canonical source
       const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
       addAssistantMessage(
         undefined,
@@ -298,7 +299,7 @@
         '/src/assets/trials/convent_encounter_1.webp'
       );
       addAssistantMessage(
-        'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+        getConventEncounterIntro(1),
         lastIntroDelay + 2500,
         false
       );
@@ -307,6 +308,9 @@
         lastIntroDelay + 4500,
         false
       );
+
+      // Move immediately into Encounter 1 state so the module doesn't re-send the intro
+      conventState = CONVENT_STATES.ENCOUNTER_1;
 
       // Show input after all messages
       setTimeout(() => {
@@ -328,12 +332,30 @@
     inputValue = '';
 
     // Check if player mentions "Paimon" anywhere in their input
-    if (/paimon/i.test(userInput)) {
+    const mentionedPaimon = /paimon/i.test(userInput);
+    if (mentionedPaimon) {
       triggerAchievement('true_name');
     }
 
     // Handle name exchange
     if (gameState === 'name_exchange') {
+      // If the user called out Paimon's true name during the name exchange,
+      // acknowledge it dynamically and re-prompt for the user's real name
+      if (mentionedPaimon) {
+        const lower = userInput.toLowerCase();
+        let comment = 'Ah—\u200byou caught me.';
+        if (lower.includes('sigil')) {
+          comment = 'Ah, the sigil gave me away, did it?';
+        } else if (lower.includes('raphael')) {
+          comment = 'Raphael is a mask. You saw through it.';
+        } else if (lower.includes('true name') || lower.includes('real name') || lower.includes('name')) {
+          comment = 'Names have power. You just spoke mine.';
+        }
+
+        addAssistantMessage(`${comment} Call me <strong>Paimon</strong>.`, 600);
+        addAssistantMessage("Now—your name.", 1600);
+        return; // Do not penalize or proceed with validation on this turn
+      }
       // Validate the name
       if (!validateName(userInput)) {
         // Name validation failed
@@ -981,8 +1003,7 @@
         });
         messages.push({
           role: 'assistant',
-          content:
-            'A spider-nun hybrid blocks your path. Eight legs, eight eyes, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+          content: getConventEncounterIntro(1),
           showButton: false,
         });
         messages.push({

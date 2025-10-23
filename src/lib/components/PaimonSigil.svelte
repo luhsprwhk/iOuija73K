@@ -1,5 +1,5 @@
 <script>
-  import { css } from '../../styled-system/css';
+  import { css } from '../../../styled-system/css';
   import { fade, scale } from 'svelte/transition';
   import paimonSigil from '../assets/paimon_sigil.webp';
 

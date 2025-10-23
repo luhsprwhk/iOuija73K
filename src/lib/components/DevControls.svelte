@@ -1,13 +1,11 @@
 <script>
-  import { css } from '../../styled-system/css';
+  import { css } from '../../../styled-system/css';
 
   let { onStateJump, onTriggerLockout } = $props();
 
   const trialOptions = [
     { label: 'Start (Initial)', value: 'initial' },
     { label: 'Name Exchange', value: 'name_exchange' },
-    { label: 'Number Game Intro', value: 'number_game_intro' },
-    { label: 'Number Game', value: 'number_game' },
     { label: 'Convent Trial', value: 'convent' },
     { label: 'Hangman Trial', value: 'hangman' },
     { label: 'White Room Trial', value: 'white_room' },
