@@ -1,28 +1,29 @@
 <script>
-  import { css } from '../../styled-system/css';
+  import { css } from '../../../styled-system/css';
   import ChatMessage from './ChatMessage.svelte';
-  import PaimonSigil from './components/PaimonSigil.svelte';
+  import PaimonSigil from './PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
-  import AchievementToast from './components/AchievementToast.svelte';
-  import AchievementPanel from './components/AchievementPanel.svelte';
-  import StatusBox from '../components/StatusBox.svelte';
-  import MovementControls from '../components/MovementControls.svelte';
-  import getBrowserDetails from './helpers/getBrowserDetails';
-  import { validateName } from './helpers/validateName';
+  import AchievementToast from './AchievementToast.svelte';
+  import AchievementPanel from './AchievementPanel.svelte';
+  import StatusBox from './StatusBox.svelte';
+  import MovementControls from './MovementControls.svelte';
+  import getBrowserDetails from '../helpers/getBrowserDetails';
+  import { validateName } from '../helpers/validateName';
   import {
     checkLockout,
     setLockout,
     clearLockout,
-  } from './helpers/lockoutManager';
-  import { getAchievementById } from '../achievements/achievementData.js';
+  } from '../helpers/lockoutManager';
+  import { getAchievementById } from '../../achievements/achievementData.js';
   import {
     unlockAchievement,
     isAchievementUnlocked,
-  } from '../achievements/achievementManager.js';
-  import { loadProfile } from './helpers/corruptionManager.js';
-  import { getPlayerName, setPlayerName } from './helpers/playerProfile.js';
+  } from '../../achievements/achievementManager.js';
+  import { unlockCodexEntry } from '../../codex/codexManager.js';
+  import { loadProfile } from '../helpers/corruptionManager.js';
+  import { getPlayerName, setPlayerName } from '../helpers/playerProfile.js';
   import {
     handleConventInput,
     getConventIntro,
@@ -30,7 +31,7 @@
     createConventState,
     CONVENT_STATES,
     getConventEncounterIntro,
-  } from '../trials/convent.js';
+  } from '../../trials/convent.js';
   import {
     initializeHangmanExploration,
     getHangmanIntro,
@@ -40,7 +41,7 @@
     getCondemnedState,
     handleGlitchingTimer,
     HANGMAN_STATES,
-  } from '../trials/hangman.js';
+  } from '../../trials/hangman.js';
   import {
     initializeWhiteRoomExploration,
     getWhiteRoomIntro,
@@ -48,13 +49,13 @@
     getWhiteRoomReveal,
     getFinalDismissal,
     WHITE_ROOM_STATES,
-  } from '../trials/whiteRoom.js';
+  } from '../../trials/whiteRoom.js';
   import {
     callClaude,
     formatMessagesForClaude,
     handleHangmanExploration,
-  } from '../ai/claude.js';
-  import { GAME_CONFIG } from '../config/gameConfig.js';
+  } from '../../ai/claude.js';
+  import { GAME_CONFIG } from '../../config/gameConfig.js';
 
   let animatedSubtitleRef = $state(null);
 
@@ -150,6 +151,18 @@
    */
   function dismissAchievementToast() {
     currentAchievement = null;
+  }
+
+  /**
+   * Unlock a codex entry and notify parent
+   * @param {string} entryId - ID of the codex entry to unlock
+   */
+  function triggerCodexUnlock(entryId) {
+    const wasUnlocked = unlockCodexEntry(entryId);
+    if (wasUnlocked) {
+      // Notify parent component about codex unlock
+      onCodexUnlock?.();
+    }
   }
 
   /**
@@ -332,6 +345,10 @@
             ? "You're back. What's your name? <i>You know me as Paimon.</i>"
             : "Awesome! What's your name? <i>Mine is Raphael.</i>";
           addAssistantMessage(introLine);
+
+          // Unlock Raphael codex entry when he introduces himself
+          triggerCodexUnlock('raphael');
+
           // Trigger footer reveal after demon's name appears
           onGameStateChange?.(gameState);
         }, 500);
@@ -1031,6 +1048,7 @@
     title = 'iOuija73k',
     onGameStateChange = undefined,
     onAchievementUnlock = undefined,
+    onCodexUnlock = undefined,
     showAchievementPanel = $bindable(false),
   } = $props();
 
@@ -1098,6 +1116,7 @@
           },
         ];
         hasTrueNameAchievement = false; // Reset to false name for this state
+        triggerCodexUnlock('raphael'); // Unlock Raphael codex entry for dev mode
         break;
 
       case 'convent':

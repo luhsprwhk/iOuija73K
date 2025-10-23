@@ -5,9 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import AnimatedSubtitle from './AnimatedSubtitle.svelte';
-
-describe('AnimatedSubtitle Component', () => {
+import AnimatedSubtitle from '../../src/lib/components/AnimatedSubtitle.sveltee('AnimatedSubtitle Component', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     // Mock localStorage

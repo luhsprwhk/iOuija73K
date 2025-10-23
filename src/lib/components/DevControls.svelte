@@ -1,7 +1,7 @@
 <script>
   import { css } from '../../../styled-system/css';
 
-  let { onStateJump, onTriggerLockout } = $props();
+  let { onStateJump, onTriggerLockout, onReset } = $props();
 
   const trialOptions = [
     { label: 'Start (Initial)', value: 'initial' },
@@ -88,5 +88,8 @@
   </select>
   <button class={buttonClass} onclick={onTriggerLockout}>
     Trigger Lockout
+  </button>
+  <button class={buttonClass} onclick={onReset}>
+    Reset Profile
   </button>
 </div>

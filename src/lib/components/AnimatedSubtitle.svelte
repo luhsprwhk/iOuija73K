@@ -1,5 +1,5 @@
 <script>
-  import { css } from '../../styled-system/css';
+  import { css } from '../../../styled-system/css';
   import { Tooltip } from 'melt/components';
 
   const subtitles = [

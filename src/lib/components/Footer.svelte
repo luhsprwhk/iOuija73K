@@ -1,7 +1,12 @@
 <script>
   import { css } from '../../../styled-system/css';
 
-  let { onAchievementClick, showAchievementButton = false } = $props();
+  let {
+    onAchievementClick,
+    showAchievementButton = false,
+    onCodexClick,
+    showCodexButton = false,
+  } = $props();
 
   const footerClass = css({
     display: 'flex',
@@ -13,7 +18,7 @@
     gap: '2rem',
   });
 
-  const achievementButtonClass = css({
+  const buttonClass = css({
     bg: 'transparent',
     border: '2px solid',
     borderColor: 'bloodRed',
@@ -32,9 +37,14 @@
 
 <footer class={footerClass}>
   <span>A game by <a href="https://luhsprwhk.xyz">Luh Sprwhk</a></span>
+  {#if showCodexButton}
+    <button class={buttonClass} onclick={onCodexClick} title="View Codex">
+      📖
+    </button>
+  {/if}
   {#if showAchievementButton}
     <button
-      class={achievementButtonClass}
+      class={buttonClass}
       onclick={onAchievementClick}
       title="View Achievements"
     >

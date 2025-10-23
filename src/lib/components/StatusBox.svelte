@@ -1,5 +1,5 @@
 <script>
-  import { css } from '../../styled-system/css';
+  import { css } from '../../../styled-system/css';
 
   /**
    * StatusBox - A reusable component for displaying trial status information

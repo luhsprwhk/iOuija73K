@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import '@testing-library/jest-dom';
-import StatusBox from '../../src/components/StatusBox.svelte';
+import StatusBox from '../../src/lib/components/StatusBox.svelte';
 
 describe('StatusBox', () => {
   describe('Rendering', () => {

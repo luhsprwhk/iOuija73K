@@ -1,6 +1,6 @@
 <script>
-  import { css } from '../../styled-system/css';
-  import PaimonSigil from './components/PaimonSigil.svelte';
+  import { css } from '../../../styled-system/css';
+  import PaimonSigil from './PaimonSigil.svelte';
 
   let { timeRemaining = 300, onUnlock = undefined } = $props();
 

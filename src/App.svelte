@@ -1,17 +1,30 @@
 <script>
   import { css } from '../styled-system/css';
-  import ChatInterface from './lib/ChatInterface.svelte';
+  import ChatInterface from './lib/components/ChatInterface.svelte';
   import DevControls from './lib/components/DevControls.svelte';
   import Footer from './lib/components/Footer.svelte';
-  import { getUnlockedAchievements } from './achievements/achievementManager.js';
+  import CodexPanel from './lib/components/CodexPanel.svelte';
+  import { getUnlockedAchievements, clearAllAchievements } from './achievements/achievementManager.js';
+  import { getUnlockedCodexCount } from './codex/codexManager.js';
+  import { clearPlayerName } from './lib/helpers/playerProfile.js';
+  import { resetProfile as resetCorruptionProfile } from './lib/helpers/corruptionManager.js';
+  import { resetMetaLockoutCount } from './lib/helpers/metaLockoutTracker.js';
+  import { clearLockout } from './lib/helpers/lockoutManager.js';
 
   let chatInterfaceRef;
   let showAchievementPanel = $state(false);
+  let showCodexPanel = $state(false);
   let hasAchievements = $state(getUnlockedAchievements().length > 0);
+  let hasCodexEntries = $state(getUnlockedCodexCount() > 0);
 
   // Update achievement button visibility when achievements are unlocked
   function handleAchievementUnlock() {
     hasAchievements = true;
+  }
+
+  // Update codex button visibility when codex entries are unlocked
+  function handleCodexUnlock() {
+    hasCodexEntries = true;
   }
 
   // Console incantation easter egg
@@ -89,6 +102,20 @@
   function handleAchievementClick() {
     showAchievementPanel = true;
   }
+
+  function handleCodexClick() {
+    showCodexPanel = true;
+  }
+
+  function handleResetProfile() {
+    // Global reset: clear player name, achievements, corruption profile, and any lockouts
+    clearPlayerName();
+    clearAllAchievements();
+    resetCorruptionProfile();
+    resetMetaLockoutCount();
+    clearLockout();
+    window.location.reload();
+  }
 </script>
 
 <div class={containerClass}>
@@ -97,6 +124,7 @@
       <DevControls
         onStateJump={handleStateJump}
         onTriggerLockout={handleTriggerLockout}
+        onReset={handleResetProfile}
       />
     </div>
   {/if}
@@ -105,10 +133,15 @@
       bind:this={chatInterfaceRef}
       bind:showAchievementPanel
       onAchievementUnlock={handleAchievementUnlock}
+      onCodexUnlock={handleCodexUnlock}
     />
     <Footer
       onAchievementClick={handleAchievementClick}
       showAchievementButton={hasAchievements}
+      onCodexClick={handleCodexClick}
+      showCodexButton={hasCodexEntries}
     />
   </div>
 </div>
+
+<CodexPanel bind:isOpen={showCodexPanel} />
