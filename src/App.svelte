@@ -136,12 +136,11 @@
       onAchievementUnlock={handleAchievementUnlock}
       onCodexUnlock={handleCodexUnlock}
       onCodexClick={handleCodexClick}
-      showCodexButton={hasCodexEntries}
-    />
-    <Footer
       onAchievementClick={handleAchievementClick}
+      showCodexButton={hasCodexEntries}
       showAchievementButton={hasAchievements}
     />
+    <Footer />
   </div>
 </div>
 

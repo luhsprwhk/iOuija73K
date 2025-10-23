@@ -1,49 +1,40 @@
 <script>
   import { css } from '../../../styled-system/css';
-
-  let {
-    onAchievementClick,
-    showAchievementButton = false,
-  } = $props();
+  import TipButton from './TipButton.svelte';
+  import GitHubLink from './GitHubLink.svelte';
 
   const footerClass = css({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: '1rem',
     padding: '2rem',
     animation: 'fadeIn 1s ease-in',
     position: 'relative',
-    gap: '2rem',
   });
 
-  const buttonClass = css({
-    bg: 'transparent',
-    border: '2px solid',
-    borderColor: 'bloodRed',
-    borderRadius: '8px',
-    padding: '8px 12px',
-    fontSize: '20px',
-    color: 'bloodRed',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    _hover: {
-      bg: 'rgba(139, 0, 0, 0.1)',
-      transform: 'scale(1.05)',
+  const separatorClass = css({
+    content: '"|"',
+    color: 'white',
+  });
+
+  const footerLinkClass = css({
+    color: '#8b0000',
+    textDecoration: 'none',
+    transition: 'color 0.2s',
+    '&:hover': {
+      color: '#a00000',
     },
+    textDecorationLine: 'underline',
   });
 </script>
 
 <footer class={footerClass}>
-  <span>A game by <a href="https://luhsprwhk.xyz">Luh Sprwhk</a></span>
-  {#if showAchievementButton}
-    <button
-      class={buttonClass}
-      onclick={onAchievementClick}
-      title="View Achievements"
-    >
-      🏆
-    </button>
-  {/if}
+  <span>A game by <a class={footerLinkClass} href="https://luhsprwhk.xyz">Luh Sprwhk</a></span>
+  <span class={separatorClass}></span>
+  <GitHubLink />
+  <span class={separatorClass}></span>
+  <TipButton />
 </footer>
 
 <style>

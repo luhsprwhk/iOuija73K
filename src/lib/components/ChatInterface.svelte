@@ -982,8 +982,7 @@
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: '1rem',
-    flexWrap: 'wrap',
+    gap: '2rem',
     position: 'relative',
   });
 
@@ -994,6 +993,20 @@
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
     margin: 0,
+    flexShrink: 0,
+  });
+
+  const headerRightClass = css({
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '0.5rem',
+  });
+
+  const headerButtonsClass = css({
+    display: 'flex',
+    gap: '0.75rem',
+    alignItems: 'center',
   });
 
   const messagesContainerClass = css({
@@ -1072,16 +1085,19 @@
     },
   });
 
-  const codexButtonClass = css({
-    padding: '0.75rem 1rem',
+  const headerButtonClass = css({
+    padding: '0.5rem 1.5rem',
     backgroundColor: 'transparent',
     border: '2px solid #8b0000',
     borderRadius: '0.375rem',
     color: '#8b0000',
     fontFamily: 'monospace',
-    fontSize: '1.25rem',
+    fontSize: '1rem',
     cursor: 'pointer',
     transition: 'background-color 0.2s, transform 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
     '&:hover': {
       backgroundColor: 'rgba(139, 0, 0, 0.1)',
     },
@@ -1096,7 +1112,9 @@
     onAchievementUnlock = undefined,
     onCodexUnlock = undefined,
     onCodexClick = undefined,
+    onAchievementClick = undefined,
     showCodexButton = false,
+    showAchievementButton = false,
     showAchievementPanel = $bindable(false),
   } = $props();
 
@@ -1279,7 +1297,33 @@
   <div class={containerClass}>
     <header class={headerClass}>
       <h1 class={titleClass}>{title}</h1>
-      <AnimatedSubtitle bind:this={animatedSubtitleRef} />
+      <div class={headerRightClass}>
+        <AnimatedSubtitle bind:this={animatedSubtitleRef} />
+        {#if showCodexButton || showAchievementButton}
+          <div class={headerButtonsClass}>
+            {#if showCodexButton}
+              <button
+                type="button"
+                class={headerButtonClass}
+                onclick={onCodexClick}
+                title="View Codex"
+              >
+                📖 Codex
+              </button>
+            {/if}
+            {#if showAchievementButton}
+              <button
+                type="button"
+                class={headerButtonClass}
+                onclick={onAchievementClick}
+                title="View Achievements"
+              >
+                🏆 Achievements
+              </button>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </header>
 
     <div class={messagesContainerClass}>
@@ -1309,16 +1353,6 @@
             placeholder={`Reply to ${demonName}`}
             autocomplete="off"
           />
-          {#if showCodexButton}
-            <button
-              type="button"
-              class={codexButtonClass}
-              onclick={onCodexClick}
-              title="View Codex"
-            >
-              📖
-            </button>
-          {/if}
           <button type="submit" class={buttonClass}>↑</button>
         </form>
       </div>

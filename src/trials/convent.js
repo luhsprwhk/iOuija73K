@@ -118,6 +118,7 @@ export function createConventState() {
     explorationTurns: 0, // Track how many exploration actions taken
     roomPotionCounts: {},
     combatHelpCount: 0,
+    paimonPotionOffered: false,
   };
 }
 
@@ -452,17 +453,49 @@ export async function handleConventInput(
             corruptionProfile,
           };
         } else {
+          const canOfferPotion =
+            !conventState.paimonPotionOffered &&
+            newHP < MAX_HP &&
+            corruptionProfile &&
+            ((corruptionProfile.playCount || 1) <= 1 ||
+              ((corruptionProfile.playCount || 1) > 1 &&
+                (corruptionProfile.corruptionScore || 0) > 2));
+
+          let finalHP = newHP;
+          const extraPotionMessages = [];
+          if (canOfferPotion) {
+            const healedHP = Math.min(newHP + 1, MAX_HP);
+            extraPotionMessages.push(
+              {
+                delay: MIN_DELAY,
+                content: 'First lesson: potions keep you useful.',
+              },
+              {
+                delay: MIN_DELAY,
+                content: `<strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+              }
+            );
+            finalHP = healedHP;
+          }
+
           return {
             messages: intervalsToCumulative([
               ...attackMessages,
+              ...extraPotionMessages,
               {
                 delay: MIN_DELAY,
-                content: '<span class="blink">Now what?</span>',
+                content: '<span class="blink">What do you do?</span>',
               },
             ]),
             nextState: currentState,
             useAPI: false,
-            conventState: { ...conventState, playerHP: newHP },
+            conventState: {
+              ...conventState,
+              playerHP: finalHP,
+              paimonPotionOffered: canOfferPotion
+                ? true
+                : conventState.paimonPotionOffered || false,
+            },
             corruptionProfile,
           };
         }
@@ -628,6 +661,32 @@ export async function handleConventInput(
       };
     }
 
+    // Conditional Paimon potion offer
+    const canOfferPotion =
+      !conventState.paimonPotionOffered &&
+      newHP < MAX_HP &&
+      corruptionProfile &&
+      ((corruptionProfile.playCount || 1) <= 1 ||
+        ((corruptionProfile.playCount || 1) > 1 &&
+          (corruptionProfile.corruptionScore || 0) > 2));
+
+    let finalHP = newHP;
+    const extraPotionMessages = [];
+    if (canOfferPotion) {
+      const healedHP = Math.min(newHP + 1, MAX_HP);
+      extraPotionMessages.push(
+        {
+          delay: MIN_DELAY,
+          content: 'On your feet. <em>Drink.</em>',
+        },
+        {
+          delay: MIN_DELAY,
+          content: `<strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+        }
+      );
+      finalHP = healedHP;
+    }
+
     return {
       messages: intervalsToCumulative([
         {
@@ -636,16 +695,26 @@ export async function handleConventInput(
             'You turn to flee—but the creature rakes you as you retreat.',
         },
         { delay: MIN_DELAY, content: damageNarrative },
+        ...extraPotionMessages,
         {
           delay: DRAMATIC_DELAY,
           content: `You stumble into the <strong>${currentRoom.name}</strong>.`,
         },
         { delay: MIN_DELAY, content: currentRoom.description },
-        { delay: MIN_DELAY, content: '<span class="blink">What do you do?</span>' },
+        {
+          delay: MIN_DELAY,
+          content: '<span class="blink">What do you do?</span>',
+        },
       ]),
       nextState: CONVENT_STATES.EXPLORATION,
       useAPI: false,
-      conventState: { ...conventState, playerHP: newHP },
+      conventState: {
+        ...conventState,
+        playerHP: finalHP,
+        paimonPotionOffered: canOfferPotion
+          ? true
+          : conventState.paimonPotionOffered || false,
+      },
       corruptionProfile,
     };
   }
@@ -688,20 +757,51 @@ export async function handleConventInput(
         nextState: CONVENT_STATES.LOCKOUT,
         useAPI: false,
         conventState: { ...conventState, playerHP: 0 },
+        corruptionProfile,
       };
     } else {
-      // Player survives with warning
+      // Player survives with warning, potential Paimon potion offer
+      const canOfferPotion =
+        !conventState.paimonPotionOffered &&
+        newHP < MAX_HP &&
+        corruptionProfile &&
+        ((corruptionProfile.playCount || 1) <= 1 ||
+          ((corruptionProfile.playCount || 1) > 1 &&
+            (corruptionProfile.corruptionScore || 0) > 2));
+
+      let finalHP = newHP;
+      const extraPotionMessages = [];
+      if (canOfferPotion) {
+        const healedHP = Math.min(newHP + 1, MAX_HP);
+        extraPotionMessages.push(
+          {
+            delay: MIN_DELAY,
+            content: "You're leaking. Here—<em>this will do</em>.",
+          },
+          {
+            delay: MIN_DELAY,
+            content: `<strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+          }
+        );
+        finalHP = healedHP;
+      }
+
       return {
         messages: intervalsToCumulative([
           ...attackMessages,
-          {
-            delay: MIN_DELAY,
-            content: '<span class="blink">Now what?</span>',
-          },
+          ...extraPotionMessages,
+          { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
         ]),
         nextState: currentState, // Stay in same encounter
         useAPI: false,
-        conventState: { ...conventState, playerHP: newHP },
+        conventState: {
+          ...conventState,
+          playerHP: finalHP,
+          paimonPotionOffered: canOfferPotion
+            ? true
+            : conventState.paimonPotionOffered || false,
+        },
+        corruptionProfile,
       };
     }
   }
@@ -814,17 +914,47 @@ export async function handleConventInput(
             corruptionProfile,
           };
         } else {
+          // Conditional Paimon potion offer
+          const canOfferPotion =
+            !conventState.paimonPotionOffered &&
+            newHP < MAX_HP &&
+            corruptionProfile &&
+            ((corruptionProfile.playCount || 1) <= 1 ||
+              ((corruptionProfile.playCount || 1) > 1 &&
+                (corruptionProfile.corruptionScore || 0) > 2));
+
+          let finalHP = newHP;
+          const extraPotionMessages = [];
+          if (canOfferPotion) {
+            const healedHP = Math.min(newHP + 1, MAX_HP);
+            extraPotionMessages.push(
+              {
+                delay: MIN_DELAY,
+                content: 'First lesson: potions keep you useful.',
+              },
+              {
+                delay: MIN_DELAY,
+                content: `<strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+              }
+            );
+            finalHP = healedHP;
+          }
+
           return {
             messages: intervalsToCumulative([
               { delay: MIN_DELAY, content: damageNarrative },
-              {
-                delay: MIN_DELAY,
-                content: '<span class="blink">Now what?</span>',
-              },
+              ...extraPotionMessages,
+              { delay: MIN_DELAY, content: '<span class="blink">Now what?</span>' },
             ]),
             nextState: CONVENT_STATES.ENCOUNTER_1, // Retry encounter
             useAPI: false,
-            conventState: { ...conventState, playerHP: newHP },
+            conventState: {
+              ...conventState,
+              playerHP: finalHP,
+              paimonPotionOffered: canOfferPotion
+                ? true
+                : conventState.paimonPotionOffered || false,
+            },
             corruptionProfile,
           };
         }
@@ -834,7 +964,11 @@ export async function handleConventInput(
     case `${CONVENT_STATES.ENCOUNTER_2}_combat`: {
       // Award corruption for second combat encounter
       if (corruptionProfile) {
-        increaseCorruption(corruptionProfile, 1, 'convent_encounter_2_combat');
+        increaseCorruption(
+          corruptionProfile,
+          1,
+          'convent_encounter_2_combat'
+        );
       }
 
       // Second encounter - dice roll combat with heavy glitching and corruption-based difficulty
@@ -899,6 +1033,32 @@ export async function handleConventInput(
             corruptionProfile,
           };
         } else {
+          // Conditional Paimon potion offer
+          const canOfferPotion =
+            !conventState.paimonPotionOffered &&
+            newHP < MAX_HP &&
+            corruptionProfile &&
+            ((corruptionProfile.playCount || 1) <= 1 ||
+              ((corruptionProfile.playCount || 1) > 1 &&
+                (corruptionProfile.corruptionScore || 0) > 2));
+
+          let finalHP = newHP;
+          const extraPotionMessages = [];
+          if (canOfferPotion) {
+            const healedHP = Math.min(newHP + 1, MAX_HP);
+            extraPotionMessages.push(
+              {
+                delay: MIN_DELAY,
+                content: 'Wobbling already? Take it.',
+              },
+              {
+                delay: MIN_DELAY,
+                content: `<strong>+1 HP</strong> (${healedHP}/${MAX_HP}).`,
+              }
+            );
+            finalHP = healedHP;
+          }
+
           return {
             messages: intervalsToCumulative([
               { delay: MIN_DELAY, content: damageNarrative },
@@ -907,11 +1067,18 @@ export async function handleConventInput(
                 content:
                   "Blood pools at your feet. Your vision blurs. But you're still standing.",
               },
+              ...extraPotionMessages,
               { delay: MIN_DELAY, content: '<strong>Now what?</strong>' },
             ]),
             nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`, // Retry encounter
             useAPI: false,
-            conventState: { ...conventState, playerHP: newHP },
+            conventState: {
+              ...conventState,
+              playerHP: finalHP,
+              paimonPotionOffered: canOfferPotion
+                ? true
+                : conventState.paimonPotionOffered || false,
+            },
             corruptionProfile,
           };
         }
