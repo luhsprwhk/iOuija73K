@@ -63,11 +63,18 @@ export const GAME_CONFIG = {
    */
   lockout: {
     /**
-     * Duration of lockout period in milliseconds
+     * Duration of lockout period for meta-breaking in milliseconds
      * 5 minutes = 5 * 60 * 1000 ms
      * Prevents spam/abuse of the game system
      */
-    DURATION_MS: 5 * 60 * 1000,
+    META_BREAKING_DURATION_MS: 5 * 60 * 1000,
+
+    /**
+     * Duration of lockout period for game over (death) in milliseconds
+     * 1 minute = 1 * 60 * 1000 ms
+     * Short cooldown after player dies in combat
+     */
+    GAME_OVER_DURATION_MS: 1 * 60 * 1000,
   },
 
   /**

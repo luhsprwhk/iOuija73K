@@ -248,40 +248,35 @@ export function getConventLockout() {
         'You collapse. Vision fading. The stone floor is cold against your cheek.',
     },
     {
+      delay: DRAMATIC_DELAY,
+      content: 'Blood pools around you. So much blood.',
+    },
+    {
       delay: MIN_DELAY,
-      content: 'And then... <strong>clarity</strong>.',
+      content:
+        'In your final moments, you see... <em>something</em>. A shape standing over you.',
     },
     {
       delay: DRAMATIC_DELAY,
       content:
-        'The monsters flicker. Dissolve. <em>They were never monsters</em>.',
+        'For just a moment, it doesn\'t look like a monster at all.',
     },
     {
       delay: MIN_DELAY,
-      content:
-        'Just <strong>women</strong>. Nuns. Terrified. Defending their home from an armored <i>thing</i> that came in the night, sword drawn, eyes wild.',
+      content: 'But that can\'t be right.',
     },
     {
       delay: MIN_DELAY,
-      content: 'From <strong>you</strong>.',
+      content: 'Can it?',
     },
     {
       delay: DRAMATIC_DELAY,
       content:
-        "The last nun—the one who struck you down—kneels beside your body. She's <em>crying</em>. Praying for your soul.",
+        'Too weak. Too <i>soft</i>. You hesitated when you should have <strong>struck</strong>.',
     },
     {
       delay: MIN_DELAY,
-      content: 'How <i>generous</i> of her.',
-    },
-    {
-      delay: DRAMATIC_DELAY,
-      content:
-        '<strong>You resisted me</strong>. Tried to be <i>good</i>. And this is what it cost you.',
-    },
-    {
-      delay: MIN_DELAY,
-      content: 'Remember that.',
+      content: 'This is what mercy gets you.',
     },
     {
       delay: DRAMATIC_DELAY,
@@ -290,7 +285,7 @@ export function getConventLockout() {
     },
     {
       delay: MIN_DELAY,
-      content: "Reload to try again. Or don't. <i>I don't care</i>.",
+      content: "Try again. Maybe this time you'll learn.",
     },
   ]);
 }
@@ -769,15 +764,21 @@ export async function handleConventInput(
           }
         }
 
+        // Transition to exploration state instead of immediately showing encounter 2
+        const currentRoom = CONVENT_MAP[conventState.playerPosition.join(',')];
         messages.push(
-          { delay: MIN_DELAY, content: 'You press forward into the darkness.' },
-          // Automatically show encounter 2 intro
+          {
+            delay: DRAMATIC_DELAY,
+            content: 'The creature lies still. The silence is deafening.',
+          },
           {
             delay: MIN_DELAY,
-            image: '/src/assets/trials/convent_encounter_2.webp',
+            content: `You find yourself in the <strong>${currentRoom.name}</strong>.`,
           },
-          { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
-          { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
+          {
+            delay: MIN_DELAY,
+            content: currentRoom.description,
+          },
           {
             delay: MIN_DELAY,
             content: '<span class="blink">What do you do?</span>',
@@ -786,9 +787,9 @@ export async function handleConventInput(
 
         return {
           messages: intervalsToCumulative(messages),
-          nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
+          nextState: CONVENT_STATES.EXPLORATION,
           useAPI: false,
-          conventState: { ...conventState, combatHelpCount: 0 },
+          conventState: { ...conventState, combatHelpCount: 0, currentEncounter: 2 },
           corruptionProfile,
         };
       } else {
@@ -1180,6 +1181,42 @@ async function handleExploration(userInput, conventState) {
 
   const lowerInput = userInput.toLowerCase().trim();
   const [currentRow, currentCol] = conventState.playerPosition;
+
+  // Handle fight intent - trigger encounter 2 if player has completed encounter 1
+  if (
+    (lowerInput.includes('fight') ||
+      lowerInput.includes('attack') ||
+      lowerInput.includes('battle') ||
+      lowerInput.includes('combat')) &&
+    conventState.currentEncounter === 2
+  ) {
+    return {
+      messages: intervalsToCumulative([
+        {
+          delay: 1000,
+          content:
+            "You hear sounds from deeper in the convent. Scraping. Chittering.",
+        },
+        {
+          delay: MIN_DELAY,
+          content: "You grip your sword and move toward the noise.",
+        },
+        {
+          delay: MIN_DELAY,
+          image: '/src/assets/trials/convent_encounter_2.webp',
+        },
+        { delay: MIN_DELAY, content: ENCOUNTERS[2].intro },
+        { delay: MIN_DELAY, content: ENCOUNTERS[2].glitchIntro },
+        {
+          delay: MIN_DELAY,
+          content: '<span class="blink">What do you do?</span>',
+        },
+      ]),
+      nextState: `${CONVENT_STATES.ENCOUNTER_2}_combat`,
+      useAPI: false,
+      conventState: { ...conventState, combatHelpCount: 0 },
+    };
+  }
 
   // Parse directional movement
   let newRow = currentRow;

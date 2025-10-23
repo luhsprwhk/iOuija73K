@@ -1,7 +1,7 @@
 import { GAME_CONFIG } from '../../config/gameConfig.js';
 
 const LOCKOUT_KEY = 'io73k_lockout';
-const LOCKOUT_DURATION = GAME_CONFIG.lockout.DURATION_MS;
+const DEFAULT_LOCKOUT_DURATION = GAME_CONFIG.lockout.META_BREAKING_DURATION_MS;
 
 /**
  * Checks if the user is currently locked out
@@ -35,10 +35,11 @@ export function checkLockout() {
 
 /**
  * Sets a lockout for the user
+ * @param {number} durationMs - Optional custom duration in milliseconds (defaults to meta-breaking duration)
  */
-export function setLockout() {
+export function setLockout(durationMs = DEFAULT_LOCKOUT_DURATION) {
   try {
-    const lockoutEnd = Date.now() + LOCKOUT_DURATION;
+    const lockoutEnd = Date.now() + durationMs;
     localStorage.setItem(LOCKOUT_KEY, lockoutEnd.toString());
   } catch (error) {
     console.error('Error setting lockout:', error);
@@ -60,5 +61,5 @@ export function clearLockout() {
  * Gets the lockout duration in seconds
  */
 export function getLockoutDuration() {
-  return LOCKOUT_DURATION / 1000;
+  return DEFAULT_LOCKOUT_DURATION / 1000;
 }

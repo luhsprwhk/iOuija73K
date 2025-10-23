@@ -82,9 +82,10 @@
   });
 
   const devControlsClass = css({
-    marginBottom: '1rem',
-    display: 'flex',
-    justifyContent: 'center',
+    position: 'fixed',
+    left: '1rem',
+    top: '1rem',
+    zIndex: 1000,
   });
 
   function handleStateJump(state) {

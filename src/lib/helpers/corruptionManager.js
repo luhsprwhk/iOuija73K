@@ -242,9 +242,10 @@ export function getPaimonCommentary(profile) {
     return 'Why do you hesitate? You know what you want to do.';
   }
 
-  if (profile.playCount > 1) {
-    return "Back again? I knew you couldn't stay away.";
-  }
+  // TODO: Figure out when to show this so it doesnt come off as a meta
+  // if (profile.playCount > 1) {
+  //   return "Back again? I knew you couldn't stay away.";
+  // }
 
   return null;
 }

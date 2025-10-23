@@ -1,7 +1,11 @@
 <script>
   import { css } from '../../../styled-system/css';
+  import { Tabs } from 'melt/components';
 
   let { onStateJump, onTriggerLockout, onReset } = $props();
+
+  let storageData = $state({});
+  let currentTab = $state('controls');
 
   const trialOptions = [
     { label: 'Start (Initial)', value: 'initial' },
@@ -21,14 +25,105 @@
     }
   }
 
+  function loadStorageData() {
+    const data = {};
+    // Get all localStorage keys that start with io73k
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('io73k_')) {
+        const value = localStorage.getItem(key);
+        if (value !== null) {
+          try {
+            // Try to parse as JSON for pretty display
+            data[key] = JSON.parse(value);
+          } catch {
+            // If not JSON, store as string
+            data[key] = value;
+          }
+        }
+      }
+    }
+    storageData = data;
+  }
+
+  function refreshStorage() {
+    loadStorageData();
+  }
+
+  // Load storage data when switching to storage tab
+  $effect(() => {
+    if (currentTab === 'storage') {
+      loadStorageData();
+    }
+  });
+
   const containerClass = css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
     padding: '0.5rem 1rem',
     backgroundColor: 'rgba(139, 0, 0, 0.2)',
     border: '1px solid #8b0000',
     borderRadius: '0.375rem',
+    maxWidth: '20rem',
+  });
+
+  const tabListClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    marginBottom: '0.5rem',
+  });
+
+  const tabTriggerClass = css({
+    padding: '0.375rem 0.75rem',
+    backgroundColor: 'transparent',
+    border: '1px solid #2a2a3e',
+    borderRadius: '0.25rem',
+    color: '#e0e0e0',
+    fontFamily: 'monospace',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+    outline: 'none',
+    transition: 'all 0.2s',
+    '&:hover': {
+      borderColor: '#8b0000',
+    },
+    '&[data-state="active"]': {
+      backgroundColor: '#8b0000',
+      borderColor: '#a00000',
+    },
+  });
+
+  const contentClass = css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    flexWrap: 'wrap',
+  });
+
+  const storageViewClass = css({
+    fontFamily: 'monospace',
+    fontSize: '0.75rem',
+    color: '#e0e0e0',
+    backgroundColor: '#1a1a2e',
+    padding: '0.75rem',
+    borderRadius: '0.25rem',
+    maxHeight: '300px',
+    overflowY: 'auto',
+    width: '100%',
+  });
+
+  const storageKeyClass = css({
+    color: '#a00000',
+    fontWeight: 'bold',
+  });
+
+  const storageValueClass = css({
+    color: '#b0b0b0',
+    marginLeft: '0.5rem',
+  });
+
+  const emptyStorageClass = css({
+    color: '#666',
+    fontStyle: 'italic',
   });
 
   const labelClass = css({
@@ -78,18 +173,57 @@
   });
 </script>
 
-<div class={containerClass}>
-  <span class={labelClass}>DEV:</span>
-  <select class={selectClass} onchange={handleJump}>
-    <option value="">Jump to trial...</option>
-    {#each trialOptions as option}
-      <option value={option.value}>{option.label}</option>
-    {/each}
-  </select>
-  <button class={buttonClass} onclick={onTriggerLockout}>
-    Trigger Lockout
-  </button>
-  <button class={buttonClass} onclick={onReset}>
-    Reset Profile
-  </button>
-</div>
+<Tabs bind:value={currentTab}>
+  {#snippet children(tabs)}
+    <div class={containerClass}>
+      <div class={tabListClass} {...tabs.triggerList}>
+        <span class={labelClass}>DEV:</span>
+        <button class={tabTriggerClass} {...tabs.getTrigger('controls')}>
+          Controls
+        </button>
+        <button class={tabTriggerClass} {...tabs.getTrigger('storage')}>
+          Storage
+        </button>
+      </div>
+
+      <div {...tabs.getContent('controls')}>
+        <div class={contentClass}>
+          <select class={selectClass} onchange={handleJump}>
+            <option value="">Jump to trial...</option>
+            {#each trialOptions as option}
+              <option value={option.value}>{option.label}</option>
+            {/each}
+          </select>
+          <button class={buttonClass} onclick={onTriggerLockout}>
+            Trigger Lockout
+          </button>
+          <button class={buttonClass} onclick={onReset}>
+            Reset Profile
+          </button>
+        </div>
+      </div>
+
+      <div {...tabs.getContent('storage')}>
+        <div class={contentClass}>
+          <button class={buttonClass} onclick={refreshStorage}>
+            Refresh
+          </button>
+        </div>
+        <div class={storageViewClass}>
+          {#if Object.keys(storageData).length === 0}
+            <div class={emptyStorageClass}>No game data in localStorage</div>
+          {:else}
+            {#each Object.entries(storageData) as [key, value]}
+              <div style="margin-bottom: 0.5rem;">
+                <span class={storageKeyClass}>{key}:</span>
+                <span class={storageValueClass}>
+                  {JSON.stringify(value, null, 2)}
+                </span>
+              </div>
+            {/each}
+          {/if}
+        </div>
+      </div>
+    </div>
+  {/snippet}
+</Tabs>

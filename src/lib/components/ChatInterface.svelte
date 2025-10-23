@@ -28,6 +28,7 @@
     handleConventInput,
     getConventIntro,
     getConventReveal,
+    getConventLockout,
     createConventState,
     CONVENT_STATES,
     getConventEncounterIntro,
@@ -538,6 +539,33 @@
         revealMessages.forEach(({ delay, content, image }) => {
           addAssistantMessage(content, lastDelay + delay, false, image);
         });
+      }
+
+      // If we just transitioned TO the lockout state (player died), show lockout messages and trigger lockout screen
+      if (
+        previousState !== CONVENT_STATES.LOCKOUT &&
+        conventState === CONVENT_STATES.LOCKOUT
+      ) {
+        const lockoutMessages = getConventLockout();
+
+        // Show all lockout messages first
+        lockoutMessages.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, lastDelay + delay, false, image);
+        });
+
+        // Calculate total delay of all messages
+        const totalLockoutDelay = lockoutMessages.reduce(
+          (sum, msg) => sum + msg.delay,
+          0
+        );
+
+        // After messages complete + 5 seconds for reading, trigger the lockout screen
+        setTimeout(() => {
+          setLockout(GAME_CONFIG.lockout.GAME_OVER_DURATION_MS);
+          isLockedOut = true;
+          const lockoutStatus = checkLockout();
+          lockoutTimeRemaining = lockoutStatus.remainingTime;
+        }, lastDelay + totalLockoutDelay + 5000);
       }
 
       // If convent is complete, transition to hangman trial
