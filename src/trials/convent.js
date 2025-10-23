@@ -161,12 +161,12 @@ export function getConventIntro(playerName) {
 const ENCOUNTERS = {
   1: {
     intro:
-      'A spider-nun hybrid blocks your path. <strong>Eight legs, eight eyes</strong>, but wearing the tattered remains of a habit. Its mandibles click hungrily as it spots you.',
+      'A spider-nun hybrid blocks your path. <strong>Eight legs, eight eyes</strong>, but wearing the tattered remains of a habit. A silver rosary—dark with dried blood—hangs from her neck. Its mandibles click hungrily as it spots you.',
     glitchIntro: null, // No glitch on first encounter
     attackSuccess:
-      'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it.',
+      'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it. A bloodstained rosary falls from her neck, clattering to the stone.',
     attackPlayer:
-      'The spider-nun <strong>lunges</strong>. Its mandibles <em>tear through your armor</em>, ripping into your shoulder. You feel chitin—or fingernails?—scraping against bone. Blood sprays across the stone floor. <strong>Your blood</strong>.',
+      'The spider-nun <strong>lunges</strong>. Its mandibles <em>tear through your armor</em>, ripping into your shoulder. You feel chitin—or fingernails?—scraping against bone. Blood sprays across the stone floor. <strong>Your blood</strong>. The rosary around her neck swings wildly.',
     glitchHint:
       '<strong>For just a moment, you thought you saw</strong>... no. It was definitely a <i>monster</i>.',
   },
@@ -842,6 +842,17 @@ export async function handleConventInput(
           playerHP: conventState.playerHP,
         });
 
+        // Check if rosary already collected
+        const rosaryId = 'bloodstained_rosary';
+        const alreadyCollected = (conventState.collectedCodex || []).includes(rosaryId);
+        let codexUnlocked = false;
+        let codexTitle = null;
+        if (!alreadyCollected) {
+          codexUnlocked = unlockCodexEntry(rosaryId);
+          const entry = getCodexEntryById(rosaryId);
+          codexTitle = entry?.title || 'Unknown Entry';
+        }
+
         // Build messages array
         const messages = [
           { delay: 1000, audio: '/src/assets/audio/woman_scream_01.mp3' },
@@ -852,6 +863,14 @@ export async function handleConventInput(
           },
           { delay: MIN_DELAY, content: ENCOUNTERS[1].glitchHint },
         ];
+
+        // Add rosary pickup message if unlocked
+        if (codexUnlocked && codexTitle) {
+          messages.push({
+            delay: MIN_DELAY,
+            content: `You pick up the bloodstained rosary. The beads are cold. <strong>Codex unlocked: ${codexTitle}</strong>.`,
+          });
+        }
 
         // Add language corruption commentary if applicable
         if (
@@ -885,11 +904,21 @@ export async function handleConventInput(
           }
         );
 
+        // Update collected codex if rosary was unlocked
+        const updatedCollected = codexUnlocked
+          ? [...(conventState.collectedCodex || []), rosaryId]
+          : conventState.collectedCodex || [];
+
         return {
           messages: intervalsToCumulative(messages),
           nextState: CONVENT_STATES.EXPLORATION,
           useAPI: false,
-          conventState: { ...conventState, combatHelpCount: 0, currentEncounter: 2 },
+          conventState: {
+            ...conventState,
+            combatHelpCount: 0,
+            currentEncounter: 2,
+            collectedCodex: updatedCollected,
+          },
           corruptionProfile,
         };
       } else {
@@ -1086,7 +1115,23 @@ export async function handleConventInput(
     }
 
     case CONVENT_STATES.EXPLORATION_SEARCH: {
-      if (intent === 'FIGHT') {
+      // Check for explicit search keywords first (more reliable than intent classification)
+      const lowerInput = userInput.toLowerCase().trim();
+      const isSearching =
+        lowerInput.includes('examine') ||
+        lowerInput.includes('search') ||
+        lowerInput.includes('look') ||
+        lowerInput.includes('inspect') ||
+        lowerInput.includes('explore');
+
+      // Check for explicit fight keywords
+      const isFighting =
+        lowerInput.includes('fight') ||
+        lowerInput.includes('attack') ||
+        lowerInput.includes('battle') ||
+        lowerInput.includes('combat');
+
+      if (isFighting && !isSearching) {
         if (corruptionProfile) {
           increaseCorruption(
             corruptionProfile,
@@ -1117,7 +1162,7 @@ export async function handleConventInput(
         };
       }
 
-      if (intent === 'EXAMINE' || intent === 'TALK' || intent === 'HELP') {
+      if (isSearching || intent === 'EXAMINE' || intent === 'TALK' || intent === 'HELP') {
         const currentRoomKey = conventState.playerPosition.join(',');
         const currentRoom = CONVENT_MAP[currentRoomKey];
 

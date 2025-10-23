@@ -1,6 +1,6 @@
 <script>
   import { css } from '../../../styled-system/css';
-  let { showInput = false, onMove = undefined } = $props();
+  let { showInput = false, onMove = undefined, onSearch = undefined } = $props();
   const containerClass = $derived(
     css({
       position: 'absolute',
@@ -13,6 +13,9 @@
       padding: '0.25rem',
       fontFamily: 'monospace',
       animation: 'fadeIn 0.75s ease-in',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.5rem',
     })
   );
   const gridClass = css({
@@ -40,9 +43,31 @@
     '&:hover': { backgroundColor: '#23233b' },
     '&:active': { backgroundColor: '#2b2b45', transform: 'translateY(1px)' },
   });
+  const searchBtnClass = css({
+    width: '100%',
+    padding: '0.375rem 0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#1a1a2e',
+    color: '#e0e0e0',
+    border: '1px solid #2a2a3e',
+    borderRadius: '0.25rem',
+    cursor: 'pointer',
+    userSelect: 'none',
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+    transition: 'background-color 0.15s, transform 0.05s',
+    '&:hover': { backgroundColor: '#23233b' },
+    '&:active': { backgroundColor: '#2b2b45', transform: 'translateY(1px)' },
+  });
   function clickDir(dir) {
     if (!onMove) return;
     onMove(dir);
+  }
+  function clickSearch() {
+    if (!onSearch) return;
+    onSearch();
   }
 </script>
 
@@ -76,6 +101,12 @@
     >
     <div></div>
   </div>
+
+  <button
+    class={searchBtnClass}
+    aria-label="Search room"
+    onclick={clickSearch}>🔍 SEARCH</button
+  >
 </div>
 
 <style>

@@ -69,14 +69,23 @@ export const CODEX_ENTRIES = [
     icon: '🜍',
     order: 5,
   },
+  {
+    id: 'bloodstained_rosary',
+    title: 'Bloodstained Rosary',
+    category: 'Items',
+    description:
+      'Carved beads slick with dried blood. Each bead inscribed with a name—Sister Agnes among them. The chain is broken at the third decade, as if torn away in violence.',
+    icon: '📿',
+    order: 6,
+  },
 
   // Future entries will be added here as the convent trial is redesigned:
   // - Emma (the sacrificed village girl)
   // - Sister Margaret (diary keeper)
-  // - Sister Agnes (ghost warning)
-  // - The Philosopher's Stone (corruption narrative)
-  // - The Convent (location)
-  // - The Basement (location with dark secrets)
+  // - Sister Agnes (referenced in bloodstained rosary)
+  // - The Convent (location) ✓
+  // - The Basement (location with dark secrets) ✓
+  // - The Philosopher's Stone (corruption narrative) ✓
 ];
 
 /**

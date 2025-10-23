@@ -907,6 +907,78 @@
     scrollToBottom();
   }
 
+  async function handleSearch() {
+    if (gameState !== 'convent' || (conventState !== CONVENT_STATES.EXPLORATION && conventState !== CONVENT_STATES.EXPLORATION_SEARCH))
+      return;
+    if (isProcessing) return;
+
+    isProcessing = true;
+
+    const previousState = conventState;
+    const result = await handleConventInput(
+      'search', // Trigger search action
+      conventState,
+      conventStateData,
+      metaOffenseCount,
+      triggerAchievement,
+      corruptionProfile
+    );
+
+    if (result.isMetaBreaking) {
+      metaOffenseCount++;
+    }
+
+    conventState = result.nextState;
+    if (result.conventState) {
+      conventStateData = result.conventState;
+    }
+
+    // Update corruption profile if returned
+    if (result.corruptionProfile) {
+      corruptionProfile = result.corruptionProfile;
+    }
+
+    isProcessing = false;
+
+    result.messages.forEach(({ delay, content, image }) => {
+      addAssistantMessage(content, delay, false, image);
+    });
+
+    const lastDelay =
+      result.messages.length > 0
+        ? result.messages[result.messages.length - 1].delay
+        : 0;
+
+    if (
+      previousState !== CONVENT_STATES.REVEAL &&
+      conventState === CONVENT_STATES.REVEAL
+    ) {
+      const revealMessages = getConventReveal();
+      revealMessages.forEach(({ delay, content, image }) => {
+        addAssistantMessage(content, lastDelay + delay, false, image);
+      });
+    }
+
+    if (conventState === CONVENT_STATES.COMPLETE) {
+      gameState = 'hangman';
+      hangmanTrialState = HANGMAN_STATES.INTRO;
+
+      const hangmanIntro = getHangmanIntro(playerName);
+      addAssistantMessages(hangmanIntro);
+
+      const lastIntroDelay = hangmanIntro[hangmanIntro.length - 1].delay;
+      setTimeout(() => {
+        hangmanTrialState = HANGMAN_STATES.EXPLORATION;
+        hangmanState = initializeHangmanExploration();
+        hangmanExplorationHistory = [];
+        addAssistantMessage(getExplorationStatus(hangmanState), 1000);
+        startHangmanTimer();
+      }, lastIntroDelay + 1000);
+    }
+
+    scrollToBottom();
+  }
+
   const containerClass = css({
     display: 'flex',
     flexDirection: 'column',
@@ -1364,8 +1436,8 @@
       </div>
     {/if}
 
-    {#if gameState === 'convent' && conventState === CONVENT_STATES.EXPLORATION}
-      <MovementControls {showInput} onMove={handleMovement} />
+    {#if gameState === 'convent' && (conventState === CONVENT_STATES.EXPLORATION || conventState === CONVENT_STATES.EXPLORATION_SEARCH)}
+      <MovementControls {showInput} onMove={handleMovement} onSearch={handleSearch} />
     {/if}
 
     <!-- Status Box -->
