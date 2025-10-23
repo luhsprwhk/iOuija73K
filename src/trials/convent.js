@@ -307,6 +307,7 @@ export async function handleConventInput(
   conventState,
   metaOffenseCount = 0,
   onAchievement = null,
+  onCodexUnlock = null,
   corruptionProfile = null
 ) {
   // Check for anachronisms first (doesn't count as offense, just redirects)
@@ -845,12 +846,8 @@ export async function handleConventInput(
         // Check if rosary already collected
         const rosaryId = 'bloodstained_rosary';
         const alreadyCollected = (conventState.collectedCodex || []).includes(rosaryId);
-        let codexUnlocked = false;
-        let codexTitle = null;
-        if (!alreadyCollected) {
-          codexUnlocked = unlockCodexEntry(rosaryId);
-          const entry = getCodexEntryById(rosaryId);
-          codexTitle = entry?.title || 'Unknown Entry';
+        if (!alreadyCollected && onCodexUnlock) {
+          onCodexUnlock(rosaryId);
         }
 
         // Build messages array
@@ -865,10 +862,10 @@ export async function handleConventInput(
         ];
 
         // Add rosary pickup message if unlocked
-        if (codexUnlocked && codexTitle) {
+        if (!alreadyCollected) {
           messages.push({
             delay: MIN_DELAY,
-            content: `You pick up the bloodstained rosary. The beads are cold. <strong>Codex unlocked: ${codexTitle}</strong>.`,
+            content: 'You pick up the bloodstained rosary. The beads are cold.',
           });
         }
 
@@ -905,7 +902,7 @@ export async function handleConventInput(
         );
 
         // Update collected codex if rosary was unlocked
-        const updatedCollected = codexUnlocked
+        const updatedCollected = !alreadyCollected
           ? [...(conventState.collectedCodex || []), rosaryId]
           : conventState.collectedCodex || [];
 

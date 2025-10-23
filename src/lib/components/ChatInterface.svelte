@@ -6,6 +6,7 @@
   import LockoutScreen from './LockoutScreen.svelte';
   import AnimatedSubtitle from './AnimatedSubtitle.svelte';
   import AchievementToast from './AchievementToast.svelte';
+  import CodexToast from './CodexToast.svelte';
   import AchievementPanel from './AchievementPanel.svelte';
   import StatusBox from './StatusBox.svelte';
   import MovementControls from './MovementControls.svelte';
@@ -17,11 +18,12 @@
     clearLockout,
   } from '../helpers/lockoutManager';
   import { getAchievementById } from '../../achievements/achievementData.js';
+  import { getCodexEntryById } from '../../codex/codexData.js';
   import {
     unlockAchievement,
     isAchievementUnlocked,
   } from '../../achievements/achievementManager.js';
-  import { unlockCodexEntry } from '../../codex/codexManager.js';
+  import { unlockCodexEntry, resetCodexProgress } from '../../codex/codexManager.js';
   import { loadProfile } from '../helpers/corruptionManager.js';
   import { getPlayerName, setPlayerName } from '../helpers/playerProfile.js';
   import {
@@ -95,6 +97,7 @@
   let isLockedOut = $state(false);
   let lockoutTimeRemaining = $state(0);
   let currentAchievement = $state(null); // Currently displayed achievement toast
+  let currentCodexToast = $state(null); // Currently displayed codex toast
   let hasTrueNameAchievement = $state(isAchievementUnlocked('true_name')); // Track if true name is known
   let metaOffenseCount = $state(0); // Track meta-breaking offense count
   let corruptionProfile = $state(loadProfile()); // Load corruption profile from localStorage
@@ -155,16 +158,27 @@
   }
 
   /**
-   * Unlock a codex entry and notify parent
+   * Unlock a codex entry and show toast notification
    * @param {string} entryId - ID of the codex entry to unlock
    */
-  function triggerCodexUnlock(entryId) {
+  function triggerCodexToast(entryId) {
     const wasUnlocked = unlockCodexEntry(entryId);
     if (wasUnlocked) {
+      const entry = getCodexEntryById(entryId);
+      currentCodexToast = entry;
+
       // Notify parent component about codex unlock
       onCodexUnlock?.();
     }
   }
+
+  /**
+   * Dismiss the codex toast
+   */
+  function dismissCodexToast() {
+    currentCodexToast = null;
+  }
+
 
   /**
    * Converts cumulative delays to interval delays
@@ -348,7 +362,7 @@
           addAssistantMessage(introLine);
 
           // Unlock Raphael codex entry when he introduces himself
-          triggerCodexUnlock('raphael');
+          triggerCodexToast('raphael');
 
           // Trigger footer reveal after demon's name appears
           onGameStateChange?.(gameState);
@@ -497,6 +511,7 @@
         conventStateData,
         metaOffenseCount,
         triggerAchievement,
+      triggerCodexToast,
         corruptionProfile
       );
 
@@ -849,6 +864,7 @@
       conventStateData,
       metaOffenseCount,
       triggerAchievement,
+      triggerCodexToast,
       corruptionProfile
     );
 
@@ -921,6 +937,7 @@
       conventStateData,
       metaOffenseCount,
       triggerAchievement,
+      triggerCodexToast,
       corruptionProfile
     );
 
@@ -1241,6 +1258,9 @@
             showButton: true,
           },
         ];
+        // Reset codex progress
+        resetCodexProgress();
+        onCodexUnlock?.(); // Notify parent to refresh codex panel
         break;
 
       case 'name_exchange':
@@ -1254,7 +1274,7 @@
           },
         ];
         hasTrueNameAchievement = false; // Reset to false name for this state
-        triggerCodexUnlock('raphael'); // Unlock Raphael codex entry for dev mode
+        triggerCodexToast('raphael'); // Unlock Raphael codex entry for dev mode
         break;
 
       case 'convent':
@@ -1359,8 +1379,17 @@
     setTimeout(() => scrollToBottom(), 100);
   }
 
+  /**
+   * DEV MODE: Reset codex progress
+   */
+  function handleResetCodex() {
+    resetCodexProgress();
+    onCodexUnlock?.(); // Notify parent to refresh codex panel
+    console.log('Codex progress has been reset.');
+  }
+
   // Export functions for parent component access (Svelte 5)
-  export { handleStateJump, handleTriggerLockout };
+  export { handleStateJump, handleTriggerLockout, handleResetCodex };
 </script>
 
 {#if isLockedOut}
@@ -1380,7 +1409,7 @@
                 onclick={onCodexClick}
                 title="View Codex"
               >
-                📖 Codex
+                📖
               </button>
             {/if}
             {#if showAchievementButton}
@@ -1390,7 +1419,7 @@
                 onclick={onAchievementClick}
                 title="View Achievements"
               >
-                🏆 Achievements
+                🏆
               </button>
             {/if}
           </div>
@@ -1456,11 +1485,9 @@
 </audio>
 
 <!-- Achievement components -->
-<AchievementToast
-  achievement={currentAchievement}
-  onDismiss={dismissAchievementToast}
-/>
-<AchievementPanel bind:isOpen={showAchievementPanel} />
+<AchievementToast achievement={currentAchievement} onDismiss={dismissAchievementToast} />
+<CodexToast entry={currentCodexToast} onDismiss={dismissCodexToast} />
+<AchievementPanel bind:isOpen={showAchievementPanel} onClose={() => showAchievementPanel = false} />
 
 <style>
   @keyframes fadeIn {

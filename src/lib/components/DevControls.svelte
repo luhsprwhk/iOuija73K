@@ -2,7 +2,7 @@
   import { css } from '../../../styled-system/css';
   import { Tabs } from 'melt/components';
 
-  let { onStateJump, onTriggerLockout, onReset } = $props();
+  let { onStateJump, onTriggerLockout, onReset, onResetCodex } = $props();
 
   let storageData = $state({});
   let currentTab = $state('controls');
@@ -199,6 +199,9 @@
           </button>
           <button class={buttonClass} onclick={onReset}>
             Reset Profile
+          </button>
+          <button class={buttonClass} onclick={onResetCodex}>
+            Reset Codex
           </button>
         </div>
       </div>

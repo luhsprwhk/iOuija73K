@@ -100,6 +100,12 @@
     }
   }
 
+  function handleResetCodex() {
+    if (chatInterfaceRef) {
+      chatInterfaceRef.handleResetCodex();
+    }
+  }
+
   function handleAchievementClick() {
     showAchievementPanel = true;
   }
@@ -126,6 +132,7 @@
         onStateJump={handleStateJump}
         onTriggerLockout={handleTriggerLockout}
         onReset={handleResetProfile}
+        onResetCodex={handleResetCodex}
       />
     </div>
   {/if}
