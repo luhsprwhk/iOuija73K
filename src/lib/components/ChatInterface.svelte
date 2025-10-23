@@ -23,7 +23,11 @@
     unlockAchievement,
     isAchievementUnlocked,
   } from '../../achievements/achievementManager.js';
-  import { unlockCodexEntry, resetCodexProgress } from '../../codex/codexManager.js';
+  import {
+    unlockCodexEntry,
+    resetCodexProgress,
+    isCodexEntryUnlocked,
+  } from '../../codex/codexManager.js';
   import { loadProfile } from '../helpers/corruptionManager.js';
   import { getPlayerName, setPlayerName } from '../helpers/playerProfile.js';
   import {
@@ -315,38 +319,51 @@
           });
         }
 
-        // Start convent trial (same flow as post-name exchange)
-        const conventIntro = getConventIntro(playerName);
-        conventIntro.forEach(({ delay, content, image }) => {
-          addAssistantMessage(content, delay, false, image);
-        });
+        // Check if player has already completed the first encounter
+        const hasRosary = isCodexEntryUnlocked('bloodstained_rosary');
+        let introDelay = 5000;
 
-        const lastIntroDelay =
-          conventIntro.length > 0 ? conventIntro[conventIntro.length - 1].delay : 0;
-        addAssistantMessage(
-          undefined,
-          lastIntroDelay + 2000,
-          false,
-          '/src/assets/trials/convent_encounter_1.webp'
-        );
-        addAssistantMessage(
-          getConventEncounterIntro(1),
-          lastIntroDelay + 2500,
-          false
-        );
-        addAssistantMessage(
-          '<span class="blink">What do you do?</span>',
-          lastIntroDelay + 4500,
-          false
-        );
+        if (hasRosary) {
+          // Skip directly to exploration
+          addAssistantMessage(`You return to the convent. The air is thick with silence.`, 1000);
+          addAssistantMessage('You are in the Entrance Hall.', 2500);
+          addAssistantMessage('<span class="blink">What do you do?</span>', 4000);
+          conventState = CONVENT_STATES.EXPLORATION;
+          introDelay = 4500; // Set delay for showing input
+        } else {
+          // Start convent trial normally
+          const conventIntro = getConventIntro(playerName);
+          addAssistantMessages(conventIntro);
 
-        // Move immediately into Encounter 1 state so the module doesn't re-send the intro
-        conventState = CONVENT_STATES.ENCOUNTER_1;
+          const lastIntroDelay =
+            conventIntro.length > 0
+              ? conventIntro[conventIntro.length - 1].delay
+              : 0;
+          introDelay = lastIntroDelay + 5000;
+
+          addAssistantMessage(
+            undefined,
+            lastIntroDelay + 2000,
+            false,
+            '/src/assets/trials/convent_encounter_1.webp'
+          );
+          addAssistantMessage(
+            getConventEncounterIntro(1),
+            lastIntroDelay + 2500,
+            false
+          );
+          addAssistantMessage(
+            '<span class="blink">What do you do?</span>',
+            lastIntroDelay + 4500,
+            false
+          );
+          conventState = CONVENT_STATES.ENCOUNTER_1;
+        }
 
         // Ensure input is shown after the intro sequence
         setTimeout(() => {
           showInput = true;
-        }, lastIntroDelay + 5000);
+        }, introDelay);
 
         // Trigger footer reveal for current state
         onGameStateChange?.(gameState);
@@ -386,38 +403,51 @@
         });
       }
 
-      // Start convent trial
-      const conventIntro = getConventIntro(playerName);
-      conventIntro.forEach(({ delay, content, image }) => {
-        addAssistantMessage(content, delay, false, image);
-      });
+      // Check if player has already completed the first encounter
+      const hasRosary = isCodexEntryUnlocked('bloodstained_rosary');
+      let introDelay = 5000;
 
-      // Add first encounter art + description from canonical source
-      const lastIntroDelay = conventIntro[conventIntro.length - 1].delay;
-      addAssistantMessage(
-        undefined,
-        lastIntroDelay + 2000,
-        false,
-        '/src/assets/trials/convent_encounter_1.webp'
-      );
-      addAssistantMessage(
-        getConventEncounterIntro(1),
-        lastIntroDelay + 2500,
-        false
-      );
-      addAssistantMessage(
-        '<span class="blink">What do you do?</span>',
-        lastIntroDelay + 4500,
-        false
-      );
+      if (hasRosary) {
+        // Skip directly to exploration
+        addAssistantMessage(`You return to the convent. The air is thick with silence.`, 1000);
+        addAssistantMessage('You are in the Entrance Hall.', 2500);
+        addAssistantMessage('<span class="blink">What do you do?</span>', 4000);
+        conventState = CONVENT_STATES.EXPLORATION;
+        introDelay = 4500; // Set delay for showing input
+      } else {
+        // Start convent trial normally
+        const conventIntro = getConventIntro(playerName);
+        addAssistantMessages(conventIntro);
 
-      // Move immediately into Encounter 1 state so the module doesn't re-send the intro
-      conventState = CONVENT_STATES.ENCOUNTER_1;
+        const lastIntroDelay =
+          conventIntro.length > 0
+            ? conventIntro[conventIntro.length - 1].delay
+            : 0;
+        introDelay = lastIntroDelay + 5000;
+
+        addAssistantMessage(
+          undefined,
+          lastIntroDelay + 2000,
+          false,
+          '/src/assets/trials/convent_encounter_1.webp'
+        );
+        addAssistantMessage(
+          getConventEncounterIntro(1),
+          lastIntroDelay + 2500,
+          false
+        );
+        addAssistantMessage(
+          '<span class="blink">What do you do?</span>',
+          lastIntroDelay + 4500,
+          false
+        );
+        conventState = CONVENT_STATES.ENCOUNTER_1;
+      }
 
       // Show input after all messages
       setTimeout(() => {
         showInput = true;
-      }, lastIntroDelay + 5000);
+      }, introDelay);
     }
   }
 
