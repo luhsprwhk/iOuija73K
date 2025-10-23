@@ -22,6 +22,7 @@
     isAchievementUnlocked,
   } from '../achievements/achievementManager.js';
   import { loadProfile } from './helpers/corruptionManager.js';
+  import { getPlayerName, setPlayerName } from './helpers/playerProfile.js';
   import {
     handleConventInput,
     getConventIntro,
@@ -269,16 +270,77 @@
     if (gameState === 'initial') {
       // Initial game start - trigger subtitle animations
       animatedSubtitleRef?.start();
-      showInput = true;
-      gameState = 'name_exchange';
 
-      setTimeout(() => {
+      const savedName = getPlayerName();
+      if (savedName) {
+        // Returning player: skip name exchange and start the convent trial
+        playerName = savedName;
+        gameState = 'convent';
+
+        // Optional quick acknowledgment
         addAssistantMessage(
-          "Awesome! What's your name? <i>Mine is Raphael.</i>"
+          hasTrueNameAchievement
+            ? `Welcome back, ${savedName}. <i>Paimon remembers.</i>`
+            : `Welcome back, ${savedName}. <i>Raphael remembers.</i>`
         );
-        // Trigger footer reveal after demon's name appears
+
+        // Start ambient music before convent trial
+        isPlayingMusic = true;
+        if (audioElement) {
+          audioElement.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+          });
+        }
+
+        // Start convent trial (same flow as post-name exchange)
+        const conventIntro = getConventIntro(playerName);
+        conventIntro.forEach(({ delay, content, image }) => {
+          addAssistantMessage(content, delay, false, image);
+        });
+
+        const lastIntroDelay =
+          conventIntro.length > 0 ? conventIntro[conventIntro.length - 1].delay : 0;
+        addAssistantMessage(
+          undefined,
+          lastIntroDelay + 2000,
+          false,
+          '/src/assets/trials/convent_encounter_1.webp'
+        );
+        addAssistantMessage(
+          getConventEncounterIntro(1),
+          lastIntroDelay + 2500,
+          false
+        );
+        addAssistantMessage(
+          '<span class="blink">What do you do?</span>',
+          lastIntroDelay + 4500,
+          false
+        );
+
+        // Move immediately into Encounter 1 state so the module doesn't re-send the intro
+        conventState = CONVENT_STATES.ENCOUNTER_1;
+
+        // Ensure input is shown after the intro sequence
+        setTimeout(() => {
+          showInput = true;
+        }, lastIntroDelay + 5000);
+
+        // Trigger footer reveal for current state
         onGameStateChange?.(gameState);
-      }, 500);
+      } else {
+        // New player: show the name exchange prompt
+        showInput = true;
+        gameState = 'name_exchange';
+
+        setTimeout(() => {
+          const introLine = hasTrueNameAchievement
+            ? "You're back. What's your name? <i>You know me as Paimon.</i>"
+            : "Awesome! What's your name? <i>Mine is Raphael.</i>";
+          addAssistantMessage(introLine);
+          // Trigger footer reveal after demon's name appears
+          onGameStateChange?.(gameState);
+        }, 500);
+      }
     } else if (gameState === 'name_exchange') {
       // After name is entered, user clicks OK to start convent trial
       gameState = 'convent';
@@ -403,6 +465,7 @@
 
       // Name is valid, proceed directly to convent trial
       playerName = userInput;
+      setPlayerName(userInput);
       showInput = false;
 
       // Show transition messages
