@@ -33,6 +33,43 @@ export const CODEX_ENTRIES = [
     order: 1,
   },
 
+  {
+    id: 'the_convent',
+    title: 'The Convent',
+    category: 'Locations',
+    description:
+      'Moon-slashed stone and stained glass leaking prayer. The sisters kept quiet records and quieter sins; something in the mortar remembers the hymns.',
+    icon: '⛪',
+    order: 2,
+  },
+  {
+    id: 'sister_margaret_diary',
+    title: "Sister Margaret's Diary",
+    category: 'Items',
+    description:
+      'Pressed violets, cramped handwriting, pages gone thin with touch. She writes of sleepless nights and a glimmering promise in lead that will not cleanse but consume.',
+    icon: '📖',
+    order: 3,
+  },
+  {
+    id: 'the_basement',
+    title: 'The Basement',
+    category: 'Locations',
+    description:
+      'Steps sweat in the cold. Candles gutter toward something shackled and patient. The air tastes like coins and old prayers overturned.',
+    icon: '🕯️',
+    order: 4,
+  },
+  {
+    id: 'philosophers_stone',
+    title: "The Philosopher's Stone",
+    category: 'Mysteries',
+    description:
+      'A promise of transmutation: sorrow to gold, guilt to grace. In practice, it turns mercy to metal and men to monsters—most of all in the mind that seeks it.',
+    icon: '🜍',
+    order: 5,
+  },
+
   // Future entries will be added here as the convent trial is redesigned:
   // - Emma (the sacrificed village girl)
   // - Sister Margaret (diary keeper)
