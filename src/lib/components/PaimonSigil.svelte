@@ -1,7 +1,7 @@
 <script>
   import { css } from '../../../styled-system/css';
   import { fade, scale } from 'svelte/transition';
-  import paimonSigil from '../assets/paimon_sigil.webp';
+  import paimonSigil from '../../assets/paimon_sigil.webp';
 
   export let width = '40px';
   export let height = '40px';
