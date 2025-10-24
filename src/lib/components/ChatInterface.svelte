@@ -28,7 +28,7 @@
     resetCodexProgress,
     isCodexEntryUnlocked,
   } from '../../codex/codexManager.js';
-  import { loadProfile } from '../helpers/corruptionManager.js';
+  import { loadProfile, incrementPlayCount } from '../helpers/corruptionManager.js';
   import { getPlayerName, setPlayerName } from '../helpers/playerProfile.js';
   import {
     handleConventInput,
@@ -302,6 +302,9 @@
 
     // Handle different game states
     if (gameState === 'initial') {
+      // A new session is starting, so increment the play count and update the local profile state.
+      corruptionProfile = incrementPlayCount();
+
       // Initial game start - trigger subtitle animations
       animatedSubtitleRef?.start();
 
@@ -319,11 +322,11 @@
           });
         }
 
-        // Check if player has already completed the first encounter
-        const hasRosary = isCodexEntryUnlocked('bloodstained_rosary');
+        // Check if this is the first playthrough. If not, skip the intro encounter.
+        const isFirstPlaythrough = corruptionProfile.playCount <= 1;
         let introDelay = 5000;
 
-        if (hasRosary) {
+        if (!isFirstPlaythrough) {
           // Skip directly to exploration
           addAssistantMessage(`You return to the convent. The air is thick with silence.`, 1000);
           addAssistantMessage('You are in the Entrance Hall.', 2500);
@@ -403,11 +406,11 @@
         });
       }
 
-      // Check if player has already completed the first encounter
-      const hasRosary = isCodexEntryUnlocked('bloodstained_rosary');
+      // Check if this is the first playthrough. If not, skip the intro encounter.
+      const isFirstPlaythrough = corruptionProfile.playCount <= 1;
       let introDelay = 5000;
 
-      if (hasRosary) {
+      if (!isFirstPlaythrough) {
         // Skip directly to exploration
         addAssistantMessage(`You return to the convent. The air is thick with silence.`, 1000);
         addAssistantMessage('You are in the Entrance Hall.', 2500);

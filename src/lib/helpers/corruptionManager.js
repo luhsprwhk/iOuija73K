@@ -12,8 +12,8 @@ const STORAGE_KEY = 'io73k_corruption_profile';
  * @property {string|null} firstViolentAction - Timestamp or trial name of first violence
  * @property {number} totalViolentActions - Count of violent choices
  * @property {number} totalNonViolentAttempts - Count of non-violent attempts
- * @property {Array<{trial: string, duration: number}>} hesitations - Pauses before key decisions
- * @property {Array<{claimed: string, actual: string, trial: string}>} contradictions - Says vs. does
+ * @property {Array<{trial: string, duration: number, timestamp: number}>} hesitations - Pauses before key decisions
+ * @property {Array<{claimed: string, actual: string, trial: string, timestamp: number}>} contradictions - Says vs. does
  * @property {number} averageResponseTime - Average time between messages (ms)
  * @property {Object<string, {completedAt: number, duration: number}>} trialCompletionTimes - Trial timing data
  * @property {number} lastUpdated - Timestamp of last update
@@ -35,7 +35,7 @@ function createProfile() {
     averageResponseTime: 0,
     trialCompletionTimes: {},
     lastUpdated: Date.now(),
-    playCount: 1,
+    playCount: 0,
   };
 }
 
@@ -47,16 +47,12 @@ export function loadProfile() {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      const profile = JSON.parse(stored);
-      // Increment play count on new session
-      profile.playCount = (profile.playCount || 0) + 1;
-      profile.lastUpdated = Date.now();
-      saveProfile(profile);
-      return profile;
+      return JSON.parse(stored);
     }
   } catch (error) {
     console.error('Failed to load corruption profile:', error);
   }
+  // If nothing is stored, create a fresh profile
   return createProfile();
 }
 
@@ -70,6 +66,22 @@ export function saveProfile(profile) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
   } catch (error) {
     console.error('Failed to save corruption profile:', error);
+  }
+}
+
+/**
+ * Increment the play count
+ */
+export function incrementPlayCount() {
+  try {
+    const profile = loadProfile();
+    profile.playCount = (profile.playCount || 0) + 1;
+    saveProfile(profile);
+    return profile;
+  } catch (error) {
+    console.error('Failed to increment play count:', error);
+    // Return the original profile on error
+    return loadProfile();
   }
 }
 
