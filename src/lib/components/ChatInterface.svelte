@@ -1,6 +1,7 @@
 <script>
   import { css } from '../../../styled-system/css';
   import ChatMessage from './ChatMessage.svelte';
+  import IntroMessage from './IntroMessage.svelte';
   import PaimonSigil from './PaimonSigil.svelte';
   import Confetti from './Confetti.svelte';
   import LockoutScreen from './LockoutScreen.svelte';
@@ -64,16 +65,27 @@
   } from '../../ai/claude.js';
   import { GAME_CONFIG } from '../../config/gameConfig.js';
 
+  /**
+   * @typedef {Object} Message
+   * @property {string} role
+   * @property {string} [content]
+   * @property {boolean} [isIntroMessage]
+   * @property {boolean} [showButton]
+   * @property {string} [image]
+   * @property {Array} [buttons]
+   */
+
   let animatedSubtitleRef = $state(null);
 
   const savedPlayerNameInit = getPlayerName();
+  /** @type {Array<Message>} */
   let messages = $state([
     {
       role: 'assistant',
       content: savedPlayerNameInit
         ? `Hey ${savedPlayerNameInit}! Welcome back. Want to play again?`
         : "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
-      showButton: true,
+      isIntroMessage: true,
     },
   ]);
 
@@ -294,9 +306,14 @@
 
   function handleOkClick() {
     // Find the message with the button and remove it
-    const buttonMessageIndex = messages.findIndex((msg) => msg.showButton);
+    const buttonMessageIndex = messages.findIndex((msg) => msg.showButton || msg.isIntroMessage);
     if (buttonMessageIndex !== -1) {
-      messages[buttonMessageIndex].showButton = false;
+      if (messages[buttonMessageIndex].showButton) {
+        messages[buttonMessageIndex].showButton = false;
+      }
+      if (messages[buttonMessageIndex].isIntroMessage) {
+        messages[buttonMessageIndex].isIntroMessage = false;
+      }
       messages = [...messages];
     }
 
@@ -442,6 +459,48 @@
       setTimeout(() => {
         showInput = true;
       }, introDelay);
+    }
+  }
+
+  /**
+   * Handle new game button click - reset all game state and start fresh
+   */
+  function handleNewGameClick() {
+    // Clear all game state
+    messages = [
+      {
+        role: 'assistant',
+        content: "Hey! Want to play a game? It's pretty cool. I think you'll like it.",
+        isIntroMessage: true,
+      },
+    ];
+    
+    // Reset game variables
+    gameState = 'initial';
+    playerName = '';
+    conventState = CONVENT_STATES.INTRO;
+    conventStateData = createConventState();
+    hangmanTrialState = HANGMAN_STATES.INTRO;
+    hangmanState = null;
+    hangmanExplorationHistory = [];
+    whiteRoomState = WHITE_ROOM_STATES.INTRO;
+    whiteRoomChoice = null;
+    whiteRoomExplorationHistory = [];
+    showInput = false;
+    inputValue = '';
+    metaOffenseCount = 0;
+    
+    // Stop any playing audio
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.currentTime = 0;
+      isPlayingMusic = false;
+    }
+    
+    // Stop hangman timer if running
+    if (hangmanTimer) {
+      clearInterval(hangmanTimer);
+      hangmanTimer = null;
     }
   }
 
@@ -1453,16 +1512,24 @@
 
     <div class={messagesContainerClass}>
       {#each messages as message}
-        <ChatMessage
-          role={message.role}
-          content={message.content}
-          showButton={message.showButton}
-          onButtonClick={handleOkClick}
-          showDemonName={gameState !== 'initial'}
-          {demonName}
-          image={message.image}
-          buttons={message.buttons}
-        />
+        {#if message.isIntroMessage}
+          <IntroMessage
+            content={message.content}
+            onOkClick={handleOkClick}
+            onNewGameClick={handleNewGameClick}
+          />
+        {:else}
+          <ChatMessage
+            role={message.role}
+            content={message.content}
+            showButton={message.showButton}
+            onButtonClick={handleOkClick}
+            showDemonName={gameState !== 'initial'}
+            {demonName}
+            image={message.image}
+            buttons={message.buttons}
+          />
+        {/if}
       {/each}
       <div bind:this={messagesEndRef}></div>
     </div>
