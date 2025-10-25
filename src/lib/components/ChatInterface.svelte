@@ -327,11 +327,11 @@
         playerName = savedName;
         gameState = 'convent';
 
-        // Check if this is the first playthrough. If not, skip the intro encounter.
-        const isFirstPlaythrough = corruptionProfile.playCount <= 1;
+        // Check if player has met Sister Agnes. If not, trigger intro encounter 100% of the time.
+        const hasMetSisterAgnes = corruptionProfile.metSisterAgnes;
         let introDelay = 5000;
 
-        if (!isFirstPlaythrough) {
+        if (hasMetSisterAgnes) {
           // Skip directly to exploration
           addAssistantMessage(`You return to the convent. The air is thick with silence.`, 1000);
           addAssistantMessage('You are in the Entrance Hall.', 2500);

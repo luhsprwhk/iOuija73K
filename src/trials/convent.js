@@ -29,6 +29,7 @@ import {
   trackNonViolentAttempt,
   shouldApplyLanguageCorruption,
   getPaimonCommentary,
+  markMetSisterAgnes,
 } from '../lib/helpers/corruptionManager.js';
 import { unlockCodexEntry } from '../codex/codexManager.js';
 import { getCodexEntryById } from '../codex/codexData.js';
@@ -232,6 +233,24 @@ export function getConventReveal() {
         "Did you enjoy that? The way her skull caved in when you—oh sorry, when you '<i>defeated the monster</i>'?",
     },
     { delay: DRAMATIC_DELAY, content: 'lmao 😂' },
+    {
+      delay: MIN_DELAY,
+      content: 'There were never any monsters. Just nuns. Terrified, sick nuns.',
+    },
+    {
+      delay: DRAMATIC_DELAY,
+      content:
+        'Agnes. Do you know what that means? <em>Chaste. Pure. Innocent.</em>',
+    },
+    {
+      delay: MIN_DELAY,
+      content:
+        'Such a fitting name for someone so thoroughly <strong>corrupted</strong>.',
+    },
+    {
+      delay: MIN_DELAY,
+      content: "And you? You didn't even hesitate.",
+    },
     {
       delay: MIN_DELAY,
       content: "Let's <strong>continue</strong>.",
@@ -883,6 +902,12 @@ export async function handleConventInput(
             delay: MIN_DELAY,
             content: 'You pick up the bloodstained rosary. The beads are cold.',
           });
+          // Add thematic hint about Sister Agnes's name
+          messages.push({
+            delay: MIN_DELAY,
+            content:
+              'The rosary... it has a name engraved on it. <em>Sister Agnes</em>.',
+          });
         }
 
         // Add language corruption commentary if applicable
@@ -921,6 +946,11 @@ export async function handleConventInput(
         const updatedCollected = !alreadyCollected
           ? [...(conventState.collectedCodex || []), rosaryId]
           : conventState.collectedCodex || [];
+
+        // Mark that player has met Sister Agnes (first encounter)
+        if (corruptionProfile && !corruptionProfile.metSisterAgnes) {
+          markMetSisterAgnes(corruptionProfile);
+        }
 
         return {
           messages: intervalsToCumulative(messages),

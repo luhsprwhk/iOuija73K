@@ -18,6 +18,7 @@ const STORAGE_KEY = 'io73k_corruption_profile';
  * @property {Object<string, {completedAt: number, duration: number}>} trialCompletionTimes - Trial timing data
  * @property {number} lastUpdated - Timestamp of last update
  * @property {number} playCount - Number of times game has been played
+ * @property {boolean} metSisterAgnes - Whether player has encountered Sister Agnes (triggers intro 100% on first meet)
  */
 
 /**
@@ -36,6 +37,7 @@ function createProfile() {
     trialCompletionTimes: {},
     lastUpdated: Date.now(),
     playCount: 0,
+    metSisterAgnes: false,
   };
 }
 
@@ -176,6 +178,17 @@ export function completeTrialTracking(profile, trial, duration) {
     completedAt: Date.now(),
     duration,
   };
+  saveProfile(profile);
+  return profile;
+}
+
+/**
+ * Mark that player has met Sister Agnes
+ * @param {PlayerProfile} profile
+ * @returns {PlayerProfile} Updated profile
+ */
+export function markMetSisterAgnes(profile) {
+  profile.metSisterAgnes = true;
   saveProfile(profile);
   return profile;
 }
