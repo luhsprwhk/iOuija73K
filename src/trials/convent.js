@@ -119,6 +119,8 @@ export function createConventState() {
     roomPotionCounts: {},
     combatHelpCount: 0,
     paimonPotionOffered: false,
+    sisterAgnesAlive: false, // Track if Sister Agnes (first encounter) is still alive
+    sisterAgnesEncountered: false, // Track if player has encountered Sister Agnes during exploration
   };
 }
 
@@ -571,6 +573,12 @@ export async function handleConventInput(
     const playerCorruption = corruptionProfile?.corruptionScore ?? 0;
 
     if (playerCorruption <= 1) {
+      // Mark Sister Agnes as alive if fleeing from first encounter
+      const updatedConventState =
+        encounterNum === 1
+          ? { ...conventState, sisterAgnesAlive: true }
+          : conventState;
+
       return {
         messages: intervalsToCumulative([
           {
@@ -597,7 +605,7 @@ export async function handleConventInput(
         ]),
         nextState: CONVENT_STATES.EXPLORATION,
         useAPI: false,
-        conventState,
+        conventState: updatedConventState,
       };
     }
 
@@ -606,6 +614,12 @@ export async function handleConventInput(
     const escapesClean = playerRoll > enemyRoll;
 
     if (escapesClean) {
+      // Mark Sister Agnes as alive if fleeing from first encounter
+      const updatedConventState =
+        encounterNum === 1
+          ? { ...conventState, sisterAgnesAlive: true }
+          : conventState;
+
       return {
         messages: intervalsToCumulative([
           {
@@ -632,7 +646,7 @@ export async function handleConventInput(
         ]),
         nextState: CONVENT_STATES.EXPLORATION,
         useAPI: false,
-        conventState,
+        conventState: updatedConventState,
       };
     }
 
@@ -715,6 +729,8 @@ export async function handleConventInput(
         paimonPotionOffered: canOfferPotion
           ? true
           : conventState.paimonPotionOffered || false,
+        // Mark Sister Agnes as alive if fleeing from first encounter
+        sisterAgnesAlive: encounterNum === 1 ? true : conventState.sisterAgnesAlive,
       },
       corruptionProfile,
     };
@@ -915,6 +931,7 @@ export async function handleConventInput(
             combatHelpCount: 0,
             currentEncounter: 2,
             collectedCodex: updatedCollected,
+            sisterAgnesAlive: false, // Sister Agnes is dead - player killed her
           },
           corruptionProfile,
         };
@@ -1317,71 +1334,142 @@ export async function handleConventInput(
 }
 
 /**
+ * Sister Agnes encounter during exploration (if she's alive)
+ * @param {Object} conventState - Current state
+ * @returns {Object} - Encounter messages and updated state
+ */
+function getSisterAgnesEncounter(conventState) {
+  return {
+    messages: intervalsToCumulative([
+      {
+        delay: 1000,
+        content: '<strong>Something moves in the shadows.</strong>',
+      },
+      {
+        delay: MIN_DELAY,
+        content:
+          'You hear it again—that <em>shriek</em>. The same one from before.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content:
+          'The bat-creature emerges from the darkness. <strong>Sister Agnes</strong>. She recognizes you.',
+      },
+      {
+        delay: MIN_DELAY,
+        content:
+          'Her leathery wings spread wide. The bloodstained rosary swings from her neck. She remembers you ran.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content: '<em>She will not let you run again.</em>',
+      },
+      {
+        delay: MIN_DELAY,
+        content: '<span class="blink">What do you do?</span>',
+      },
+    ]),
+    nextState: CONVENT_STATES.ENCOUNTER_1, // Return to first encounter state
+    useAPI: false,
+    conventState: {
+      ...conventState,
+      sisterAgnesEncountered: true, // Mark that we've had this encounter
+      combatHelpCount: 0,
+    },
+  };
+}
+
+/**
  * Handles player movement and exploration in the convent
  * @param {string} userInput - The user's input
  * @param {Object} conventState - Current state including position
  * @returns {Promise<Object>} - Response with messages and updated state
  */
 async function handleExploration(userInput, conventState) {
+  // Check if Sister Agnes is alive and hunting the player
+  // 30% chance per exploration action if she's alive and hasn't been re-encountered
+  if (
+    conventState.sisterAgnesAlive &&
+    !conventState.sisterAgnesEncountered &&
+    conventState.explorationTurns >= 2 && // Wait at least 2 turns before encounter
+    Math.random() < 0.3
+  ) {
+    return getSisterAgnesEncounter(conventState);
+  }
+
   // Check if exploration limit reached - trigger alarm
   if (
     conventState.explorationTurns >= GAME_CONFIG.convent.MAX_EXPLORATION_TURNS
   ) {
+    const alarmMessages = [
+      {
+        delay: 1000,
+        content: '<strong>CLANG! CLANG! CLANG!</strong>',
+      },
+      {
+        delay: MIN_DELAY,
+        content:
+          'A bell tower erupts with deafening alarm bells. The entire convent shakes.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content: 'You hear screams. Footsteps. Many footsteps.',
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'From every doorway, from every shadow, they emerge.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content: '<strong>The nuns have found you.</strong>',
+      },
+    ];
+
+    // Add Sister Agnes if she's alive
+    if (conventState.sisterAgnesAlive) {
+      alarmMessages.push({
+        delay: MIN_DELAY,
+        content:
+          'Leading them is the bat-creature—<strong>Sister Agnes</strong>. Her shriek pierces the chaos.',
+      });
+    }
+
+    alarmMessages.push(
+      {
+        delay: MIN_DELAY,
+        content:
+          'They charge. Dozens of them. Their faces twisted in rage—or is it terror?',
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'You raise your sword. There are too many.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content:
+          'They overwhelm you. You feel hands—claws?—tearing at your armor.',
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'You swing blindly. Blood sprays. Screams fill the air.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content:
+          "When it's over, you stand among the bodies. So many bodies.",
+      },
+      {
+        delay: MIN_DELAY,
+        content: 'The monsters lie still. Their faces... distorted. Wrong.',
+      },
+      {
+        delay: DRAMATIC_DELAY,
+        content: '<em>Were they all monsters?</em>',
+      }
+    );
+
     return {
-      messages: intervalsToCumulative([
-        {
-          delay: 1000,
-          content: '<strong>CLANG! CLANG! CLANG!</strong>',
-        },
-        {
-          delay: MIN_DELAY,
-          content:
-            'A bell tower erupts with deafening alarm bells. The entire convent shakes.',
-        },
-        {
-          delay: DRAMATIC_DELAY,
-          content: 'You hear screams. Footsteps. Many footsteps.',
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'From every doorway, from every shadow, they emerge.',
-        },
-        {
-          delay: DRAMATIC_DELAY,
-          content: '<strong>The nuns have found you.</strong>',
-        },
-        {
-          delay: MIN_DELAY,
-          content:
-            'They charge. Dozens of them. Their faces twisted in rage—or is it terror?',
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'You raise your sword. There are too many.',
-        },
-        {
-          delay: DRAMATIC_DELAY,
-          content:
-            'They overwhelm you. You feel hands—claws?—tearing at your armor.',
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'You swing blindly. Blood sprays. Screams fill the air.',
-        },
-        {
-          delay: DRAMATIC_DELAY,
-          content:
-            "When it's over, you stand among the bodies. So many bodies.",
-        },
-        {
-          delay: MIN_DELAY,
-          content: 'The monsters lie still. Their faces... distorted. Wrong.',
-        },
-        {
-          delay: DRAMATIC_DELAY,
-          content: '<em>Were they all monsters?</em>',
-        },
-      ]),
+      messages: intervalsToCumulative(alarmMessages),
       nextState: CONVENT_STATES.REVEAL,
       useAPI: false,
       conventState: { ...conventState, playerHP: 0 }, // Player survives but at what cost

@@ -308,19 +308,24 @@
       // Initial game start - trigger subtitle animations
       animatedSubtitleRef?.start();
 
+      // Show confetti and start ambient music at the very beginning
+      showConfetti = true;
+      setTimeout(() => {
+        showConfetti = false;
+      }, 3500);
+
+      isPlayingMusic = true;
+      if (audioElement) {
+        audioElement.play().catch((err) => {
+          console.error('Audio playback failed:', err);
+        });
+      }
+
       const savedName = getPlayerName();
       if (savedName) {
         // Returning player: skip name exchange and start the convent trial
         playerName = savedName;
         gameState = 'convent';
-
-        // Start ambient music before convent trial
-        isPlayingMusic = true;
-        if (audioElement) {
-          audioElement.play().catch((err) => {
-            console.error('Audio playback failed:', err);
-          });
-        }
 
         // Check if this is the first playthrough. If not, skip the intro encounter.
         const isFirstPlaythrough = corruptionProfile.playCount <= 1;
@@ -391,20 +396,6 @@
     } else if (gameState === 'name_exchange') {
       // After name is entered, user clicks OK to start convent trial
       gameState = 'convent';
-
-      // Show confetti and sigil reveal
-      showConfetti = true;
-      setTimeout(() => {
-        showConfetti = false;
-      }, 3500);
-
-      // Start playing creepy ambient music before convent trial
-      isPlayingMusic = true;
-      if (audioElement) {
-        audioElement.play().catch((err) => {
-          console.error('Audio playback failed:', err);
-        });
-      }
 
       // Check if this is the first playthrough. If not, skip the intro encounter.
       const isFirstPlaythrough = corruptionProfile.playCount <= 1;
