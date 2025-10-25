@@ -75,17 +75,34 @@
     {role === 'user' ? 'You' : showDemonName ? demonName : 'DM'}
   </div>
   {#if image}
-    <img
-      src={image}
-      alt="Scene illustration"
-      class={css({
-        width: '100%',
-        maxWidth: '500px',
-        borderRadius: '0.375rem',
-        marginBottom: content ? '0.75rem' : '0',
-        display: 'block',
-      })}
-    />
+    {#if image.endsWith('.mp4') || image.endsWith('.webm')}
+      <video
+        src={image}
+        autoplay
+        loop
+        muted
+        playsinline
+        class={css({
+          width: '100%',
+          maxWidth: '500px',
+          borderRadius: '0.375rem',
+          marginBottom: content ? '0.75rem' : '0',
+          display: 'block',
+        })}
+      ></video>
+    {:else}
+      <img
+        src={image}
+        alt="Scene illustration"
+        class={css({
+          width: '100%',
+          maxWidth: '500px',
+          borderRadius: '0.375rem',
+          marginBottom: content ? '0.75rem' : '0',
+          display: 'block',
+        })}
+      />
+    {/if}
   {/if}
   {#if content}
     <div

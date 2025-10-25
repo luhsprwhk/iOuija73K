@@ -348,7 +348,7 @@
             undefined,
             lastIntroDelay + 2000,
             false,
-            '/src/assets/trials/convent_encounter_1.webp'
+            '/src/assets/trials/convent_intro_encounter_optimized.mp4'
           );
           addAssistantMessage(
             getConventEncounterIntro(1),
@@ -432,7 +432,7 @@
           undefined,
           lastIntroDelay + 2000,
           false,
-          '/src/assets/trials/convent_encounter_1.webp'
+          '/src/assets/trials/convent_intro_encounter_optimized.mp4'
         );
         addAssistantMessage(
           getConventEncounterIntro(1),

@@ -161,12 +161,12 @@ export function getConventIntro(playerName) {
 const ENCOUNTERS = {
   1: {
     intro:
-      'A spider-nun hybrid blocks your path. <strong>Eight legs, eight eyes</strong>, but wearing the tattered remains of a habit. A silver rosary—dark with dried blood—hangs from her neck. Its mandibles click hungrily as it spots you.',
+      'A bat-like demon, hunched and <strong>wingless</strong>, blocks your path. It wears the tattered remains of a habit. A silver rosary—dark with dried blood—hangs from its neck. Its leathery ears twitch as it spots you, and it lets out a <strong>piercing shriek</strong>.',
     glitchIntro: null, // No glitch on first encounter
     attackSuccess:
-      'Your blade finds its mark. The creature shrieks—a <em>horrible, almost human</em> sound—and collapses. Black ichor pools beneath it. A bloodstained rosary falls from her neck, clattering to the stone.',
+      'Your blade finds its mark. The demon shrieks—a <em>high-pitched, agonizing</em> sound—and collapses. Black ichor pools beneath it. A bloodstained rosary falls from its neck, clattering to the stone.',
     attackPlayer:
-      'The spider-nun <strong>lunges</strong>. Its mandibles <em>tear through your armor</em>, ripping into your shoulder. You feel chitin—or fingernails?—scraping against bone. Blood sprays across the stone floor. <strong>Your blood</strong>. The rosary around her neck swings wildly.',
+      'The demon <strong>lunges</strong>. Its claws <em>tear through your armor</em>, ripping into your shoulder. You feel sharp talons—or are they fingernails?—scraping against bone. Blood sprays across the stone floor. <strong>Your blood</strong>. The rosary around its neck swings wildly.',
     glitchHint:
       '<strong>For just a moment, you thought you saw</strong>... no. It was definitely a <i>monster</i>.',
   },
